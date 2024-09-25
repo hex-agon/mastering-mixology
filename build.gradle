@@ -1,0 +1,31 @@
+plugins {
+    id 'java'
+}
+
+repositories {
+    mavenLocal()
+    maven {
+        url = 'https://repo.runelite.net'
+        content {
+            includeGroupByRegex("net\\.runelite.*")
+        }
+    }
+    mavenCentral()
+}
+
+def runeLiteVersion = 'latest.release'
+
+dependencies {
+    compileOnly group: 'net.runelite', name: 'client', version: runeLiteVersion
+
+    testImplementation group: 'net.runelite', name: 'client', version: runeLiteVersion
+    testImplementation group: 'net.runelite', name: 'jshell', version: runeLiteVersion
+}
+
+group = 'work.fking.rlplugins'
+version = '1.0.0'
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+    options.release.set(11)
+}
