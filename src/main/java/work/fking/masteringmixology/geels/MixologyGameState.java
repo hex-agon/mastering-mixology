@@ -1,4 +1,4 @@
-package work.fking.masteringmixology;
+package work.fking.masteringmixology.geels;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -14,10 +14,11 @@ import net.runelite.api.events.GameObjectDespawned;
 import net.runelite.api.events.GameObjectSpawned;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.client.eventbus.Subscribe;
-import work.fking.masteringmixology.enums.AlchemyBuilding;
-import work.fking.masteringmixology.enums.AlchemyContract;
-import work.fking.masteringmixology.enums.AlchemyPaste;
-import work.fking.masteringmixology.enums.AlchemyPotion;
+import work.fking.masteringmixology.MasteringMixologyConfig;
+import work.fking.masteringmixology.geels.enums.AlchemyBuilding;
+import work.fking.masteringmixology.geels.enums.AlchemyContract;
+import work.fking.masteringmixology.geels.enums.AlchemyPaste;
+import work.fking.masteringmixology.geels.enums.AlchemyPotion;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

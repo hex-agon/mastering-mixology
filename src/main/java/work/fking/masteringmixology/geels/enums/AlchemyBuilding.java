@@ -1,4 +1,4 @@
-package work.fking.masteringmixology.enums;
+package work.fking.masteringmixology.geels.enums;
 
 import com.geel.masteringmixology.Constants;
 import lombok.AllArgsConstructor;

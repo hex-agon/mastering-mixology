@@ -1,4 +1,4 @@
-package work.fking.masteringmixology;
+package work.fking.masteringmixology.geels;
 
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
@@ -9,9 +9,10 @@ import net.runelite.api.TileObject;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
-import work.fking.masteringmixology.enums.AlchemyBuilding;
-import work.fking.masteringmixology.enums.AlchemyContract;
-import work.fking.masteringmixology.enums.AlchemyPaste;
+import work.fking.masteringmixology.MasteringMixologyPlugin;
+import work.fking.masteringmixology.geels.enums.AlchemyBuilding;
+import work.fking.masteringmixology.geels.enums.AlchemyContract;
+import work.fking.masteringmixology.geels.enums.AlchemyPaste;
 
 import javax.inject.Inject;
 import java.awt.Color;
@@ -20,7 +21,7 @@ import java.awt.Graphics2D;
 import java.awt.Shape;
 
 @Slf4j
-class MixologyOverlay extends Overlay {
+public class MixologyOverlay extends Overlay {
     private final Client client;
     private final MixologyGameState gameState;
 

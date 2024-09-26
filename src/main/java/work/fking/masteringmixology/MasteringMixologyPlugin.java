@@ -2,7 +2,6 @@ package work.fking.masteringmixology;
 
 import com.google.inject.Provides;
 import net.runelite.api.Client;
-import net.runelite.api.EnumComposition;
 import net.runelite.api.Skill;
 import net.runelite.api.events.ScriptPostFired;
 import net.runelite.api.events.WidgetLoaded;
@@ -14,6 +13,8 @@ import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
+import work.fking.masteringmixology.geels.MixologyGameState;
+import work.fking.masteringmixology.geels.MixologyOverlay;
 
 import javax.inject.Inject;
 import java.util.ArrayList;

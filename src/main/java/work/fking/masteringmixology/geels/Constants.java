@@ -1,4 +1,4 @@
-package work.fking.masteringmixology;
+package work.fking.masteringmixology.geels;
 
 public class Constants {
     public static int VB_PASTE_COUNT_MOX = 11321;

@@ -3,7 +3,7 @@ package work.fking.masteringmixology;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
-import work.fking.masteringmixology.enums.AlchemyBuilding;
+import work.fking.masteringmixology.geels.enums.AlchemyBuilding;
 
 @ConfigGroup("masteringmixology")
 public interface MasteringMixologyConfig extends Config {
