@@ -16,6 +16,7 @@ repositories {
 def runeLiteVersion = 'latest.release'
 
 dependencies {
+    implementation 'org.projectlombok:lombok:1.18.18'
     compileOnly group: 'net.runelite', name: 'client', version: runeLiteVersion
 
     testImplementation group: 'net.runelite', name: 'client', version: runeLiteVersion
