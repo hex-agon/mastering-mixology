@@ -9,9 +9,11 @@ import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetType;
 import net.runelite.client.config.ConfigManager;
+import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.ui.overlay.OverlayManager;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -41,7 +43,33 @@ public class MasteringMixologyPlugin extends Plugin {
     private Client client;
 
     @Inject
+    private EventBus eventBus;
+
+    @Inject
+    private OverlayManager overlayManager;
+
+    @Inject
+    private MixologyOverlay overlay;
+
+    @Inject
+    private MixologyGameState mixologyGameState;
+
+    @Inject
     private MasteringMixologyConfig config;
+
+    @Override
+    protected void startUp() throws Exception {
+        eventBus.register(mixologyGameState);
+        mixologyGameState.start();
+        overlayManager.add(overlay);
+    }
+
+    @Override
+    protected void shutDown() throws Exception {
+        eventBus.unregister(mixologyGameState);
+        mixologyGameState.stop();
+        overlayManager.remove(overlay);
+    }
 
     @Provides
     MasteringMixologyConfig provideConfig(ConfigManager configManager) {

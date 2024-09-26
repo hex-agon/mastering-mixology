@@ -3,6 +3,7 @@ package work.fking.masteringmixology;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
+import work.fking.masteringmixology.enums.AlchemyBuilding;
 
 @ConfigGroup("masteringmixology")
 public interface MasteringMixologyConfig extends Config {
@@ -15,4 +16,6 @@ public interface MasteringMixologyConfig extends Config {
     default boolean highlightBestExperience() {
         return true;
     }
+
+    AlchemyBuilding prioritisedBuilding();
 }
