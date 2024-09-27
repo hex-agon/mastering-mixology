@@ -51,36 +51,37 @@ public class MasteringMixologyTooltips extends Overlay {
         final int widgetId = menuEntry.getParam1();
         final int groupId = WidgetUtil.componentToInterface(widgetId);
 
-        // Tooltip action type handling
-        if (action == MenuAction.CC_OP && (groupId == InterfaceID.INVENTORY || groupId == InterfaceID.BANK || groupId == InterfaceID.BANK_INVENTORY)) {
-            // Make tooltip
-            final String text = makeValueTooltip(menuEntry);
-            if (text != null) {
-                tooltipManager.add(new Tooltip(ColorUtil.prependColorTag(text, new Color(238, 238, 238))));
-            }
+        // Tooltip for inventory item
+        if (action == MenuAction.WIDGET_TARGET && menuEntry.getWidget().getId() == ComponentID.INVENTORY_CONTAINER) {
+            makeTooltip(menuEntry);
+        }
+
+        // Tooltip for bank items (inventory & bank)
+        if (action == MenuAction.CC_OP  && (groupId == InterfaceID.INVENTORY || groupId == InterfaceID.BANK || groupId == InterfaceID.BANK_INVENTORY)) {
+            makeTooltip(menuEntry);
         }
 
         return null;
     }
 
-    private String makeValueTooltip(MenuEntry menuEntry) {
+    private void makeTooltip(MenuEntry menuEntry) {
         // Get the item container
         ItemContainer itemContainer = getContainer(menuEntry);
         if (itemContainer == null) {
-            return null;
+            return;
         }
 
         // Find the item in the container to get stack size
         final int index = menuEntry.getParam0();
         final Item item = itemContainer.getItem(index);
         if (item == null) {
-            return null;
+            return;
         }
 
         // Get the herb
         Herb herb = Herb.getHerbFromItemId(item.getId());
         if (herb == null) {
-            return null;
+            return;
         }
 
         // Get the GE Price of the item if enabled
@@ -90,7 +91,9 @@ public class MasteringMixologyTooltips extends Overlay {
             gePrice = itemManager.getItemPrice(id);
         }
 
-        return stackValueText(herb, item.getQuantity(), gePrice);
+        // Create the text and add it to the tooltip manager
+        String text = stackValueText(herb, item.getQuantity(), gePrice);
+        tooltipManager.add(new Tooltip(ColorUtil.prependColorTag(text, new Color(238, 238, 238))));
     }
 
     private ItemContainer getContainer(MenuEntry menuEntry) {
