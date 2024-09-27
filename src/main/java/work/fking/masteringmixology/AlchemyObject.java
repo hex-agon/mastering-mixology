@@ -13,7 +13,11 @@ public enum AlchemyObject {
     AGITATOR(NullObjectID.NULL_55390, new WorldPoint(1393, 9329, 0)),
     RETORT(NullObjectID.NULL_55389, new WorldPoint(1397, 9325, 0)),
     CONVEYOR_BELT(ObjectID.CONVEYOR_BELT_54917, new WorldPoint(1394, 9331, 0)),
-    HOPPER(ObjectID.HOPPER_54903, new WorldPoint(1394, 9322, 0));
+    HOPPER(ObjectID.HOPPER_54903, new WorldPoint(1394, 9322, 0)),
+    DIGWEED_NORTH_EAST(NullObjectID.NULL_55396, new WorldPoint(1399, 9331, 0)),
+    DIGWEED_SOUTH_EAST(NullObjectID.NULL_55397, new WorldPoint(1399, 9322, 0)),
+    DIGWEED_SOUTH_WEST(NullObjectID.NULL_55398, new WorldPoint(1389, 9322, 0)),
+    DIGWEED_NORTH_WEST(NullObjectID.NULL_55399, new WorldPoint(1389, 9331, 0));
 
     private final int objectId;
     private final WorldPoint coordinate;

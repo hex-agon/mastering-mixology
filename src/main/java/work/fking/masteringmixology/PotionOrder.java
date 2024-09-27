@@ -23,4 +23,13 @@ public class PotionOrder {
     public PotionModifier potionModifier() {
         return potionModifier;
     }
+
+    @Override
+    public String toString() {
+        return "PotionOrder{" +
+                "idx=" + idx +
+                ", potionType=" + potionType +
+                ", potionModifier=" + potionModifier +
+                '}';
+    }
 }

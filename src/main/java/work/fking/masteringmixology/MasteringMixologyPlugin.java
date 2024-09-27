@@ -2,32 +2,31 @@ package work.fking.masteringmixology;
 
 import com.google.inject.Provides;
 import net.runelite.api.Client;
-import net.runelite.api.DecorativeObject;
-import net.runelite.api.GameObject;
 import net.runelite.api.GameState;
 import net.runelite.api.Skill;
-import net.runelite.api.Tile;
 import net.runelite.api.TileObject;
-import net.runelite.api.WorldView;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.events.GameStateChanged;
+import net.runelite.api.events.GraphicsObjectCreated;
 import net.runelite.api.events.ScriptPostFired;
+import net.runelite.api.events.VarbitChanged;
+import net.runelite.api.events.WidgetClosed;
 import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetType;
+import net.runelite.client.Notifier;
+import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
-import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer;
-import work.fking.masteringmixology.evaluator.BestExperienceEvaluator;
-import work.fking.masteringmixology.evaluator.PotionOrderEvaluator;
 import work.fking.masteringmixology.evaluator.PotionOrderEvaluator.EvaluatorContext;
 
 import javax.inject.Inject;
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +47,19 @@ public class MasteringMixologyPlugin extends Plugin {
     private static final int VARBIT_AGA_RESIN = 4415;
     private static final int VARBIT_MOX_RESIN = 4416;
 
+    private static final int VARBIT_MIXING_VESSEL_POTION = 11339;
+    private static final int VARBIT_AGITATOR_POTION = 11340;
+    private static final int VARBIT_RETORT_POTION = 11341;
+    private static final int VARBIT_ALEMBIC_POTION = 11342;
+
+    private static final int VARBIT_DIGWEED_NORTH_EAST = 11330;
+    private static final int VARBIT_DIGWEED_SOUTH_EAST = 11331;
+    private static final int VARBIT_DIGWEED_SOUTH_WEST = 11332;
+    private static final int VARBIT_DIGWEED_NORTH_WEST = 11333;
+
+    private static final int SPOT_ANIM_AGITATOR = 2954;
+    private static final int SPOT_ANIM_ALEMBIC = 2955;
+
     private static final int COMPONENT_POTION_ORDERS_GROUP_ID = 882;
     private static final int COMPONENT_POTION_ORDERS = COMPONENT_POTION_ORDERS_GROUP_ID << 16 | 2;
     private static final int EXTRA_WIDTH = 30;
@@ -62,14 +74,23 @@ public class MasteringMixologyPlugin extends Plugin {
     private OverlayManager overlayManager;
 
     @Inject
+    private Notifier notifier;
+
+    @Inject
+    private ClientThread clientThread;
+
+    @Inject
     private MasteringMixologyOverlay overlay;
 
-    private PotionOrderEvaluator potionOrderStrategy = new BestExperienceEvaluator();
-    private final Map<AlchemyObject, TileObject> highlightedObjects = new LinkedHashMap<>();
+    private final Map<AlchemyObject, HighlightedObject> highlightedObjects = new LinkedHashMap<>();
 
-    public Map<AlchemyObject, TileObject> highlightedObjects() {
+    public Map<AlchemyObject, HighlightedObject> highlightedObjects() {
         return highlightedObjects;
     }
+
+    private List<PotionOrder> potionOrders = Collections.emptyList();
+    private PotionType mixingVesselPotionType;
+    private PotionOrder bestPotionOrder;
 
     @Provides
     MasteringMixologyConfig provideConfig(ConfigManager configManager) {
@@ -106,6 +127,109 @@ public class MasteringMixologyPlugin extends Plugin {
     }
 
     @Subscribe
+    public void onWidgetClosed(WidgetClosed event) {
+        if (event.getGroupId() != COMPONENT_POTION_ORDERS_GROUP_ID) {
+            return;
+        }
+        highlightedObjects.clear();
+    }
+
+    @Subscribe
+    public void onVarbitChanged(VarbitChanged event) {
+        var varbitId = event.getVarbitId();
+        var value = event.getValue();
+
+        if (varbitId == VARBIT_MIXING_VESSEL_POTION) {
+            // Took potion from mixing vessel, time to highlight the relevant station
+            if (!config.highlightStations()) {
+                return;
+            }
+            if (value == 0) {
+                // first try to match with our bestPotionOrder (most likely scenario)
+                if (bestPotionOrder != null && bestPotionOrder.potionType() == mixingVesselPotionType) {
+                    highlightObject(bestPotionOrder.potionModifier().alchemyObject(), Color.MAGENTA);
+                } else {
+                    // fallback to checking other remaining potion orders
+                    for (var potionOrder : potionOrders) {
+                        if (potionOrder.potionType() == mixingVesselPotionType) {
+                            highlightObject(potionOrder.potionModifier().alchemyObject(), Color.MAGENTA);
+                        }
+                    }
+                }
+                mixingVesselPotionType = null;
+            } else {
+                mixingVesselPotionType = PotionType.from(value - 1);
+            }
+        } else if (varbitId == VARBIT_ALEMBIC_POTION && value == 0) {
+            // Finished crystalising
+            highlightedObjects.remove(AlchemyObject.ALEMBIC);
+        } else if (varbitId == VARBIT_AGITATOR_POTION && value == 0) {
+            // Finished homogenising
+            highlightedObjects.remove(AlchemyObject.AGITATOR);
+        } else if (varbitId == VARBIT_RETORT_POTION && value == 0) {
+            // Finished crystalising
+            highlightedObjects.remove(AlchemyObject.RETORT);
+        } else if (varbitId == VARBIT_DIGWEED_NORTH_EAST) {
+            if (value == 1) {
+                if (config.highlightDigWeed()) {
+                    highlightObject(AlchemyObject.DIGWEED_NORTH_EAST, Color.GREEN);
+                }
+                if (config.notifyDigWeed()) {
+                    notifier.notify("A digweed has spawned north east.");
+                }
+            } else {
+                highlightedObjects.remove(AlchemyObject.DIGWEED_NORTH_EAST);
+            }
+        } else if (varbitId == VARBIT_DIGWEED_SOUTH_EAST) {
+            if (value == 1) {
+                if (config.highlightDigWeed()) {
+                    highlightObject(AlchemyObject.DIGWEED_SOUTH_EAST, Color.GREEN);
+                }
+                if (config.notifyDigWeed()) {
+                    notifier.notify("A digweed has spawned south east.");
+                }
+            } else {
+                highlightedObjects.remove(AlchemyObject.DIGWEED_SOUTH_EAST);
+            }
+        } else if (varbitId == VARBIT_DIGWEED_SOUTH_WEST) {
+            if (value == 1) {
+                if (config.highlightDigWeed()) {
+                    highlightObject(AlchemyObject.DIGWEED_SOUTH_WEST, Color.GREEN);
+                }
+                if (config.notifyDigWeed()) {
+                    notifier.notify("A digweed has spawned south west.");
+                }
+            } else {
+                highlightedObjects.remove(AlchemyObject.DIGWEED_SOUTH_WEST);
+            }
+        } else if (varbitId == VARBIT_DIGWEED_NORTH_WEST) {
+            if (value == 1) {
+                if (config.highlightDigWeed()) {
+                    highlightObject(AlchemyObject.DIGWEED_NORTH_WEST, Color.GREEN);
+                }
+                if (config.notifyDigWeed()) {
+                    notifier.notify("A digweed has spawned north west.");
+                }
+            } else {
+                highlightedObjects.remove(AlchemyObject.DIGWEED_NORTH_WEST);
+            }
+        }
+    }
+
+    @Subscribe
+    public void onGraphicsObjectCreated(GraphicsObjectCreated event) {
+        var spotAnimId = event.getGraphicsObject().getId();
+
+        if (spotAnimId == SPOT_ANIM_ALEMBIC && highlightedObjects.containsKey(AlchemyObject.ALEMBIC)) {
+            highlightObject(AlchemyObject.ALEMBIC, Color.GREEN);
+        }
+
+        if (spotAnimId == SPOT_ANIM_AGITATOR && highlightedObjects.containsKey(AlchemyObject.AGITATOR)) {
+            highlightObject(AlchemyObject.AGITATOR, Color.GREEN);
+        }
+    }
+
+    @Subscribe
     public void onScriptPostFired(ScriptPostFired event) {
         if (event.getScriptId() != PROC_MASTERING_MIXOLOGY_BUILD_POTION_ORDER) {
             return;
@@ -120,20 +244,17 @@ public class MasteringMixologyPlugin extends Plugin {
         if (textComponents.size() < 4) {
             return;
         }
-        var evaluatorContext = createEvaluatorContext();
+        updatePotionOrders();
 
-        if (evaluatorContext == null) {
-            return;
-        }
-        var bestPotionOrder = potionOrderStrategy.evaluate(evaluatorContext);
+        var bestPotionOrderIdx = bestPotionOrder != null ? bestPotionOrder.idx() : -1;
 
         for (int orderIdx = 1; orderIdx <= 3; orderIdx++) {
             // The first text widget is always the interface title 'Potion Orders'
-            appendPotionRecipe(textComponents.get(orderIdx), orderIdx, bestPotionOrder.idx() == orderIdx);
+            appendPotionRecipe(textComponents.get(orderIdx), orderIdx, bestPotionOrderIdx == orderIdx);
         }
     }
 
-    public void highlightObject(AlchemyObject alchemyObject) {
+    public void highlightObject(AlchemyObject alchemyObject, Color color) {
         var worldView = client.getTopLevelWorldView();
 
         if (worldView == null) {
@@ -153,7 +274,7 @@ public class MasteringMixologyPlugin extends Plugin {
             }
 
             if (gameObject.getId() == alchemyObject.objectId()) {
-                highlightedObjects.put(alchemyObject, gameObject);
+                highlightedObjects.put(alchemyObject, new HighlightedObject(gameObject, color, config.highlightBorderWidth(), config.highlightFeather()));
                 return;
             }
         }
@@ -161,8 +282,19 @@ public class MasteringMixologyPlugin extends Plugin {
         var decorativeObject = tile.getDecorativeObject();
 
         if (decorativeObject != null && decorativeObject.getId() == alchemyObject.objectId()) {
-            highlightedObjects.put(alchemyObject, decorativeObject);
+            highlightedObjects.put(alchemyObject, new HighlightedObject(decorativeObject, color, config.highlightBorderWidth(), config.highlightFeather()));
         }
+    }
+
+    private void updatePotionOrders() {
+        potionOrders = getPotionOrders();
+        var evaluatorContext = new EvaluatorContext(
+                potionOrders,
+                client.getVarbitValue(VARBIT_LYE_RESIN),
+                client.getVarbitValue(VARBIT_AGA_RESIN),
+                client.getVarbitValue(VARBIT_MOX_RESIN)
+        );
+        bestPotionOrder = config.strategy().evaluator().evaluate(evaluatorContext);
     }
 
     private List<Widget> findTextComponents(Widget parent) {
@@ -190,20 +322,6 @@ public class MasteringMixologyPlugin extends Plugin {
             component.setText(component.getText() + " (" + potionType.recipe() + ")");
         }
         component.setOriginalWidth(component.getOriginalWidth() + EXTRA_WIDTH);
-    }
-
-    private EvaluatorContext createEvaluatorContext() {
-        var potionOrders = getPotionOrders();
-
-        if (potionOrders.isEmpty()) {
-            return null;
-        }
-        return new EvaluatorContext(
-                potionOrders,
-                client.getVarbitValue(VARBIT_LYE_RESIN),
-                client.getVarbitValue(VARBIT_AGA_RESIN),
-                client.getVarbitValue(VARBIT_MOX_RESIN)
-        );
     }
 
     private List<PotionOrder> getPotionOrders() {
@@ -246,6 +364,37 @@ public class MasteringMixologyPlugin extends Plugin {
             return PotionModifier.from(client.getVarbitValue(VARBIT_POTION_MODIFIER_3) - 1);
         } else {
             return null;
+        }
+    }
+
+    public static class HighlightedObject {
+
+        private final TileObject object;
+        private final Color color;
+        private final int outlineWidth;
+        private final int feather;
+
+        private HighlightedObject(TileObject object, Color color, int outlineWidth, int feather) {
+            this.object = object;
+            this.color = color;
+            this.outlineWidth = outlineWidth;
+            this.feather = feather;
+        }
+
+        public TileObject object() {
+            return object;
+        }
+
+        public Color color() {
+            return color;
+        }
+
+        public int outlineWidth() {
+            return outlineWidth;
+        }
+
+        public int feather() {
+            return feather;
         }
     }
 }

@@ -6,7 +6,6 @@ import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer;
 
 import javax.inject.Inject;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 
@@ -25,8 +24,8 @@ public class MasteringMixologyOverlay extends Overlay {
 
     @Override
     public Dimension render(Graphics2D graphics) {
-        for (var tileObject : plugin.highlightedObjects().values()) {
-            modelOutlineRenderer.drawOutline(tileObject, 2, Color.RED, 0);
+        for (var highlightedObject : plugin.highlightedObjects().values()) {
+            modelOutlineRenderer.drawOutline(highlightedObject.object(), highlightedObject.outlineWidth(), highlightedObject.color(), highlightedObject.feather());
         }
         return null;
     }
