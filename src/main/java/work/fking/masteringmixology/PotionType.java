@@ -2,7 +2,9 @@ package work.fking.masteringmixology;
 
 import java.util.Arrays;
 
-import static work.fking.masteringmixology.PotionComponent.*;
+import static work.fking.masteringmixology.PotionComponent.AGA;
+import static work.fking.masteringmixology.PotionComponent.LYE;
+import static work.fking.masteringmixology.PotionComponent.MOX;
 
 public enum PotionType {
     MAMMOTH_MIGHT_MIX(60, 1350, MOX, MOX, MOX),

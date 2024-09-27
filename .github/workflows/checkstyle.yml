@@ -1,0 +1,23 @@
+name: Checkstyle
+
+on:
+  push:
+
+jobs:
+  build-gradle-project:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout project sources
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Checkstyle
+        run: ./gradlew checkstyleMain
