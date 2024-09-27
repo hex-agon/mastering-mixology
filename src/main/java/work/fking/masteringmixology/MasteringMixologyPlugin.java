@@ -2,7 +2,15 @@ package work.fking.masteringmixology;
 
 import com.google.inject.Provides;
 import net.runelite.api.Client;
+import net.runelite.api.DecorativeObject;
+import net.runelite.api.GameObject;
+import net.runelite.api.GameState;
 import net.runelite.api.Skill;
+import net.runelite.api.Tile;
+import net.runelite.api.TileObject;
+import net.runelite.api.WorldView;
+import net.runelite.api.coords.LocalPoint;
+import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.ScriptPostFired;
 import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.widgets.Widget;
@@ -11,13 +19,18 @@ import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.ui.overlay.OverlayManager;
+import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer;
 import work.fking.masteringmixology.evaluator.BestExperienceEvaluator;
 import work.fking.masteringmixology.evaluator.PotionOrderEvaluator;
 import work.fking.masteringmixology.evaluator.PotionOrderEvaluator.EvaluatorContext;
 
 import javax.inject.Inject;
+import java.awt.Color;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @PluginDescriptor(name = "Mastering Mixology")
 public class MasteringMixologyPlugin extends Plugin {
@@ -45,11 +58,39 @@ public class MasteringMixologyPlugin extends Plugin {
     @Inject
     private MasteringMixologyConfig config;
 
+    @Inject
+    private OverlayManager overlayManager;
+
+    @Inject
+    private MasteringMixologyOverlay overlay;
+
     private PotionOrderEvaluator potionOrderStrategy = new BestExperienceEvaluator();
+    private final Map<AlchemyObject, TileObject> highlightedObjects = new LinkedHashMap<>();
+
+    public Map<AlchemyObject, TileObject> highlightedObjects() {
+        return highlightedObjects;
+    }
 
     @Provides
     MasteringMixologyConfig provideConfig(ConfigManager configManager) {
         return configManager.getConfig(MasteringMixologyConfig.class);
+    }
+
+    @Override
+    protected void startUp() {
+        overlayManager.add(overlay);
+    }
+
+    @Override
+    protected void shutDown() {
+        overlayManager.remove(overlay);
+    }
+
+    @Subscribe
+    public void onGameStateChanged(GameStateChanged event) {
+        if (event.getGameState() == GameState.LOGIN_SCREEN || event.getGameState() == GameState.HOPPING) {
+            highlightedObjects.clear();
+        }
     }
 
     @Subscribe
@@ -89,6 +130,38 @@ public class MasteringMixologyPlugin extends Plugin {
         for (int orderIdx = 1; orderIdx <= 3; orderIdx++) {
             // The first text widget is always the interface title 'Potion Orders'
             appendPotionRecipe(textComponents.get(orderIdx), orderIdx, bestPotionOrder.idx() == orderIdx);
+        }
+    }
+
+    public void highlightObject(AlchemyObject alchemyObject) {
+        var worldView = client.getTopLevelWorldView();
+
+        if (worldView == null) {
+            return;
+        }
+        var localPoint = LocalPoint.fromWorld(worldView, alchemyObject.coordinate());
+
+        if (localPoint == null) {
+            return;
+        }
+        var tiles = worldView.getScene().getTiles();
+        var tile = tiles[worldView.getPlane()][localPoint.getSceneX()][localPoint.getSceneY()];
+
+        for (var gameObject : tile.getGameObjects()) {
+            if (gameObject == null) {
+                continue;
+            }
+
+            if (gameObject.getId() == alchemyObject.objectId()) {
+                highlightedObjects.put(alchemyObject, gameObject);
+                return;
+            }
+        }
+        // The aga lever is actually a wall decoration, not a scenery object
+        var decorativeObject = tile.getDecorativeObject();
+
+        if (decorativeObject != null && decorativeObject.getId() == alchemyObject.objectId()) {
+            highlightedObjects.put(alchemyObject, decorativeObject);
         }
     }
 
