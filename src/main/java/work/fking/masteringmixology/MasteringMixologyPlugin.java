@@ -2,20 +2,34 @@ package work.fking.masteringmixology;
 
 import com.google.inject.Provides;
 import net.runelite.api.Client;
-import net.runelite.api.EnumComposition;
+import net.runelite.api.GameState;
 import net.runelite.api.Skill;
+import net.runelite.api.TileObject;
+import net.runelite.api.coords.LocalPoint;
+import net.runelite.api.events.GameStateChanged;
+import net.runelite.api.events.GraphicsObjectCreated;
 import net.runelite.api.events.ScriptPostFired;
+import net.runelite.api.events.VarbitChanged;
+import net.runelite.api.events.WidgetClosed;
 import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetType;
+import net.runelite.client.Notifier;
+import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.ui.overlay.OverlayManager;
+import work.fking.masteringmixology.evaluator.PotionOrderEvaluator.EvaluatorContext;
 
 import javax.inject.Inject;
+import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @PluginDescriptor(name = "Mastering Mixology")
 public class MasteringMixologyPlugin extends Plugin {
@@ -29,9 +43,22 @@ public class MasteringMixologyPlugin extends Plugin {
     private static final int VARBIT_POTION_ORDER_3 = 11319;
     private static final int VARBIT_POTION_MODIFIER_3 = 11320;
 
-    private static final String COLOR_RED = "e91e63";
-    private static final String COLOR_GREEN = "00e676";
-    private static final String COLOR_BLUE = "03a9f4";
+    private static final int VARBIT_LYE_RESIN = 4414;
+    private static final int VARBIT_AGA_RESIN = 4415;
+    private static final int VARBIT_MOX_RESIN = 4416;
+
+    private static final int VARBIT_MIXING_VESSEL_POTION = 11339;
+    private static final int VARBIT_AGITATOR_POTION = 11340;
+    private static final int VARBIT_RETORT_POTION = 11341;
+    private static final int VARBIT_ALEMBIC_POTION = 11342;
+
+    private static final int VARBIT_DIGWEED_NORTH_EAST = 11330;
+    private static final int VARBIT_DIGWEED_SOUTH_EAST = 11331;
+    private static final int VARBIT_DIGWEED_SOUTH_WEST = 11332;
+    private static final int VARBIT_DIGWEED_NORTH_WEST = 11333;
+
+    private static final int SPOT_ANIM_AGITATOR = 2954;
+    private static final int SPOT_ANIM_ALEMBIC = 2955;
 
     private static final int COMPONENT_POTION_ORDERS_GROUP_ID = 882;
     private static final int COMPONENT_POTION_ORDERS = COMPONENT_POTION_ORDERS_GROUP_ID << 16 | 2;
@@ -43,9 +70,48 @@ public class MasteringMixologyPlugin extends Plugin {
     @Inject
     private MasteringMixologyConfig config;
 
+    @Inject
+    private OverlayManager overlayManager;
+
+    @Inject
+    private Notifier notifier;
+
+    @Inject
+    private ClientThread clientThread;
+
+    @Inject
+    private MasteringMixologyOverlay overlay;
+
+    private final Map<AlchemyObject, HighlightedObject> highlightedObjects = new LinkedHashMap<>();
+
+    public Map<AlchemyObject, HighlightedObject> highlightedObjects() {
+        return highlightedObjects;
+    }
+
+    private List<PotionOrder> potionOrders = Collections.emptyList();
+    private PotionType mixingVesselPotionType;
+    private PotionOrder bestPotionOrder;
+
     @Provides
     MasteringMixologyConfig provideConfig(ConfigManager configManager) {
         return configManager.getConfig(MasteringMixologyConfig.class);
+    }
+
+    @Override
+    protected void startUp() {
+        overlayManager.add(overlay);
+    }
+
+    @Override
+    protected void shutDown() {
+        overlayManager.remove(overlay);
+    }
+
+    @Subscribe
+    public void onGameStateChanged(GameStateChanged event) {
+        if (event.getGameState() == GameState.LOGIN_SCREEN || event.getGameState() == GameState.HOPPING) {
+            highlightedObjects.clear();
+        }
     }
 
     @Subscribe
@@ -57,6 +123,109 @@ public class MasteringMixologyPlugin extends Plugin {
 
         if (widget != null) {
             widget.setOriginalWidth(widget.getOriginalWidth() + EXTRA_WIDTH);
+        }
+    }
+
+    @Subscribe
+    public void onWidgetClosed(WidgetClosed event) {
+        if (event.getGroupId() != COMPONENT_POTION_ORDERS_GROUP_ID) {
+            return;
+        }
+        highlightedObjects.clear();
+    }
+
+    @Subscribe
+    public void onVarbitChanged(VarbitChanged event) {
+        var varbitId = event.getVarbitId();
+        var value = event.getValue();
+
+        if (varbitId == VARBIT_MIXING_VESSEL_POTION) {
+            // Took potion from mixing vessel, time to highlight the relevant station
+            if (!config.highlightStations()) {
+                return;
+            }
+            if (value == 0) {
+                // first try to match with our bestPotionOrder (most likely scenario)
+                if (bestPotionOrder != null && bestPotionOrder.potionType() == mixingVesselPotionType) {
+                    highlightObject(bestPotionOrder.potionModifier().alchemyObject(), config.stationHighlightColor());
+                } else {
+                    // fallback to checking other remaining potion orders
+                    for (var potionOrder : potionOrders) {
+                        if (potionOrder.potionType() == mixingVesselPotionType) {
+                            highlightObject(potionOrder.potionModifier().alchemyObject(), config.stationHighlightColor());
+                        }
+                    }
+                }
+                mixingVesselPotionType = null;
+            } else {
+                mixingVesselPotionType = PotionType.from(value - 1);
+            }
+        } else if (varbitId == VARBIT_ALEMBIC_POTION && value == 0) {
+            // Finished crystalising
+            highlightedObjects.remove(AlchemyObject.ALEMBIC);
+        } else if (varbitId == VARBIT_AGITATOR_POTION && value == 0) {
+            // Finished homogenising
+            highlightedObjects.remove(AlchemyObject.AGITATOR);
+        } else if (varbitId == VARBIT_RETORT_POTION && value == 0) {
+            // Finished crystalising
+            highlightedObjects.remove(AlchemyObject.RETORT);
+        } else if (varbitId == VARBIT_DIGWEED_NORTH_EAST) {
+            if (value == 1) {
+                if (config.highlightDigWeed()) {
+                    highlightObject(AlchemyObject.DIGWEED_NORTH_EAST, config.digweedHighlightColor());
+                }
+                if (config.notifyDigWeed()) {
+                    notifier.notify("A digweed has spawned north east.");
+                }
+            } else {
+                highlightedObjects.remove(AlchemyObject.DIGWEED_NORTH_EAST);
+            }
+        } else if (varbitId == VARBIT_DIGWEED_SOUTH_EAST) {
+            if (value == 1) {
+                if (config.highlightDigWeed()) {
+                    highlightObject(AlchemyObject.DIGWEED_SOUTH_EAST, config.digweedHighlightColor());
+                }
+                if (config.notifyDigWeed()) {
+                    notifier.notify("A digweed has spawned south east.");
+                }
+            } else {
+                highlightedObjects.remove(AlchemyObject.DIGWEED_SOUTH_EAST);
+            }
+        } else if (varbitId == VARBIT_DIGWEED_SOUTH_WEST) {
+            if (value == 1) {
+                if (config.highlightDigWeed()) {
+                    highlightObject(AlchemyObject.DIGWEED_SOUTH_WEST, config.digweedHighlightColor());
+                }
+                if (config.notifyDigWeed()) {
+                    notifier.notify("A digweed has spawned south west.");
+                }
+            } else {
+                highlightedObjects.remove(AlchemyObject.DIGWEED_SOUTH_WEST);
+            }
+        } else if (varbitId == VARBIT_DIGWEED_NORTH_WEST) {
+            if (value == 1) {
+                if (config.highlightDigWeed()) {
+                    highlightObject(AlchemyObject.DIGWEED_NORTH_WEST, config.digweedHighlightColor());
+                }
+                if (config.notifyDigWeed()) {
+                    notifier.notify("A digweed has spawned north west.");
+                }
+            } else {
+                highlightedObjects.remove(AlchemyObject.DIGWEED_NORTH_WEST);
+            }
+        }
+    }
+
+    @Subscribe
+    public void onGraphicsObjectCreated(GraphicsObjectCreated event) {
+        var spotAnimId = event.getGraphicsObject().getId();
+
+        if (spotAnimId == SPOT_ANIM_ALEMBIC && highlightedObjects.containsKey(AlchemyObject.ALEMBIC)) {
+            highlightObject(AlchemyObject.ALEMBIC, config.stationQuickActionHighlightColor());
+        }
+
+        if (spotAnimId == SPOT_ANIM_AGITATOR && highlightedObjects.containsKey(AlchemyObject.AGITATOR)) {
+            highlightObject(AlchemyObject.AGITATOR, config.stationQuickActionHighlightColor());
         }
     }
 
@@ -75,12 +244,57 @@ public class MasteringMixologyPlugin extends Plugin {
         if (textComponents.size() < 4) {
             return;
         }
-        var bestExperienceOrderIdx = findBestExperienceOrderIdx();
+        updatePotionOrders();
+
+        var bestPotionOrderIdx = bestPotionOrder != null ? bestPotionOrder.idx() : -1;
 
         for (int orderIdx = 1; orderIdx <= 3; orderIdx++) {
             // The first text widget is always the interface title 'Potion Orders'
-            appendPotionRecipe(textComponents.get(orderIdx), orderIdx, bestExperienceOrderIdx == orderIdx);
+            appendPotionRecipe(textComponents.get(orderIdx), orderIdx, bestPotionOrderIdx == orderIdx);
         }
+    }
+
+    public void highlightObject(AlchemyObject alchemyObject, Color color) {
+        var worldView = client.getTopLevelWorldView();
+
+        if (worldView == null) {
+            return;
+        }
+        var localPoint = LocalPoint.fromWorld(worldView, alchemyObject.coordinate());
+
+        if (localPoint == null) {
+            return;
+        }
+        var tiles = worldView.getScene().getTiles();
+        var tile = tiles[worldView.getPlane()][localPoint.getSceneX()][localPoint.getSceneY()];
+
+        for (var gameObject : tile.getGameObjects()) {
+            if (gameObject == null) {
+                continue;
+            }
+
+            if (gameObject.getId() == alchemyObject.objectId()) {
+                highlightedObjects.put(alchemyObject, new HighlightedObject(gameObject, color, config.highlightBorderWidth(), config.highlightFeather()));
+                return;
+            }
+        }
+        // The aga lever is actually a wall decoration, not a scenery object
+        var decorativeObject = tile.getDecorativeObject();
+
+        if (decorativeObject != null && decorativeObject.getId() == alchemyObject.objectId()) {
+            highlightedObjects.put(alchemyObject, new HighlightedObject(decorativeObject, color, config.highlightBorderWidth(), config.highlightFeather()));
+        }
+    }
+
+    private void updatePotionOrders() {
+        potionOrders = getPotionOrders();
+        var evaluatorContext = new EvaluatorContext(
+                potionOrders,
+                client.getVarbitValue(VARBIT_LYE_RESIN),
+                client.getVarbitValue(VARBIT_AGA_RESIN),
+                client.getVarbitValue(VARBIT_MOX_RESIN)
+        );
+        bestPotionOrder = config.strategy().evaluator().evaluate(evaluatorContext);
     }
 
     private List<Widget> findTextComponents(Widget parent) {
@@ -94,27 +308,6 @@ public class MasteringMixologyPlugin extends Plugin {
             textComponents.add(child);
         }
         return textComponents;
-    }
-
-    private int findBestExperienceOrderIdx() {
-        if (!config.highlightBestExperience()) {
-            return -1;
-        }
-        var bestOrderIdx = -1;
-        var bestExperience = 0;
-
-        for (int orderIdx = 1; orderIdx <= 3; orderIdx++) {
-            var potionType = getPotionType(orderIdx);
-
-            if (potionType == null || client.getRealSkillLevel(Skill.HERBLORE) < potionType.levelReq()) {
-                continue;
-            }
-            if (potionType.experience() > bestExperience) {
-                bestOrderIdx = orderIdx;
-                bestExperience = potionType.experience();
-            }
-        }
-        return bestOrderIdx;
     }
 
     private void appendPotionRecipe(Widget component, int orderIdx, boolean highlight) {
@@ -131,6 +324,25 @@ public class MasteringMixologyPlugin extends Plugin {
         component.setOriginalWidth(component.getOriginalWidth() + EXTRA_WIDTH);
     }
 
+    private List<PotionOrder> getPotionOrders() {
+        var potionOrders = new ArrayList<PotionOrder>(3);
+
+        for (int orderIdx = 1; orderIdx <= 3; orderIdx++) {
+            var potionType = getPotionType(orderIdx);
+            var potionModifier = getPotionModifier(orderIdx);
+
+            if (potionType == null || potionModifier == null) {
+                continue;
+            }
+            // Player cannot make the potion so we don't even consider it as an option
+            if (client.getRealSkillLevel(Skill.HERBLORE) < potionType.levelReq()) {
+                continue;
+            }
+            potionOrders.add(new PotionOrder(orderIdx, potionType, potionModifier));
+        }
+        return potionOrders;
+    }
+
     private PotionType getPotionType(int orderIdx) {
         if (orderIdx == 1) {
             return PotionType.from(client.getVarbitValue(VARBIT_POTION_ORDER_1) - 1);
@@ -143,68 +355,46 @@ public class MasteringMixologyPlugin extends Plugin {
         }
     }
 
-    private enum PotionType {
-        MAMMOTH_MIGHT_MIX("MMM", 60, 1350),
-        MYSTIC_MANA_AMALGAM("MMA", 60, 1750),
-        MARLEYS_MOONLIGHT("MML", 60, 2150),
-        ALCO_AUGMENTATOR("AAA", 76, 2550),
-        AZURE_AURA_MIX("AAM", 68, 2150),
-        AQUALUX_AMALGAM("ALA", 72, 2950),
-        LIPLACK_LIQUOR("LLL", 86, 3750),
-        MEGALITE_LIQUID("MLL", 80, 2950),
-        ANTI_LEECH_LOTION("ALL", 84, 3350),
-        MIXALOT("MAL", 64, 2550);
+    private PotionModifier getPotionModifier(int orderIdx) {
+        if (orderIdx == 1) {
+            return PotionModifier.from(client.getVarbitValue(VARBIT_POTION_MODIFIER_1) - 1);
+        } else if (orderIdx == 2) {
+            return PotionModifier.from(client.getVarbitValue(VARBIT_POTION_MODIFIER_2) - 1);
+        } else if (orderIdx == 3) {
+            return PotionModifier.from(client.getVarbitValue(VARBIT_POTION_MODIFIER_3) - 1);
+        } else {
+            return null;
+        }
+    }
 
-        private static final PotionType[] TYPES = PotionType.values();
+    public static class HighlightedObject {
 
-        private final String recipe;
-        private final int levelReq;
-        private final int experience;
+        private final TileObject object;
+        private final Color color;
+        private final int outlineWidth;
+        private final int feather;
 
-        PotionType(String recipe, int levelReq, int experience) {
-            this.recipe = colorizeRecipe(recipe);
-            this.levelReq = levelReq;
-            this.experience = experience;
+        private HighlightedObject(TileObject object, Color color, int outlineWidth, int feather) {
+            this.object = object;
+            this.color = color;
+            this.outlineWidth = outlineWidth;
+            this.feather = feather;
         }
 
-        public static PotionType from(int potionTypeId) {
-            if (potionTypeId < 0 || potionTypeId >= TYPES.length) {
-                return null;
-            }
-            return TYPES[potionTypeId];
+        public TileObject object() {
+            return object;
         }
 
-        private static String colorizeRecipe(String recipe) {
-            if (recipe.length() != 3) {
-                throw new IllegalArgumentException("Invalid recipe string: " + recipe);
-            }
-            return colorizeRecipeComponent(recipe.charAt(0))
-                    + colorizeRecipeComponent(recipe.charAt(1))
-                    + colorizeRecipeComponent(recipe.charAt(2));
+        public Color color() {
+            return color;
         }
 
-        private static String colorizeRecipeComponent(char character) {
-            if (character == 'A') {
-                return "<col=" + COLOR_GREEN + ">A</col>";
-            } else if (character == 'L') {
-                return "<col=" + COLOR_RED + ">L</col>";
-            } else if (character == 'M') {
-                return "<col=" + COLOR_BLUE + ">M</col>";
-            } else {
-                return String.valueOf(character);
-            }
+        public int outlineWidth() {
+            return outlineWidth;
         }
 
-        public String recipe() {
-            return recipe;
-        }
-
-        public int levelReq() {
-            return levelReq;
-        }
-
-        public int experience() {
-            return experience;
+        public int feather() {
+            return feather;
         }
     }
 }
