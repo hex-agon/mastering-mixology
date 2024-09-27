@@ -10,11 +10,13 @@ public class BestExperienceEvaluator implements PotionOrderEvaluator {
         var bestExperience = 0;
 
         for (PotionOrder order : context.orders()) {
-            var experience = order.potionType().experience();
+            var potionExperience = order.potionType().experience();
+            var modifierExperience = order.potionModifier().quickActionExperience();
+            var totalExperience = potionExperience + modifierExperience;
 
-            if (experience > bestExperience) {
+            if (totalExperience > bestExperience) {
                 bestOrder = order;
-                bestExperience = experience;
+                bestExperience = totalExperience;
             }
         }
         return bestOrder;
