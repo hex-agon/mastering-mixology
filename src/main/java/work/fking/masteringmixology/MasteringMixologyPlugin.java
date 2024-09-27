@@ -1,10 +1,7 @@
 package work.fking.masteringmixology;
 
 import com.google.inject.Provides;
-import net.runelite.api.Client;
-import net.runelite.api.GameState;
-import net.runelite.api.Skill;
-import net.runelite.api.TileObject;
+import net.runelite.api.*;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GraphicsObjectCreated;
@@ -19,13 +16,17 @@ import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.game.ItemManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
+import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
 import work.fking.masteringmixology.evaluator.PotionOrderEvaluator.EvaluatorContext;
+import work.fking.masteringmixology.ui.OrdersFulfilledInfoBox;
 
 import javax.inject.Inject;
 import java.awt.Color;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -47,6 +48,7 @@ public class MasteringMixologyPlugin extends Plugin {
     private static final int VARP_LYE_RESIN = 4414;
     private static final int VARP_AGA_RESIN = 4415;
     private static final int VARP_MOX_RESIN = 4416;
+    private static final int VARP_ORDERS_FULFILLED = 4480;
 
     private static final int VARBIT_MIXING_VESSEL_POTION = 11339;
     private static final int VARBIT_AGITATOR_POTION = 11340;
@@ -81,7 +83,13 @@ public class MasteringMixologyPlugin extends Plugin {
     private ClientThread clientThread;
 
     @Inject
+    ItemManager itemManager;
+
+    @Inject
     private MasteringMixologyOverlay overlay;
+    @Inject
+    private InfoBoxManager infoBoxManager;
+    private OrdersFulfilledInfoBox ordersFulfilledInfoBox;
 
     private final Map<AlchemyObject, HighlightedObject> highlightedObjects = new LinkedHashMap<>();
     private List<PotionOrder> potionOrders = Collections.emptyList();
@@ -149,11 +157,15 @@ public class MasteringMixologyPlugin extends Plugin {
             unHighlightObject(AlchemyObject.DIGWEED_SOUTH_WEST);
             unHighlightObject(AlchemyObject.DIGWEED_NORTH_WEST);
         }
+
+        // This has to be run on the client thread
+        clientThread.invokeLater(this::updateInfoboxes);
     }
 
     @Subscribe
     public void onVarbitChanged(VarbitChanged event) {
         var varbitId = event.getVarbitId();
+        var varpId = event.getVarpId();
         var value = event.getValue();
 
         // Whenever a potion is delivered, all the potion order related varbits are reset to 0 first then
@@ -230,6 +242,9 @@ public class MasteringMixologyPlugin extends Plugin {
             } else {
                 unHighlightObject(AlchemyObject.DIGWEED_NORTH_WEST);
             }
+        } else if (varpId == VARP_ORDERS_FULFILLED) {
+            // Update the infoboxes when the orders fulfilled is updated
+            updateInfoboxes();
         }
     }
 
@@ -396,6 +411,22 @@ public class MasteringMixologyPlugin extends Plugin {
             return PotionModifier.from(client.getVarbitValue(VARBIT_POTION_MODIFIER_3) - 1);
         } else {
             return null;
+        }
+    }
+
+    private void updateInfoboxes() {
+        // Setup the orders fulfilled infobox
+        if (config.showOrdersFulfilledInfobox()) {
+            int ordersFulfilled = client.getVarpValue(VARP_ORDERS_FULFILLED);
+            if (ordersFulfilledInfoBox == null) {
+                BufferedImage image = itemManager.getImage(ItemID.ALDARIUM);
+                ordersFulfilledInfoBox = new OrdersFulfilledInfoBox(this, image, "Orders Fulfilled", ordersFulfilled);
+                infoBoxManager.addInfoBox(ordersFulfilledInfoBox);
+            }
+            ordersFulfilledInfoBox.setCount(ordersFulfilled);
+        } else if (ordersFulfilledInfoBox != null) {
+            infoBoxManager.removeInfoBox(ordersFulfilledInfoBox);
+            ordersFulfilledInfoBox = null;
         }
     }
 
