@@ -1,5 +1,6 @@
 package work.fking.masteringmixology;
 
+import net.runelite.client.config.Alpha;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
@@ -105,5 +106,38 @@ public interface MasteringMixologyConfig extends Config {
     )
     default int highlightFeather() {
         return 1;
+    }
+
+    @Alpha
+    @ConfigItem(
+        position = 100,
+        keyName = "moxLeverOutline",
+        name = "Mox lever outline",
+        description = "Color to use to outline the Mox lever"
+    )
+    default Color moxLeverOutline() {
+        return Color.BLUE;
+    }
+
+    @Alpha
+    @ConfigItem(
+        position = 101,
+        keyName = "agaLeverOutline",
+        name = "Aga lever outline",
+        description = "Color to use to outline the Aga lever"
+    )
+    default Color agaLeverOutline() {
+        return Color.GREEN;
+    }
+
+    @Alpha
+    @ConfigItem(
+        position = 102,
+        keyName = "lyeLeverOutline",
+        name = "Lye lever outline",
+        description = "Color to use to outline the Lye lever"
+    )
+    default Color lyeLeverOutline() {
+        return Color.RED;
     }
 }
