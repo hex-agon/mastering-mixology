@@ -147,12 +147,12 @@ public class MasteringMixologyPlugin extends Plugin {
             if (value == 0) {
                 // first try to match with our bestPotionOrder (most likely scenario)
                 if (bestPotionOrder != null && bestPotionOrder.potionType() == mixingVesselPotionType) {
-                    highlightObject(bestPotionOrder.potionModifier().alchemyObject(), Color.MAGENTA);
+                    highlightObject(bestPotionOrder.potionModifier().alchemyObject(), config.stationHighlightColor());
                 } else {
                     // fallback to checking other remaining potion orders
                     for (var potionOrder : potionOrders) {
                         if (potionOrder.potionType() == mixingVesselPotionType) {
-                            highlightObject(potionOrder.potionModifier().alchemyObject(), Color.MAGENTA);
+                            highlightObject(potionOrder.potionModifier().alchemyObject(), config.stationHighlightColor());
                         }
                     }
                 }
@@ -172,7 +172,7 @@ public class MasteringMixologyPlugin extends Plugin {
         } else if (varbitId == VARBIT_DIGWEED_NORTH_EAST) {
             if (value == 1) {
                 if (config.highlightDigWeed()) {
-                    highlightObject(AlchemyObject.DIGWEED_NORTH_EAST, Color.GREEN);
+                    highlightObject(AlchemyObject.DIGWEED_NORTH_EAST, config.digweedHighlightColor());
                 }
                 if (config.notifyDigWeed()) {
                     notifier.notify("A digweed has spawned north east.");
@@ -183,7 +183,7 @@ public class MasteringMixologyPlugin extends Plugin {
         } else if (varbitId == VARBIT_DIGWEED_SOUTH_EAST) {
             if (value == 1) {
                 if (config.highlightDigWeed()) {
-                    highlightObject(AlchemyObject.DIGWEED_SOUTH_EAST, Color.GREEN);
+                    highlightObject(AlchemyObject.DIGWEED_SOUTH_EAST, config.digweedHighlightColor());
                 }
                 if (config.notifyDigWeed()) {
                     notifier.notify("A digweed has spawned south east.");
@@ -194,7 +194,7 @@ public class MasteringMixologyPlugin extends Plugin {
         } else if (varbitId == VARBIT_DIGWEED_SOUTH_WEST) {
             if (value == 1) {
                 if (config.highlightDigWeed()) {
-                    highlightObject(AlchemyObject.DIGWEED_SOUTH_WEST, Color.GREEN);
+                    highlightObject(AlchemyObject.DIGWEED_SOUTH_WEST, config.digweedHighlightColor());
                 }
                 if (config.notifyDigWeed()) {
                     notifier.notify("A digweed has spawned south west.");
@@ -205,7 +205,7 @@ public class MasteringMixologyPlugin extends Plugin {
         } else if (varbitId == VARBIT_DIGWEED_NORTH_WEST) {
             if (value == 1) {
                 if (config.highlightDigWeed()) {
-                    highlightObject(AlchemyObject.DIGWEED_NORTH_WEST, Color.GREEN);
+                    highlightObject(AlchemyObject.DIGWEED_NORTH_WEST, config.digweedHighlightColor());
                 }
                 if (config.notifyDigWeed()) {
                     notifier.notify("A digweed has spawned north west.");
@@ -221,11 +221,11 @@ public class MasteringMixologyPlugin extends Plugin {
         var spotAnimId = event.getGraphicsObject().getId();
 
         if (spotAnimId == SPOT_ANIM_ALEMBIC && highlightedObjects.containsKey(AlchemyObject.ALEMBIC)) {
-            highlightObject(AlchemyObject.ALEMBIC, Color.GREEN);
+            highlightObject(AlchemyObject.ALEMBIC, config.stationQuickActionHighlightColor());
         }
 
         if (spotAnimId == SPOT_ANIM_AGITATOR && highlightedObjects.containsKey(AlchemyObject.AGITATOR)) {
-            highlightObject(AlchemyObject.AGITATOR, Color.GREEN);
+            highlightObject(AlchemyObject.AGITATOR, config.stationQuickActionHighlightColor());
         }
     }
 
