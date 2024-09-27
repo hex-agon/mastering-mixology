@@ -1,9 +1,9 @@
 package work.fking.masteringmixology;
 
 public enum PotionComponent {
-    AGA('A', "00e676", 85),
-    LYE('L', "e91e63", 45),
-    MOX('M', "03a9f4", 125);
+    AGA('A', "00e676", 850),
+    LYE('L', "e91e63", 1250),
+    MOX('M', "03a9f4", 450);
 
     private final char character;
     private final String color;
