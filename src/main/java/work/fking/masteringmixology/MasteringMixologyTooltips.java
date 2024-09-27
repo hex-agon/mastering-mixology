@@ -22,7 +22,6 @@ public class MasteringMixologyTooltips extends Overlay {
     private final TooltipManager tooltipManager;
     @Inject
     private ItemManager itemManager;
-    private final StringBuilder itemStringBuilder = new StringBuilder();
 
     @Inject
     MasteringMixologyTooltips(Client client, MasteringMixologyConfig config, TooltipManager tooltipManager) {
@@ -116,27 +115,19 @@ public class MasteringMixologyTooltips extends Overlay {
         int amount = herb.pastePerHerb();
 
         // Append the ingredient name and result amount
-        itemStringBuilder.append(herb.potionComponent().getName())
-                .append(": ")
-                .append(QuantityFormatter.quantityToStackSize((long) amount * qty));
+        String text = herb.potionComponent().getName() + ": "
+                + QuantityFormatter.quantityToStackSize((long) amount * qty);
 
         // Append the value of each item
         if (qty > 1 && config.showTooltipEach()) {
-            itemStringBuilder.append(" (")
-                    .append(QuantityFormatter.quantityToStackSize(amount))
-                    .append(" ea)");
+            text += " (" + QuantityFormatter.quantityToStackSize(amount) + " ea)";
         }
 
         // Append the price per paste on a new line
         if (gePrice > 0) {
-            itemStringBuilder.append("</br>")
-                    .append(QuantityFormatter.formatNumber(gePrice / amount))
-                    .append(" gp/paste");
+            text += "</br>" + QuantityFormatter.formatNumber(gePrice / amount) + " gp/paste";
         }
 
-        // Build string and reset builder
-        final String text = itemStringBuilder.toString();
-        itemStringBuilder.setLength(0);
         return text;
     }
 }
