@@ -83,6 +83,9 @@ public class MasteringMixologyPlugin extends Plugin {
     @Inject
     private MasteringMixologyOverlay overlay;
 
+    @Inject
+    private MasteringMixologyTooltips tooltips;
+
     private final Map<AlchemyObject, HighlightedObject> highlightedObjects = new LinkedHashMap<>();
     private List<PotionOrder> potionOrders = Collections.emptyList();
     private PotionOrder bestPotionOrder;
@@ -99,11 +102,13 @@ public class MasteringMixologyPlugin extends Plugin {
     @Override
     protected void startUp() {
         overlayManager.add(overlay);
+        overlayManager.add(tooltips);
     }
 
     @Override
     protected void shutDown() {
         overlayManager.remove(overlay);
+        overlayManager.remove(tooltips);
     }
 
     @Subscribe
