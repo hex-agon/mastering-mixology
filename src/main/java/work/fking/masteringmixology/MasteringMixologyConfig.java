@@ -7,15 +7,19 @@ import net.runelite.client.config.ConfigSection;
 
 import java.awt.Color;
 
-@ConfigGroup("masteringmixology")
+import static work.fking.masteringmixology.MasteringMixologyConfig.CONFIG_GROUP;
+
+@ConfigGroup(CONFIG_GROUP)
 public interface MasteringMixologyConfig extends Config {
+
+    String CONFIG_GROUP = "masteringmixology";
 
     @ConfigSection(
             name = "Highlights",
             description = "Highlighting related configuration",
             position = 10
     )
-    String highlights = "Highlights";
+    String HIGHLIGHTS = "Highlights";
 
     @ConfigItem(
             keyName = "strategy",
@@ -88,7 +92,7 @@ public interface MasteringMixologyConfig extends Config {
     }
 
     @ConfigItem(
-            section = highlights,
+            section = HIGHLIGHTS,
             keyName = "highlightBorderWidth",
             name = "Border width",
             description = "Configures the border width of the object highlights"
@@ -98,7 +102,7 @@ public interface MasteringMixologyConfig extends Config {
     }
 
     @ConfigItem(
-            section = highlights,
+            section = HIGHLIGHTS,
             keyName = "highlightFeather",
             name = "Feather",
             description = "Configures the amount of 'feathering' to be applied to the object highlights"
