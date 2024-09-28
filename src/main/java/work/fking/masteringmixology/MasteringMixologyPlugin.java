@@ -84,14 +84,12 @@ public class MasteringMixologyPlugin extends Plugin {
     private MasteringMixologyOverlay overlay;
 
     private final Map<AlchemyObject, HighlightedObject> highlightedObjects = new LinkedHashMap<>();
+    private List<PotionOrder> potionOrders = Collections.emptyList();
+    private PotionOrder bestPotionOrder;
 
     public Map<AlchemyObject, HighlightedObject> highlightedObjects() {
         return highlightedObjects;
     }
-
-    private List<PotionOrder> potionOrders = Collections.emptyList();
-    private PotionType mixingVesselPotionType;
-    private PotionOrder bestPotionOrder;
 
     @Provides
     MasteringMixologyConfig provideConfig(ConfigManager configManager) {
@@ -142,9 +140,7 @@ public class MasteringMixologyPlugin extends Plugin {
         }
 
         if (!config.highlightStations()) {
-            unHighlightObject(AlchemyObject.RETORT);
-            unHighlightObject(AlchemyObject.ALEMBIC);
-            unHighlightObject(AlchemyObject.AGITATOR);
+            unHighlightAllStations();
         }
 
         if (!config.highlightDigWeed()) {
@@ -163,29 +159,23 @@ public class MasteringMixologyPlugin extends Plugin {
         // Whenever a potion is delivered, all the potion order related varbits are reset to 0 first then
         // set to the new values. We can use this to clear all the stations.
         if (varbitId == VARBIT_POTION_ORDER_1 && value == 0) {
-            unHighlightObject(AlchemyObject.RETORT);
-            unHighlightObject(AlchemyObject.ALEMBIC);
-            unHighlightObject(AlchemyObject.AGITATOR);
+            unHighlightAllStations();
         } else if (varbitId == VARBIT_MIXING_VESSEL_POTION) {
-            // Took potion from mixing vessel, time to highlight the relevant station
-            if (!config.highlightStations()) {
+            if (!config.highlightStations() || value == 0) {
                 return;
             }
-            if (value == 0) {
-                // first try to match with our bestPotionOrder (most likely scenario)
-                if (bestPotionOrder != null && bestPotionOrder.potionType() == mixingVesselPotionType) {
-                    highlightObject(bestPotionOrder.potionModifier().alchemyObject(), config.stationHighlightColor());
-                } else {
-                    // fallback to checking other remaining potion orders
-                    for (var potionOrder : potionOrders) {
-                        if (potionOrder.potionType() == mixingVesselPotionType) {
-                            highlightObject(potionOrder.potionModifier().alchemyObject(), config.stationHighlightColor());
-                        }
-                    }
+            var mixingVesselPotionType = PotionType.from(value - 1);
+            var anyMatch = false;
+
+            for (var potionOrder : potionOrders) {
+                if (potionOrder.potionType() == mixingVesselPotionType) {
+                    anyMatch = true;
+                    unHighlightAllStations();
+                    highlightObject(potionOrder.potionModifier().alchemyObject(), config.stationHighlightColor());
                 }
-                mixingVesselPotionType = null;
-            } else {
-                mixingVesselPotionType = PotionType.from(value - 1);
+            }
+            if (!anyMatch) {
+                unHighlightAllStations();
             }
         } else if (varbitId == VARBIT_ALEMBIC_POTION && value == 0) {
             // Finished crystalising
@@ -315,6 +305,12 @@ public class MasteringMixologyPlugin extends Plugin {
 
     public void unHighlightObject(AlchemyObject alchemyObject) {
         highlightedObjects.remove(alchemyObject);
+    }
+
+    private void unHighlightAllStations() {
+        unHighlightObject(AlchemyObject.RETORT);
+        unHighlightObject(AlchemyObject.ALEMBIC);
+        unHighlightObject(AlchemyObject.AGITATOR);
     }
 
     private void updatePotionOrders() {
