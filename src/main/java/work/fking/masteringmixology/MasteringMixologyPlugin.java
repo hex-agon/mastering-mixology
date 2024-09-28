@@ -139,7 +139,13 @@ public class MasteringMixologyPlugin extends Plugin {
         var varbitId = event.getVarbitId();
         var value = event.getValue();
 
-        if (varbitId == VARBIT_MIXING_VESSEL_POTION) {
+        // Whenever a potion is delivered, all the potion order related varbits are reset to 0 first then
+        // set to the new values. We can use this to clear all the stations.
+        if (varbitId == VARBIT_POTION_ORDER_1 && value == 0) {
+            unHighlightObject(AlchemyObject.RETORT);
+            unHighlightObject(AlchemyObject.ALEMBIC);
+            unHighlightObject(AlchemyObject.AGITATOR);
+        } else if (varbitId == VARBIT_MIXING_VESSEL_POTION) {
             // Took potion from mixing vessel, time to highlight the relevant station
             if (!config.highlightStations()) {
                 return;
@@ -162,13 +168,13 @@ public class MasteringMixologyPlugin extends Plugin {
             }
         } else if (varbitId == VARBIT_ALEMBIC_POTION && value == 0) {
             // Finished crystalising
-            highlightedObjects.remove(AlchemyObject.ALEMBIC);
+            unHighlightObject(AlchemyObject.ALEMBIC);
         } else if (varbitId == VARBIT_AGITATOR_POTION && value == 0) {
             // Finished homogenising
-            highlightedObjects.remove(AlchemyObject.AGITATOR);
+            unHighlightObject(AlchemyObject.AGITATOR);
         } else if (varbitId == VARBIT_RETORT_POTION && value == 0) {
             // Finished crystalising
-            highlightedObjects.remove(AlchemyObject.RETORT);
+            unHighlightObject(AlchemyObject.RETORT);
         } else if (varbitId == VARBIT_DIGWEED_NORTH_EAST) {
             if (value == 1) {
                 if (config.highlightDigWeed()) {
@@ -178,7 +184,7 @@ public class MasteringMixologyPlugin extends Plugin {
                     notifier.notify("A digweed has spawned north east.");
                 }
             } else {
-                highlightedObjects.remove(AlchemyObject.DIGWEED_NORTH_EAST);
+                unHighlightObject(AlchemyObject.DIGWEED_NORTH_EAST);
             }
         } else if (varbitId == VARBIT_DIGWEED_SOUTH_EAST) {
             if (value == 1) {
@@ -189,7 +195,7 @@ public class MasteringMixologyPlugin extends Plugin {
                     notifier.notify("A digweed has spawned south east.");
                 }
             } else {
-                highlightedObjects.remove(AlchemyObject.DIGWEED_SOUTH_EAST);
+                unHighlightObject(AlchemyObject.DIGWEED_SOUTH_EAST);
             }
         } else if (varbitId == VARBIT_DIGWEED_SOUTH_WEST) {
             if (value == 1) {
@@ -200,7 +206,7 @@ public class MasteringMixologyPlugin extends Plugin {
                     notifier.notify("A digweed has spawned south west.");
                 }
             } else {
-                highlightedObjects.remove(AlchemyObject.DIGWEED_SOUTH_WEST);
+                unHighlightObject(AlchemyObject.DIGWEED_SOUTH_WEST);
             }
         } else if (varbitId == VARBIT_DIGWEED_NORTH_WEST) {
             if (value == 1) {
@@ -211,7 +217,7 @@ public class MasteringMixologyPlugin extends Plugin {
                     notifier.notify("A digweed has spawned north west.");
                 }
             } else {
-                highlightedObjects.remove(AlchemyObject.DIGWEED_NORTH_WEST);
+                unHighlightObject(AlchemyObject.DIGWEED_NORTH_WEST);
             }
         }
     }
@@ -284,6 +290,10 @@ public class MasteringMixologyPlugin extends Plugin {
         if (decorativeObject != null && decorativeObject.getId() == alchemyObject.objectId()) {
             highlightedObjects.put(alchemyObject, new HighlightedObject(decorativeObject, color, config.highlightBorderWidth(), config.highlightFeather()));
         }
+    }
+
+    public void unHighlightObject(AlchemyObject alchemyObject) {
+        highlightedObjects.remove(alchemyObject);
     }
 
     private void updatePotionOrders() {
