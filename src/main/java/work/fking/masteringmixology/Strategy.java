@@ -6,6 +6,7 @@ import work.fking.masteringmixology.evaluator.FavorComponentEvaluator;
 import work.fking.masteringmixology.evaluator.PotionOrderEvaluator;
 
 public enum Strategy {
+    NONE("None", null),
     FAVOR_EXPERIENCE("Favor experience", new BestExperienceEvaluator()),
     FAVOR_ALEMBIC("Favor alembic", new FavorModifierEvaluator(PotionModifier.CRYSTALISED)),
     FAVOR_RETORT("Favor retort", new FavorModifierEvaluator(PotionModifier.CONCENTRATED)),

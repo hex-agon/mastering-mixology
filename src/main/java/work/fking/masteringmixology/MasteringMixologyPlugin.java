@@ -315,13 +315,18 @@ public class MasteringMixologyPlugin extends Plugin {
 
     private void updatePotionOrders() {
         potionOrders = getPotionOrders();
+        var strategy = config.strategy();
+
+        if (strategy == Strategy.NONE) {
+            return;
+        }
         var evaluatorContext = new EvaluatorContext(
                 potionOrders,
                 client.getVarbitValue(VARBIT_LYE_RESIN),
                 client.getVarbitValue(VARBIT_AGA_RESIN),
                 client.getVarbitValue(VARBIT_MOX_RESIN)
         );
-        bestPotionOrder = config.strategy().evaluator().evaluate(evaluatorContext);
+        bestPotionOrder = strategy.evaluator().evaluate(evaluatorContext);
     }
 
     private List<Widget> findTextComponents(Widget parent) {
