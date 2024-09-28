@@ -5,6 +5,7 @@ import net.runelite.api.Client;
 import net.runelite.api.FontID;
 import net.runelite.api.GameState;
 import net.runelite.api.InventoryID;
+import net.runelite.api.Player;
 import net.runelite.api.TileObject;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.events.GameStateChanged;
@@ -60,9 +61,9 @@ public class MasteringMixologyPlugin extends Plugin {
     private static final int VARBIT_POTION_ORDER_3 = 11319;
     private static final int VARBIT_POTION_MODIFIER_3 = 11320;
 
-    private static final int VARP_LYE_RESIN = 4414;
-    private static final int VARP_AGA_RESIN = 4415;
-    private static final int VARP_MOX_RESIN = 4416;
+    static final int VARP_LYE_RESIN = 4414;
+    static final int VARP_AGA_RESIN = 4415;
+    static final int VARP_MOX_RESIN = 4416;
 
     private static final int VARBIT_ALEMBIC_PROGRESS = 11328;
     private static final int VARBIT_AGITATOR_PROGRESS = 11329;
@@ -86,6 +87,9 @@ public class MasteringMixologyPlugin extends Plugin {
     private static final int COMPONENT_POTION_ORDERS_GROUP_ID = 882;
     private static final int COMPONENT_POTION_ORDERS = COMPONENT_POTION_ORDERS_GROUP_ID << 16 | 2;
 
+    private static final int LABS_REGION_ID = 5521;
+    private static final int LABS_REGION_PLANE = 0;
+
     @Inject
     private Client client;
 
@@ -106,6 +110,9 @@ public class MasteringMixologyPlugin extends Plugin {
 
     @Inject
     private InventoryPotionOverlay potionOverlay;
+
+    @Inject
+    private GoalInfoBoxOverlay goalInfoBoxOverlay;
 
     private final Map<AlchemyObject, HighlightedObject> highlightedObjects = new LinkedHashMap<>();
     private List<PotionOrder> potionOrders = Collections.emptyList();
@@ -129,6 +136,16 @@ public class MasteringMixologyPlugin extends Plugin {
         return inLab;
     }
 
+    /**
+     * @return true if the player is in the labs region (the area where the minigame takes place)
+     * the isInlab method only checks if they are inside the actual lab room where the UI is active
+     */
+    public boolean isInLabRegion() {
+        Player player = client.getLocalPlayer();
+        return player != null && player.getWorldLocation().getRegionID() == LABS_REGION_ID
+                && player.getWorldLocation().getPlane() == LABS_REGION_PLANE;
+    }
+
     @Provides
     MasteringMixologyConfig provideConfig(ConfigManager configManager) {
         return configManager.getConfig(MasteringMixologyConfig.class);
@@ -138,16 +155,14 @@ public class MasteringMixologyPlugin extends Plugin {
     protected void startUp() {
         overlayManager.add(overlay);
         overlayManager.add(potionOverlay);
-
-        if (client.getGameState() == GameState.LOGGED_IN) {
-            clientThread.invokeLater(this::initialize);
-        }
+        overlayManager.add(goalInfoBoxOverlay);
     }
 
     @Override
     protected void shutDown() {
         overlayManager.remove(overlay);
         overlayManager.remove(potionOverlay);
+        overlayManager.remove(goalInfoBoxOverlay);
         inLab = false;
     }
 
@@ -197,6 +212,10 @@ public class MasteringMixologyPlugin extends Plugin {
             unHighlightObject(AlchemyObject.DIGWEED_NORTH_WEST);
         }
 
+        if (event.getKey().equals("selectedReward") || event.getKey().equals("fullProgressBarBehavior")) {
+            goalInfoBoxOverlay.markDataAsDirty();
+        }
+
         if (config.highlightLevers()) {
             highlightLevers();
         } else {
@@ -235,6 +254,7 @@ public class MasteringMixologyPlugin extends Plugin {
     @Subscribe
     public void onVarbitChanged(VarbitChanged event) {
         var varbitId = event.getVarbitId();
+        var varpId = event.getVarpId();
         var value = event.getValue();
 
         // Whenever a potion is delivered, all the potion order related varbits are reset to 0 first then
@@ -348,6 +368,8 @@ public class MasteringMixologyPlugin extends Plugin {
         } else if (varbitId == VARBIT_ALEMBIC_QUICKACTION) {
             // alembic quick action was just successfully popped
             resetDefaultHighlight(AlchemyObject.ALEMBIC);
+        } else if (varpId == VARP_MOX_RESIN || varpId == VARP_AGA_RESIN || varpId == VARP_LYE_RESIN) {
+            goalInfoBoxOverlay.markDataAsDirty();
         }
     }
 

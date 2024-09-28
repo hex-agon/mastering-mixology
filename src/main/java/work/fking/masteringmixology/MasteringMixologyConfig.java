@@ -151,4 +151,33 @@ public interface MasteringMixologyConfig extends Config {
     default int highlightFeather() {
         return 1;
     }
+
+    @ConfigSection(
+            name = "Reward Tracking",
+            description = "Track your progress towards rewards",
+            position = 13
+    )
+    String REWARD_TRACKING = "RewardTracking";
+
+    @ConfigItem(
+            section = REWARD_TRACKING,
+            keyName = "selectedReward",
+            name = "Selected Reward",
+            description = "Select a reward to track resin for",
+            position = 1
+    )
+    default RewardItem selectedReward() {
+        return RewardItem.NONE;
+    }
+
+    @ConfigItem(
+            section = REWARD_TRACKING,
+            keyName = "showResinProgressBars",
+            name = "Show Resin Progress Bars",
+            description = "Toggle to display or hide the resin progress bars in the goal overlay",
+            position = 2
+    )
+    default boolean showResinProgressBars() {
+        return true;
+    }
 }
