@@ -44,9 +44,9 @@ public class MasteringMixologyPlugin extends Plugin {
     private static final int VARBIT_POTION_ORDER_3 = 11319;
     private static final int VARBIT_POTION_MODIFIER_3 = 11320;
 
-    private static final int VARBIT_LYE_RESIN = 4414;
-    private static final int VARBIT_AGA_RESIN = 4415;
-    private static final int VARBIT_MOX_RESIN = 4416;
+    private static final int VARP_LYE_RESIN = 4414;
+    private static final int VARP_AGA_RESIN = 4415;
+    private static final int VARP_MOX_RESIN = 4416;
 
     private static final int VARBIT_MIXING_VESSEL_POTION = 11339;
     private static final int VARBIT_AGITATOR_POTION = 11340;
@@ -322,9 +322,9 @@ public class MasteringMixologyPlugin extends Plugin {
         }
         var evaluatorContext = new EvaluatorContext(
                 potionOrders,
-                client.getVarbitValue(VARBIT_LYE_RESIN),
-                client.getVarbitValue(VARBIT_AGA_RESIN),
-                client.getVarbitValue(VARBIT_MOX_RESIN)
+                client.getVarpValue(VARP_LYE_RESIN),
+                client.getVarpValue(VARP_AGA_RESIN),
+                client.getVarpValue(VARP_MOX_RESIN)
         );
         bestPotionOrder = strategy.evaluator().evaluate(evaluatorContext);
     }
