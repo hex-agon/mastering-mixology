@@ -18,6 +18,7 @@ import net.runelite.client.Notifier;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
@@ -132,6 +133,26 @@ public class MasteringMixologyPlugin extends Plugin {
             return;
         }
         highlightedObjects.clear();
+    }
+
+    @Subscribe
+    public void onConfigChanged(ConfigChanged event) {
+        if (!event.getGroup().equals(MasteringMixologyConfig.CONFIG_GROUP)) {
+            return;
+        }
+
+        if (!config.highlightStations()) {
+            unHighlightObject(AlchemyObject.RETORT);
+            unHighlightObject(AlchemyObject.ALEMBIC);
+            unHighlightObject(AlchemyObject.AGITATOR);
+        }
+
+        if (!config.highlightDigWeed()) {
+            unHighlightObject(AlchemyObject.DIGWEED_NORTH_EAST);
+            unHighlightObject(AlchemyObject.DIGWEED_SOUTH_EAST);
+            unHighlightObject(AlchemyObject.DIGWEED_SOUTH_WEST);
+            unHighlightObject(AlchemyObject.DIGWEED_NORTH_WEST);
+        }
     }
 
     @Subscribe
