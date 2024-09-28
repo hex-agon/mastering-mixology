@@ -67,4 +67,11 @@ public enum PotionType {
     public PotionComponent[] components() {
         return components;
     }
+
+    public static void main(String[] args) {
+        for (var type : TYPES) {
+            var sum = Arrays.stream(type.components).mapToInt(c -> c.ordinal() + 1).sum();
+            System.out.println(type + " - " + sum);
+        }
+    }
 }
