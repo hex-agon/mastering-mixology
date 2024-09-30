@@ -85,7 +85,7 @@ public class MasteringMixologyPlugin extends Plugin {
 
     private final Map<AlchemyObject, HighlightedObject> highlightedObjects = new LinkedHashMap<>();
     private List<PotionOrder> potionOrders = Collections.emptyList();
-    private PotionOrder bestPotionOrder;
+    private List<PotionOrder> bestPotionOrders;
 
     public Map<AlchemyObject, HighlightedObject> highlightedObjects() {
         return highlightedObjects;
@@ -263,11 +263,14 @@ public class MasteringMixologyPlugin extends Plugin {
         }
         updatePotionOrders();
 
-        var bestPotionOrderIdx = bestPotionOrder != null ? bestPotionOrder.idx() : -1;
+        List<Integer> bestPotionOrderIdxs = new ArrayList<>();
+        for (var potionOrder : bestPotionOrders) {
+            bestPotionOrderIdxs.add(potionOrder.idx());
+        }
 
         for (int orderIdx = 1; orderIdx <= 3; orderIdx++) {
             // The first text widget is always the interface title 'Potion Orders'
-            appendPotionRecipe(textComponents.get(orderIdx), orderIdx, bestPotionOrderIdx == orderIdx);
+            appendPotionRecipe(textComponents.get(orderIdx), orderIdx, bestPotionOrderIdxs.contains(orderIdx));
         }
     }
 
@@ -326,7 +329,7 @@ public class MasteringMixologyPlugin extends Plugin {
                 client.getVarpValue(VARP_AGA_RESIN),
                 client.getVarpValue(VARP_MOX_RESIN)
         );
-        bestPotionOrder = strategy.evaluator().evaluate(evaluatorContext);
+        bestPotionOrders = strategy.evaluator().evaluate(evaluatorContext);
     }
 
     private List<Widget> findTextComponents(Widget parent) {

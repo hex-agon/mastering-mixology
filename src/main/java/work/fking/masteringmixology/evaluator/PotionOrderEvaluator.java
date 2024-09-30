@@ -7,12 +7,12 @@ import java.util.List;
 public interface PotionOrderEvaluator {
 
     /**
-     * Evaluates all the potion orders and determines which one should be highlighted.
+     * Evaluates all the potion orders and determines which ones should be highlighted.
      *
      * @param context The context containing the potion orders and additional player related information.
-     * @return The potion order to be highlighted.
+     * @return A list of potion orders to be highlighted.
      */
-    PotionOrder evaluate(EvaluatorContext context);
+    List<PotionOrder> evaluate(EvaluatorContext context);
 
     class EvaluatorContext {
 
