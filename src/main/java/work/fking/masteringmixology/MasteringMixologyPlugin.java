@@ -1,17 +1,9 @@
 package work.fking.masteringmixology;
 
 import com.google.inject.Provides;
-import net.runelite.api.Client;
-import net.runelite.api.GameState;
-import net.runelite.api.Skill;
-import net.runelite.api.TileObject;
+import net.runelite.api.*;
 import net.runelite.api.coords.LocalPoint;
-import net.runelite.api.events.GameStateChanged;
-import net.runelite.api.events.GraphicsObjectCreated;
-import net.runelite.api.events.ScriptPostFired;
-import net.runelite.api.events.VarbitChanged;
-import net.runelite.api.events.WidgetClosed;
-import net.runelite.api.events.WidgetLoaded;
+import net.runelite.api.events.*;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetType;
 import net.runelite.client.Notifier;
@@ -26,11 +18,7 @@ import work.fking.masteringmixology.evaluator.PotionOrderEvaluator.EvaluatorCont
 
 import javax.inject.Inject;
 import java.awt.Color;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @PluginDescriptor(name = "Mastering Mixology")
 public class MasteringMixologyPlugin extends Plugin {
@@ -85,7 +73,10 @@ public class MasteringMixologyPlugin extends Plugin {
 
     private final Map<AlchemyObject, HighlightedObject> highlightedObjects = new LinkedHashMap<>();
     private List<PotionOrder> potionOrders = Collections.emptyList();
+    private final Set<Integer> allPotionIds = new HashSet<>();
+    private final Set<Integer> canFulfill = new HashSet<>();
     private PotionOrder bestPotionOrder;
+    private PotionType typeInMixer = null;
 
     public Map<AlchemyObject, HighlightedObject> highlightedObjects() {
         return highlightedObjects;
@@ -99,6 +90,12 @@ public class MasteringMixologyPlugin extends Plugin {
     @Override
     protected void startUp() {
         overlayManager.add(overlay);
+        allPotionIds.clear();
+        canFulfill.clear();
+
+        for (PotionType type : PotionType.values()) {
+            allPotionIds.add(type.itemId());
+        }
     }
 
     @Override
@@ -140,7 +137,7 @@ public class MasteringMixologyPlugin extends Plugin {
         }
 
         if (!config.highlightStations()) {
-            unHighlightAllStations();
+            unHighlightInactiveStations();
         }
 
         if (!config.highlightDigWeed()) {
@@ -152,6 +149,63 @@ public class MasteringMixologyPlugin extends Plugin {
     }
 
     @Subscribe
+    public void onItemContainerChanged(ItemContainerChanged event) {
+        // First potion in inventory can change due to items being dragged around, destroyed, etc.
+        if (!config.highlightStations()) return;
+
+        var inventory = client.getItemContainer(InventoryID.INVENTORY);
+        if (inventory == null || !inventory.equals(event.getItemContainer())) {
+            return;
+        }
+
+        highlightBestStation();
+    }
+
+    private void highlightBestStation() {
+        unHighlightInactiveStations();
+
+        var inventory = client.getItemContainer(InventoryID.INVENTORY);
+        if (inventory == null) return;
+
+        for (var item : inventory.getItems()) {
+            if (allPotionIds.contains(item.getId())) {
+                // Check for a match to an existing order
+                for (int i = 0; i < potionOrders.size(); i++) {
+                    if (canFulfill.contains(i)) continue;
+                    var order = potionOrders.get(i);
+                    if (order.potionType().itemId() == item.getId()) {
+                        highlightObject(order.potionModifier().alchemyObject(), config.stationHighlightColor());
+                        return;
+                    }
+                }
+                return;
+            }
+        }
+
+        // Nothing in inventory, check mixer
+        for (int i = 0; i < potionOrders.size(); i++) {
+            if (canFulfill.contains(i)) continue;
+            var order = potionOrders.get(i);
+            if (order.potionType().equals(typeInMixer)) {
+                highlightObject(order.potionModifier().alchemyObject(), config.stationHighlightColor());
+                return;
+            }
+        }
+    }
+
+    private void tryFulfillOrder(PotionType potionType, PotionModifier modifier) {
+        if (potionType == null) return;
+        for (int i = 0; i < potionOrders.size(); i++) {
+            if (canFulfill.contains(i)) continue;
+            var order = potionOrders.get(i);
+            if (order.potionType().itemId() == potionType.itemId() && modifier.equals(order.potionModifier())) {
+                canFulfill.add(i);
+                return;
+            }
+        }
+    }
+
+    @Subscribe
     public void onVarbitChanged(VarbitChanged event) {
         var varbitId = event.getVarbitId();
         var value = event.getValue();
@@ -159,33 +213,24 @@ public class MasteringMixologyPlugin extends Plugin {
         // Whenever a potion is delivered, all the potion order related varbits are reset to 0 first then
         // set to the new values. We can use this to clear all the stations.
         if (varbitId == VARBIT_POTION_ORDER_1 && value == 0) {
-            unHighlightAllStations();
+            canFulfill.clear();
         } else if (varbitId == VARBIT_MIXING_VESSEL_POTION) {
-            if (!config.highlightStations() || value == 0) {
-                return;
+            if (value == 0) {
+                typeInMixer = null;
             }
-            var mixingVesselPotionType = PotionType.from(value - 1);
-            var anyMatch = false;
-
-            for (var potionOrder : potionOrders) {
-                if (potionOrder.potionType() == mixingVesselPotionType) {
-                    anyMatch = true;
-                    unHighlightAllStations();
-                    highlightObject(potionOrder.potionModifier().alchemyObject(), config.stationHighlightColor());
-                }
+            else {
+                typeInMixer = PotionType.from(value-1);
+                highlightBestStation();
             }
-            if (!anyMatch) {
-                unHighlightAllStations();
-            }
-        } else if (varbitId == VARBIT_ALEMBIC_POTION && value == 0) {
+        } else if (varbitId == VARBIT_ALEMBIC_POTION && value != 0) {
             // Finished crystalising
-            unHighlightObject(AlchemyObject.ALEMBIC);
-        } else if (varbitId == VARBIT_AGITATOR_POTION && value == 0) {
+            tryFulfillOrder(PotionType.from(value-1), PotionModifier.CRYSTALISED);
+        } else if (varbitId == VARBIT_AGITATOR_POTION && value != 0) {
             // Finished homogenising
-            unHighlightObject(AlchemyObject.AGITATOR);
-        } else if (varbitId == VARBIT_RETORT_POTION && value == 0) {
+            tryFulfillOrder(PotionType.from(value-1), PotionModifier.HOMOGENOUS);
+        } else if (varbitId == VARBIT_RETORT_POTION && value != 0) {
             // Finished crystalising
-            unHighlightObject(AlchemyObject.RETORT);
+            tryFulfillOrder(PotionType.from(value-1), PotionModifier.CONCENTRATED);
         } else if (varbitId == VARBIT_DIGWEED_NORTH_EAST) {
             if (value == 1) {
                 if (config.highlightDigWeed()) {
@@ -233,6 +278,7 @@ public class MasteringMixologyPlugin extends Plugin {
         }
     }
 
+
     @Subscribe
     public void onGraphicsObjectCreated(GraphicsObjectCreated event) {
         var spotAnimId = event.getGraphicsObject().getId();
@@ -261,6 +307,7 @@ public class MasteringMixologyPlugin extends Plugin {
         if (textComponents.size() < 4) {
             return;
         }
+
         updatePotionOrders();
 
         var bestPotionOrderIdx = bestPotionOrder != null ? bestPotionOrder.idx() : -1;
@@ -307,14 +354,27 @@ public class MasteringMixologyPlugin extends Plugin {
         highlightedObjects.remove(alchemyObject);
     }
 
-    private void unHighlightAllStations() {
-        unHighlightObject(AlchemyObject.RETORT);
-        unHighlightObject(AlchemyObject.ALEMBIC);
-        unHighlightObject(AlchemyObject.AGITATOR);
+    private void unHighlightInactiveStations() {
+        if (client.getVarbitValue(VARBIT_RETORT_POTION) == 0)
+            unHighlightObject(AlchemyObject.RETORT);
+        if (client.getVarbitValue(VARBIT_ALEMBIC_POTION) == 0)
+            unHighlightObject(AlchemyObject.ALEMBIC);
+        if (client.getVarbitValue(VARBIT_AGITATOR_POTION) == 0)
+            unHighlightObject(AlchemyObject.AGITATOR);
     }
 
     private void updatePotionOrders() {
-        potionOrders = getPotionOrders();
+        // If potion orders changed, update highlights as well
+        var newOrders = getPotionOrders();
+
+        if (!potionOrders.equals(newOrders)) {
+            potionOrders = newOrders;
+            highlightBestStation();
+        }
+        else {
+            potionOrders = newOrders;
+        }
+
         var strategy = config.strategy();
 
         if (strategy == Strategy.NONE) {
@@ -366,10 +426,12 @@ public class MasteringMixologyPlugin extends Plugin {
             if (potionType == null || potionModifier == null) {
                 continue;
             }
+
             // Player cannot make the potion so we don't even consider it as an option
             if (client.getRealSkillLevel(Skill.HERBLORE) < potionType.levelReq()) {
                 continue;
             }
+
             potionOrders.add(new PotionOrder(orderIdx, potionType, potionModifier));
         }
         return potionOrders;
