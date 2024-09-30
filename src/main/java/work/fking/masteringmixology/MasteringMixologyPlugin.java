@@ -137,7 +137,7 @@ public class MasteringMixologyPlugin extends Plugin {
         }
 
         if (!config.highlightStations()) {
-            unHighlightInactiveStations();
+            unHighlightAllStations();
         }
 
         if (!config.highlightDigWeed()) {
@@ -151,8 +151,6 @@ public class MasteringMixologyPlugin extends Plugin {
     @Subscribe
     public void onItemContainerChanged(ItemContainerChanged event) {
         // First potion in inventory can change due to items being dragged around, destroyed, etc.
-        if (!config.highlightStations()) return;
-
         var inventory = client.getItemContainer(InventoryID.INVENTORY);
         if (inventory == null || !inventory.equals(event.getItemContainer())) {
             return;
@@ -162,6 +160,7 @@ public class MasteringMixologyPlugin extends Plugin {
     }
 
     private void highlightBestStation() {
+        if (!config.highlightStations()) return;
         unHighlightInactiveStations();
 
         var inventory = client.getItemContainer(InventoryID.INVENTORY);
@@ -361,6 +360,13 @@ public class MasteringMixologyPlugin extends Plugin {
             unHighlightObject(AlchemyObject.ALEMBIC);
         if (client.getVarbitValue(VARBIT_AGITATOR_POTION) == 0)
             unHighlightObject(AlchemyObject.AGITATOR);
+    }
+
+    private void unHighlightAllStations() {
+        unHighlightObject(AlchemyObject.RETORT);
+        unHighlightObject(AlchemyObject.ALEMBIC);
+        unHighlightObject(AlchemyObject.AGITATOR);
+
     }
 
     private void updatePotionOrders() {
