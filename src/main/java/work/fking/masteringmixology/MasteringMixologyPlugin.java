@@ -153,8 +153,12 @@ public class MasteringMixologyPlugin extends Plugin {
         }
 
         if (!config.highlightStations()) {
+            overlayManager.remove(overlay);
+            overlayManager.remove(itemOverlay);
             unHighlightAllStations();
         } else {
+            overlayManager.add(overlay);
+            overlayManager.add(itemOverlay);
             updateStationHighlights();
         }
 
