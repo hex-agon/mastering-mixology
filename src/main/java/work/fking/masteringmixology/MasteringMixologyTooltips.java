@@ -1,6 +1,11 @@
 package work.fking.masteringmixology;
 
-import net.runelite.api.*;
+import net.runelite.api.Client;
+import net.runelite.api.InventoryID;
+import net.runelite.api.Item;
+import net.runelite.api.ItemContainer;
+import net.runelite.api.MenuAction;
+import net.runelite.api.MenuEntry;
 import net.runelite.api.widgets.ComponentID;
 import net.runelite.api.widgets.InterfaceID;
 import net.runelite.api.widgets.WidgetUtil;
@@ -13,7 +18,9 @@ import net.runelite.client.util.ColorUtil;
 import net.runelite.client.util.QuantityFormatter;
 
 import javax.inject.Inject;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics2D;
 
 public class MasteringMixologyTooltips extends Overlay {
 
@@ -104,7 +111,7 @@ public class MasteringMixologyTooltips extends Overlay {
         }
 
         // Bank item
-        else if (widgetId == ComponentID.BANK_ITEM_CONTAINER) {
+        if (widgetId == ComponentID.BANK_ITEM_CONTAINER) {
             return client.getItemContainer(InventoryID.BANK);
         }
 
