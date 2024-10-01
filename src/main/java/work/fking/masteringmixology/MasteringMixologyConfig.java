@@ -57,7 +57,9 @@ public interface MasteringMixologyConfig extends Config {
             description = "Configures the default agitator station highlight color",
             position = 4
     )
-    default Color agitatorHighlightColor() {return Color.YELLOW;}
+    default Color agitatorHighlightColor() {
+        return Color.YELLOW;
+    }
 
     @ConfigItem(
             keyName = "alembicHighlightColor",

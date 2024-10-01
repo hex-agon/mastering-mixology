@@ -75,7 +75,9 @@ public enum PotionType {
         return experience;
     }
 
-    public int itemId() { return itemId; }
+    public int itemId() {
+        return itemId;
+    }
 
     public PotionComponent[] components() {
         return components;

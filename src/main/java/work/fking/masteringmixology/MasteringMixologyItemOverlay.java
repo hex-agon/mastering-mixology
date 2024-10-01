@@ -23,7 +23,9 @@ public class MasteringMixologyItemOverlay extends WidgetItemOverlay {
     public void renderItemOverlay(Graphics2D graphics, int itemId, WidgetItem widgetItem) {
 
         var requiredModifiers = plugin.getRequiredModifiers(itemId);
-        if (requiredModifiers.isEmpty()) { return; }
+        if (requiredModifiers.isEmpty()) {
+            return;
+        }
 
         Collections.sort(requiredModifiers);
 

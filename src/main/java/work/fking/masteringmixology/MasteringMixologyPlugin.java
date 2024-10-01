@@ -171,9 +171,13 @@ public class MasteringMixologyPlugin extends Plugin {
     }
 
     private void tryFulfillOrder(PotionType potionType, PotionModifier modifier) {
-        if (potionType == null) return;
+        if (potionType == null) {
+            return;
+        }
         var counts = requiredModifiers.get(potionType.itemId());
-        if (counts == null) return;
+        if (counts == null) {
+            return;
+        }
         counts.compute(modifier, (k, count) -> count == null ? null : count - 1);
     }
 
@@ -190,9 +194,13 @@ public class MasteringMixologyPlugin extends Plugin {
     /** Returns color that the mixing vessel should be highlighted, or null if it shouldn't be highlighted. */
     private Color handleMixingVesselVarbit(int value) {
         PotionType type = PotionType.from(value - 1);
-        if (type == null) return null;
+        if (type == null) {
+            return null;
+        }
         List<PotionModifier> reqs = getRequiredModifiers(type.itemId());
-        if (reqs.isEmpty()) return null;
+        if (reqs.isEmpty()) {
+            return null;
+        }
         int r = 0, g = 0, b = 0, a = 0;
         for (PotionModifier modifier : reqs) {
             Color c = getHighlightColor(modifier);
@@ -385,7 +393,9 @@ public class MasteringMixologyPlugin extends Plugin {
     public List<PotionModifier> getRequiredModifiers(int potionItemId) {
         var res = new ArrayList<PotionModifier>();
         var map = requiredModifiers.get(potionItemId);
-        if (map == null) return res;
+        if (map == null) {
+            return res;
+        }
 
         for (var entry : map.entrySet()) {
             if (entry.getValue() > 0) {
