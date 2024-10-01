@@ -1,11 +1,10 @@
 package work.fking.masteringmixology;
 
-import javax.inject.Inject;
-
 import net.runelite.api.widgets.WidgetItem;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.ui.overlay.WidgetItemOverlay;
 
+import javax.inject.Inject;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
