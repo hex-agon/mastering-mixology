@@ -97,8 +97,6 @@ public class MasteringMixologyPlugin extends Plugin {
     // Whatever the player is currently processing
     private PotionModifier activeModifier = null;
 
-    private final Map<PotionType, Integer> counts = new HashMap<>();
-
     public Map<AlchemyObject, HighlightedObject> highlightedObjects() {
         return highlightedObjects;
     }
@@ -404,11 +402,6 @@ public class MasteringMixologyPlugin extends Plugin {
 
         var newOrders = getPotionOrders();
         if (!potionOrders.equals(newOrders)) {
-            for (var order : newOrders) {
-                PotionType type = order.potionType();
-                counts.compute(type, (k, count) -> count == null ? 1 : count + 1);
-            }
-
             // Update required modifiers map
             requiredModifiers.clear();
             for (var order : newOrders) {
