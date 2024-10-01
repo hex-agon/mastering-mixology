@@ -2,6 +2,7 @@ name: Checkstyle
 
 on:
   push:
+  pull_request:
 
 jobs:
   build-gradle-project:
