@@ -277,6 +277,7 @@ public class MasteringMixologyPlugin extends Plugin {
         }
         updatePotionOrders();
         updateHighlightedItems();
+        updateHighlightedStations();
 
         List<Integer> bestPotionOrderIdxs = new ArrayList<>();
         for (var potionOrder : bestPotionOrders) {
