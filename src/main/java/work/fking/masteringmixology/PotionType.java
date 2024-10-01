@@ -1,6 +1,8 @@
 package work.fking.masteringmixology;
 
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 import static work.fking.masteringmixology.PotionComponent.AGA;
 import static work.fking.masteringmixology.PotionComponent.LYE;
@@ -19,6 +21,13 @@ public enum PotionType {
     MIXALOT(64, 30020, MOX, AGA, LYE);
 
     private static final PotionType[] TYPES = PotionType.values();
+    public static final Set<Integer> ALL_POTION_IDS = new HashSet<>();
+
+    static {
+        for (PotionType type : TYPES) {
+            ALL_POTION_IDS.add(type.itemId());
+        }
+    }
 
     private final String recipe;
     private final int levelReq;
