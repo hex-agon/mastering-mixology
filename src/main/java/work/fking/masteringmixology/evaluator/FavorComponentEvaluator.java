@@ -4,6 +4,10 @@ import work.fking.masteringmixology.PotionComponent;
 import work.fking.masteringmixology.PotionOrder;
 import work.fking.masteringmixology.PotionType;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
 public class FavorComponentEvaluator implements PotionOrderEvaluator {
 
     private final PotionComponent favoredComponent;
@@ -13,30 +17,18 @@ public class FavorComponentEvaluator implements PotionOrderEvaluator {
     }
 
     @Override
-    public PotionOrder evaluate(EvaluatorContext context) {
-        PotionOrder bestOrder = null;
-        var bestScore = 0;
-
+    public Map<PotionOrder, Integer> evaluate(EvaluatorContext context) {
+        Map<PotionOrder, Integer> scores = new HashMap<>();
         for (var order : context.orders()) {
-            var score = computePotionScore(order.potionType());
-            if (score > bestScore) {
-                bestOrder = order;
-                bestScore = score;
-            }
+            scores.put(order, computePotionScore(order.potionType()));
         }
-        return bestOrder;
+        return scores;
     }
 
     private int computePotionScore(PotionType potionType) {
-        var score = 0;
-
-        for (var component : potionType.components()) {
-            if (component == favoredComponent) {
-                score += 3;
-            } else {
-                score++;
-            }
-        }
+        int score = 0;
+        score += 2 * potionType.getReward(favoredComponent);
+        score += Arrays.stream(PotionComponent.values()).mapToInt(potionType::getReward).sum();
         return score;
     }
 }

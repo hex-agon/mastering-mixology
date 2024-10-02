@@ -93,7 +93,6 @@ public class MasteringMixologyPlugin extends Plugin {
     // Maps potion item ids to total count of modifiers that occur in all orders
     private final Map<Integer, Map<PotionModifier, Integer>> requiredModifiers = new HashMap<>();
     private List<PotionOrder> potionOrders = Collections.emptyList();
-    private PotionOrder bestPotionOrder;
     // Whatever the player is currently processing
     private PotionModifier activeModifier = null;
     private PotionType typeInMixer = null;
@@ -311,13 +310,50 @@ public class MasteringMixologyPlugin extends Plugin {
         updateStationHighlights();
         updateMixingVesselHighlight();
 
-        var bestPotionOrderIdx = bestPotionOrder != null ? bestPotionOrder.idx() : -1;
+        Map<PotionOrder, Integer> scores = computeOrderScores();
+        int maxScore = 0;
+        for (int score : scores.values()) {
+            if (score > maxScore) {
+                maxScore = score;
+            }
+        }
 
-        for (int orderIdx = 1; orderIdx <= 3; orderIdx++) {
-            // The first text widget is always the interface title 'Potion Orders'
-            appendPotionRecipe(textComponents.get(orderIdx), orderIdx, bestPotionOrderIdx == orderIdx);
+        // The first text widget is always the interface title 'Potion Orders'
+        for (int i = 1; i <= potionOrders.size(); i++) {
+            appendPotionRecipe(textComponents.get(i), i, scores.get(potionOrders.get(i-1)) / (float) maxScore);
         }
     }
+
+    private Map<PotionOrder, Integer> computeOrderScores() {
+        var strategy = config.strategy();
+        if (strategy == Strategy.NONE) {
+            return new HashMap<>();
+        }
+        var evaluatorContext = new EvaluatorContext(
+                potionOrders,
+                client.getVarpValue(VARP_LYE_RESIN),
+                client.getVarpValue(VARP_AGA_RESIN),
+                client.getVarpValue(VARP_MOX_RESIN)
+        );
+        return strategy.evaluator().evaluate(evaluatorContext);
+    }
+
+    private void appendPotionRecipe(Widget component, int orderIdx, float highlightStrength) {
+        var potionType = getPotionType(orderIdx);
+
+        if (potionType == null) {
+            return;
+        }
+        if (highlightStrength > 0f) {
+            String hex = Integer.toHexString((int) (Math.max(0f, Math.min(255f, 256f * highlightStrength))));
+            component.setText("<col=00" + hex + "00>" + component.getText() + "</col> (" + potionType.recipe() + ")");
+        } else {
+            component.setText(component.getText() + " (" + potionType.recipe() + ")");
+        }
+        component.setOriginalWidth(component.getOriginalWidth() + EXTRA_WIDTH);
+    }
+
+
 
     public Color getHighlightColor(PotionModifier modifier) {
         switch (modifier) {
@@ -429,19 +465,6 @@ public class MasteringMixologyPlugin extends Plugin {
             }
         }
         potionOrders = newOrders;
-
-        var strategy = config.strategy();
-
-        if (strategy == Strategy.NONE) {
-            return;
-        }
-        var evaluatorContext = new EvaluatorContext(
-                potionOrders,
-                client.getVarpValue(VARP_LYE_RESIN),
-                client.getVarpValue(VARP_AGA_RESIN),
-                client.getVarpValue(VARP_MOX_RESIN)
-        );
-        bestPotionOrder = strategy.evaluator().evaluate(evaluatorContext);
     }
 
     private List<Widget> findTextComponents(Widget parent) {
@@ -455,20 +478,6 @@ public class MasteringMixologyPlugin extends Plugin {
             textComponents.add(child);
         }
         return textComponents;
-    }
-
-    private void appendPotionRecipe(Widget component, int orderIdx, boolean highlight) {
-        var potionType = getPotionType(orderIdx);
-
-        if (potionType == null) {
-            return;
-        }
-        if (highlight) {
-            component.setText("<col=00ff00>" + component.getText() + "</col> (" + potionType.recipe() + ")");
-        } else {
-            component.setText(component.getText() + " (" + potionType.recipe() + ")");
-        }
-        component.setOriginalWidth(component.getOriginalWidth() + EXTRA_WIDTH);
     }
 
     private List<PotionOrder> getPotionOrders() {

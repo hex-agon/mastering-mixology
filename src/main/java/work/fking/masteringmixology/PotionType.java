@@ -1,6 +1,7 @@
 package work.fking.masteringmixology;
 
 import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -36,7 +37,7 @@ public enum PotionType {
     private final int levelReq;
     private final int itemId;
     private final int experience;
-    private final Map<PotionComponent, Integer> pointRewards = new HashMap<>();
+    private final Map<PotionComponent, Integer> pointRewards = new EnumMap<>(PotionComponent.class);
     private final PotionComponent[] components;
 
     PotionType(int levelReq, int itemId, int experience, PotionComponent... components) {
@@ -117,6 +118,11 @@ public enum PotionType {
 
     private static String colorizeRecipeComponent(PotionComponent component) {
         return "<col=" + component.color() + ">" + component.character() + "</col>";
+    }
+
+    /** How much of a particular component is rewarded when an order with this type is fulfilled */
+    public int getReward(PotionComponent component) {
+        return pointRewards.getOrDefault(component, 0);
     }
 
     public String recipe() {

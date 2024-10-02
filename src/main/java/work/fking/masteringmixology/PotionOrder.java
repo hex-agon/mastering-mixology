@@ -30,12 +30,12 @@ public class PotionOrder {
             return false;
         }
         PotionOrder other = (PotionOrder) o;
-        return idx == other.idx && potionType == other.potionType && potionModifier == other.potionModifier;
+        return idx == other.idx;
     }
 
     @Override
     public int hashCode() {
-        return idx + 31 * potionType.hashCode() + 31 * 31 * potionModifier.hashCode();
+        return Integer.hashCode(idx);
     }
 
     @Override
