@@ -12,7 +12,8 @@ public enum Strategy {
     FAVOR_RETORT("Favor retort", new FavorModifierEvaluator(PotionModifier.CONCENTRATED)),
     FAVOR_MOX("Favor mox", new FavorComponentEvaluator(PotionComponent.MOX)),
     FAVOR_AGA("Favor aga", new FavorComponentEvaluator(PotionComponent.AGA)),
-    FAVOR_LYE("Favor lye", new FavorComponentEvaluator(PotionComponent.LYE));
+    FAVOR_LYE("Favor lye", new FavorComponentEvaluator(PotionComponent.LYE)),
+    FAVOR_SUM("Favor total reward", new FavorComponentEvaluator(null));
 
     private final String name;
     private final PotionOrderEvaluator evaluator;

@@ -27,6 +27,14 @@ public enum AlchemyObject {
         this.coordinate = coordinate;
     }
 
+    public boolean isStation() {
+        return this == RETORT || this == AGITATOR || this == ALEMBIC || this == MIXING_VESSEL;
+    }
+
+    public boolean isDigweed() {
+        return this == DIGWEED_NORTH_EAST || this == DIGWEED_SOUTH_EAST || this == DIGWEED_SOUTH_WEST || this == DIGWEED_NORTH_WEST;
+    }
+
     public int objectId() {
         return objectId;
     }

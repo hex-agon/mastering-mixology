@@ -25,6 +25,20 @@ public class PotionOrder {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof PotionOrder)) {
+            return false;
+        }
+        PotionOrder other = (PotionOrder) o;
+        return idx == other.idx && potionType == other.potionType && potionModifier == other.potionModifier;
+    }
+
+    @Override
+    public int hashCode() {
+        return idx + 31 * potionType.hashCode() + 31 * 31 * potionModifier.hashCode();
+    }
+
+    @Override
     public String toString() {
         return "PotionOrder{" +
                 "idx=" + idx +
