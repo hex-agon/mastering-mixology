@@ -319,8 +319,9 @@ public class MasteringMixologyPlugin extends Plugin {
         }
 
         // The first text widget is always the interface title 'Potion Orders'
-        for (int i = 1; i <= potionOrders.size(); i++) {
-            appendPotionRecipe(textComponents.get(i), i, scores.get(potionOrders.get(i-1)) / (float) maxScore);
+        for (PotionOrder order : potionOrders) {
+            int i = order.idx();
+            appendPotionRecipe(textComponents.get(i), i, scores.get(order) / (float) maxScore);
         }
     }
 

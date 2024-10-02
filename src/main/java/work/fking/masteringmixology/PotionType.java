@@ -2,7 +2,6 @@ package work.fking.masteringmixology;
 
 import java.util.Arrays;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -139,9 +138,5 @@ public enum PotionType {
 
     public int itemId() {
         return itemId;
-    }
-
-    public PotionComponent[] components() {
-        return components;
     }
 }
