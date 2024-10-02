@@ -23,6 +23,7 @@ import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
+import net.runelite.client.util.GameEventManager;
 import work.fking.masteringmixology.evaluator.PotionOrderEvaluator.EvaluatorContext;
 
 import javax.inject.Inject;
@@ -85,6 +86,9 @@ public class MasteringMixologyPlugin extends Plugin {
 
     @Inject
     private MasteringMixologyOverlay overlay;
+
+	@Inject
+	private GameEventManager gameEventManager;
 
     private final Map<AlchemyObject, HighlightedObject> highlightedObjects = new LinkedHashMap<>();
     private List<PotionOrder> potionOrders = Collections.emptyList();
@@ -311,6 +315,7 @@ public class MasteringMixologyPlugin extends Plugin {
 	private void init() {
 		enabled = true;
 		overlayManager.add(overlay);
+		gameEventManager.simulateGameEvents(this);
 	}
 
 	private boolean isInRegion() {
