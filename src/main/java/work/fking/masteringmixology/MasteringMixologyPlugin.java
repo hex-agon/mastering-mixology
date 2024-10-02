@@ -311,7 +311,7 @@ public class MasteringMixologyPlugin extends Plugin {
         updateMixingVesselHighlight();
 
         Map<PotionOrder, Integer> scores = computeOrderScores();
-        int maxScore = 0;
+        float maxScore = 0.001f;
         for (int score : scores.values()) {
             if (score > maxScore) {
                 maxScore = score;
@@ -321,7 +321,7 @@ public class MasteringMixologyPlugin extends Plugin {
         // The first text widget is always the interface title 'Potion Orders'
         for (PotionOrder order : potionOrders) {
             int i = order.idx();
-            appendPotionRecipe(textComponents.get(i), i, scores.get(order) / (float) maxScore);
+            appendPotionRecipe(textComponents.get(i), i, scores.getOrDefault(order, 0) / maxScore);
         }
     }
 
@@ -346,7 +346,7 @@ public class MasteringMixologyPlugin extends Plugin {
             return;
         }
         if (highlightStrength > 0f) {
-            String hex = Integer.toHexString((int) (Math.max(0f, Math.min(255f, 256f * highlightStrength))));
+            String hex = String.format("%02X", (int) (Math.max(0f, Math.min(255f, 256f * highlightStrength))));
             component.setText("<col=00" + hex + "00>" + component.getText() + "</col> (" + potionType.recipe() + ")");
         } else {
             component.setText(component.getText() + " (" + potionType.recipe() + ")");
