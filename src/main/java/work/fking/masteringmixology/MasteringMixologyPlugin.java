@@ -154,12 +154,8 @@ public class MasteringMixologyPlugin extends Plugin {
         }
 
         if (!config.highlightStations()) {
-            overlayManager.remove(overlay);
-            overlayManager.remove(itemOverlay);
             unHighlightAllStations();
         } else {
-            overlayManager.add(overlay);
-            overlayManager.add(itemOverlay);
             updateStationHighlights();
             updateMixingVesselHighlight();
         }
@@ -244,9 +240,7 @@ public class MasteringMixologyPlugin extends Plugin {
             handleStationVarbit(PotionModifier.CONCENTRATED, value);
         } else if (varbitId == VARBIT_DIGWEED_NORTH_EAST) {
             if (value == 1) {
-                if (config.highlightDigWeed()) {
-                    highlightObject(AlchemyObject.DIGWEED_NORTH_EAST, config.digweedHighlightColor());
-                }
+                highlightObject(AlchemyObject.DIGWEED_NORTH_EAST, config.digweedHighlightColor());
                 if (config.notifyDigWeed()) {
                     notifier.notify("A digweed has spawned north east.");
                 }
@@ -255,9 +249,7 @@ public class MasteringMixologyPlugin extends Plugin {
             }
         } else if (varbitId == VARBIT_DIGWEED_SOUTH_EAST) {
             if (value == 1) {
-                if (config.highlightDigWeed()) {
-                    highlightObject(AlchemyObject.DIGWEED_SOUTH_EAST, config.digweedHighlightColor());
-                }
+                highlightObject(AlchemyObject.DIGWEED_SOUTH_EAST, config.digweedHighlightColor());
                 if (config.notifyDigWeed()) {
                     notifier.notify("A digweed has spawned south east.");
                 }
@@ -266,9 +258,7 @@ public class MasteringMixologyPlugin extends Plugin {
             }
         } else if (varbitId == VARBIT_DIGWEED_SOUTH_WEST) {
             if (value == 1) {
-                if (config.highlightDigWeed()) {
-                    highlightObject(AlchemyObject.DIGWEED_SOUTH_WEST, config.digweedHighlightColor());
-                }
+                highlightObject(AlchemyObject.DIGWEED_SOUTH_WEST, config.digweedHighlightColor());
                 if (config.notifyDigWeed()) {
                     notifier.notify("A digweed has spawned south west.");
                 }
@@ -277,9 +267,7 @@ public class MasteringMixologyPlugin extends Plugin {
             }
         } else if (varbitId == VARBIT_DIGWEED_NORTH_WEST) {
             if (value == 1) {
-                if (config.highlightDigWeed()) {
-                    highlightObject(AlchemyObject.DIGWEED_NORTH_WEST, config.digweedHighlightColor());
-                }
+                highlightObject(AlchemyObject.DIGWEED_NORTH_WEST, config.digweedHighlightColor());
                 if (config.notifyDigWeed()) {
                     notifier.notify("A digweed has spawned north west.");
                 }
@@ -364,6 +352,15 @@ public class MasteringMixologyPlugin extends Plugin {
     }
 
     public void highlightObject(AlchemyObject alchemyObject, Color color) {
+
+        if (alchemyObject.isDigweed() && !config.highlightDigWeed()) {
+            return;
+        }
+
+        if (alchemyObject.isStation() && !config.highlightStations()) {
+            return;
+        }
+
         var worldView = client.getTopLevelWorldView();
 
         if (worldView == null) {

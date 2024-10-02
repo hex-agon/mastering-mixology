@@ -12,15 +12,21 @@ import java.util.Collections;
 public class MasteringMixologyItemOverlay extends WidgetItemOverlay {
 
     private final MasteringMixologyPlugin plugin;
+    private final MasteringMixologyConfig config;
 
     @Inject
-    protected MasteringMixologyItemOverlay(MasteringMixologyPlugin plugin) {
+    protected MasteringMixologyItemOverlay(MasteringMixologyPlugin plugin, MasteringMixologyConfig config) {
         this.plugin = plugin;
+        this.config = config;
         showOnInventory();
     }
 
     @Override
     public void renderItemOverlay(Graphics2D graphics, int itemId, WidgetItem widgetItem) {
+
+        if (!config.highlightStations()) {
+            return;
+        }
 
         var requiredModifiers = plugin.getRequiredModifiers(itemId);
         if (requiredModifiers.isEmpty()) {
