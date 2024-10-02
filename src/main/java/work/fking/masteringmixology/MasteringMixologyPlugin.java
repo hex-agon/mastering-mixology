@@ -165,6 +165,10 @@ public class MasteringMixologyPlugin extends Plugin {
             unHighlightObject(AlchemyObject.DIGWEED_SOUTH_WEST);
             unHighlightObject(AlchemyObject.DIGWEED_NORTH_WEST);
         }
+
+        if (event.getKey().equals("sortComponentNames")) {
+            PotionType.regenerateRecipes(config.sortComponentNames());
+        }
     }
 
     private void tryFulfillOrder(PotionType potionType, PotionModifier modifier) {

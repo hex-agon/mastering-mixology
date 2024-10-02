@@ -32,12 +32,12 @@ public enum PotionType {
         }
     }
 
-    private final String recipe;
+    private String recipe;
     private final int levelReq;
     private final int itemId;
     private final int experience;
-    private final Map<PotionComponent, Integer> pointRewards = new EnumMap<>(PotionComponent.class);
     private final PotionComponent[] components;
+    private final Map<PotionComponent, Integer> pointRewards = new EnumMap<>(PotionComponent.class);
 
     PotionType(int levelReq, int itemId, int experience, PotionComponent... components) {
         this.recipe = colorizeRecipe(components);
@@ -113,6 +113,18 @@ public enum PotionType {
         return colorizeRecipeComponent(components[0])
                 + colorizeRecipeComponent(components[1])
                 + colorizeRecipeComponent(components[2]);
+    }
+
+    public static void regenerateRecipes(boolean sort) {
+        for (PotionType type : TYPES) {
+            if (sort) {
+                PotionComponent[] sorted = Arrays.copyOf(type.components, type.components.length);
+                Arrays.sort(sorted);
+                type.recipe = colorizeRecipe(sorted);
+            } else {
+                type.recipe = colorizeRecipe(type.components);
+            }
+        }
     }
 
     private static String colorizeRecipeComponent(PotionComponent component) {
