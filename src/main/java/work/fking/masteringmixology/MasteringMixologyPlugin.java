@@ -96,6 +96,7 @@ public class MasteringMixologyPlugin extends Plugin {
     private PotionOrder bestPotionOrder;
     // Whatever the player is currently processing
     private PotionModifier activeModifier = null;
+    private PotionType typeInMixer = null;
 
     public Map<AlchemyObject, HighlightedObject> highlightedObjects() {
         return highlightedObjects;
@@ -160,6 +161,7 @@ public class MasteringMixologyPlugin extends Plugin {
             overlayManager.add(overlay);
             overlayManager.add(itemOverlay);
             updateStationHighlights();
+            updateMixingVesselHighlight();
         }
 
         if (!config.highlightDigWeed()) {
@@ -189,15 +191,16 @@ public class MasteringMixologyPlugin extends Plugin {
             activeModifier = null;
         }
         updateStationHighlights();
+        // Can change due to newly fulfilled order
+        updateMixingVesselHighlight();
     }
 
     /** Returns color that the mixing vessel should be highlighted, or null if it shouldn't be highlighted. */
-    private Color handleMixingVesselVarbit(int value) {
-        PotionType type = PotionType.from(value - 1);
-        if (type == null) {
+    private Color getMixingVesselHighlightColor() {
+        if (typeInMixer == null) {
             return null;
         }
-        List<PotionModifier> reqs = getRequiredModifiers(type.itemId());
+        List<PotionModifier> reqs = getRequiredModifiers(typeInMixer.itemId());
         if (reqs.isEmpty()) {
             return null;
         }
@@ -216,18 +219,23 @@ public class MasteringMixologyPlugin extends Plugin {
         return new Color(r, g, b, a/2);
     }
 
+    private void updateMixingVesselHighlight() {
+        Color highlight = getMixingVesselHighlightColor();
+        if (highlight == null) {
+            unHighlightObject(AlchemyObject.MIXING_VESSEL);
+        } else {
+            highlightObject(AlchemyObject.MIXING_VESSEL, highlight);
+        }
+    }
+
     @Subscribe
     public void onVarbitChanged(VarbitChanged event) {
         var varbitId = event.getVarbitId();
         var value = event.getValue();
 
         if (varbitId == VARBIT_MIXING_VESSEL_POTION) {
-            Color highlight = handleMixingVesselVarbit(value);
-            if (highlight == null) {
-                unHighlightObject(AlchemyObject.MIXING_VESSEL);
-            } else {
-                highlightObject(AlchemyObject.MIXING_VESSEL, highlight);
-            }
+            typeInMixer = PotionType.from(value - 1);
+            updateMixingVesselHighlight();
         } else if (varbitId == VARBIT_ALEMBIC_POTION) {
             handleStationVarbit(PotionModifier.CRYSTALISED, value);
         } else if (varbitId == VARBIT_AGITATOR_POTION) {
@@ -313,6 +321,7 @@ public class MasteringMixologyPlugin extends Plugin {
 
         updatePotionOrders();
         updateStationHighlights();
+        updateMixingVesselHighlight();
 
         var bestPotionOrderIdx = bestPotionOrder != null ? bestPotionOrder.idx() : -1;
 
@@ -413,7 +422,6 @@ public class MasteringMixologyPlugin extends Plugin {
     }
 
     private void updatePotionOrders() {
-
         var newOrders = getPotionOrders();
         if (!potionOrders.equals(newOrders)) {
             // Update required modifiers map
