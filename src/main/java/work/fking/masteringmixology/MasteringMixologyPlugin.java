@@ -6,6 +6,7 @@ import net.runelite.api.GameState;
 import net.runelite.api.Skill;
 import net.runelite.api.TileObject;
 import net.runelite.api.coords.LocalPoint;
+import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GraphicsObjectCreated;
 import net.runelite.api.events.ScriptPostFired;
@@ -65,6 +66,8 @@ public class MasteringMixologyPlugin extends Plugin {
     private static final int COMPONENT_POTION_ORDERS = COMPONENT_POTION_ORDERS_GROUP_ID << 16 | 2;
     private static final int EXTRA_WIDTH = 30;
 
+	private static final int REGION_ID = 5521;
+
     @Inject
     private Client client;
 
@@ -87,6 +90,8 @@ public class MasteringMixologyPlugin extends Plugin {
     private List<PotionOrder> potionOrders = Collections.emptyList();
     private PotionOrder bestPotionOrder;
 
+	private boolean enabled;
+
     public Map<AlchemyObject, HighlightedObject> highlightedObjects() {
         return highlightedObjects;
     }
@@ -98,24 +103,46 @@ public class MasteringMixologyPlugin extends Plugin {
 
     @Override
     protected void startUp() {
-        overlayManager.add(overlay);
+		clientThread.invoke(() -> {
+			if (client.getGameState() == GameState.LOGGED_IN && isInRegion()) {
+				init();
+			}
+		});
     }
 
     @Override
     protected void shutDown() {
+		enabled = false;
+		highlightedObjects.clear();
         overlayManager.remove(overlay);
     }
 
-    @Subscribe
-    public void onGameStateChanged(GameStateChanged event) {
-        if (event.getGameState() == GameState.LOGIN_SCREEN || event.getGameState() == GameState.HOPPING) {
-            highlightedObjects.clear();
-        }
-    }
+	@Subscribe
+	public void onGameStateChanged(GameStateChanged event) {
+		switch (event.getGameState()) {
+			case LOGGED_IN:
+				if (isInRegion()) {
+					if (!enabled) {
+						init();
+					}
+				} else {
+					if (enabled) {
+						shutDown();
+					}
+				}
+				break;
+			case HOPPING:
+			case LOGIN_SCREEN:
+				if (enabled) {
+					shutDown();
+				}
+				break;
+		}
+	}
 
     @Subscribe
     public void onWidgetLoaded(WidgetLoaded event) {
-        if (event.getGroupId() != COMPONENT_POTION_ORDERS_GROUP_ID) {
+        if (!enabled || event.getGroupId() != COMPONENT_POTION_ORDERS_GROUP_ID) {
             return;
         }
         var widget = client.getWidget(COMPONENT_POTION_ORDERS);
@@ -127,7 +154,7 @@ public class MasteringMixologyPlugin extends Plugin {
 
     @Subscribe
     public void onWidgetClosed(WidgetClosed event) {
-        if (event.getGroupId() != COMPONENT_POTION_ORDERS_GROUP_ID) {
+        if (!enabled || event.getGroupId() != COMPONENT_POTION_ORDERS_GROUP_ID) {
             return;
         }
         highlightedObjects.clear();
@@ -135,24 +162,30 @@ public class MasteringMixologyPlugin extends Plugin {
 
     @Subscribe
     public void onConfigChanged(ConfigChanged event) {
-        if (!event.getGroup().equals(MasteringMixologyConfig.CONFIG_GROUP)) {
-            return;
-        }
+		if (!enabled || !event.getGroup().equals(MasteringMixologyConfig.CONFIG_GROUP)) {
+			return;
+		}
 
-        if (!config.highlightStations()) {
-            unHighlightAllStations();
-        }
+		clientThread.invokeLater(() -> {
+			if (!config.highlightStations()) {
+				unHighlightAllStations();
+			}
 
-        if (!config.highlightDigWeed()) {
-            unHighlightObject(AlchemyObject.DIGWEED_NORTH_EAST);
-            unHighlightObject(AlchemyObject.DIGWEED_SOUTH_EAST);
-            unHighlightObject(AlchemyObject.DIGWEED_SOUTH_WEST);
-            unHighlightObject(AlchemyObject.DIGWEED_NORTH_WEST);
-        }
+			if (!config.highlightDigWeed()) {
+				unHighlightObject(AlchemyObject.DIGWEED_NORTH_EAST);
+				unHighlightObject(AlchemyObject.DIGWEED_SOUTH_EAST);
+				unHighlightObject(AlchemyObject.DIGWEED_SOUTH_WEST);
+				unHighlightObject(AlchemyObject.DIGWEED_NORTH_WEST);
+			}
+		});
     }
 
     @Subscribe
     public void onVarbitChanged(VarbitChanged event) {
+		if (!enabled) {
+			return;
+		}
+
         var varbitId = event.getVarbitId();
         var value = event.getValue();
 
@@ -235,6 +268,10 @@ public class MasteringMixologyPlugin extends Plugin {
 
     @Subscribe
     public void onGraphicsObjectCreated(GraphicsObjectCreated event) {
+		if (!enabled) {
+			return;
+		}
+
         var spotAnimId = event.getGraphicsObject().getId();
 
         if (spotAnimId == SPOT_ANIM_ALEMBIC && highlightedObjects.containsKey(AlchemyObject.ALEMBIC)) {
@@ -248,7 +285,7 @@ public class MasteringMixologyPlugin extends Plugin {
 
     @Subscribe
     public void onScriptPostFired(ScriptPostFired event) {
-        if (event.getScriptId() != PROC_MASTERING_MIXOLOGY_BUILD_POTION_ORDER) {
+        if (!enabled || event.getScriptId() != PROC_MASTERING_MIXOLOGY_BUILD_POTION_ORDER) {
             return;
         }
         var baseWidget = client.getWidget(COMPONENT_POTION_ORDERS);
@@ -270,6 +307,17 @@ public class MasteringMixologyPlugin extends Plugin {
             appendPotionRecipe(textComponents.get(orderIdx), orderIdx, bestPotionOrderIdx == orderIdx);
         }
     }
+
+	private void init() {
+		enabled = true;
+		overlayManager.add(overlay);
+	}
+
+	private boolean isInRegion() {
+		final LocalPoint lp = client.getLocalPlayer().getLocalLocation();
+		final int id = lp == null ? -1 : WorldPoint.fromLocalInstance(client, lp).getRegionID();
+		return id == REGION_ID;
+	}
 
     public void highlightObject(AlchemyObject alchemyObject, Color color) {
         var worldView = client.getTopLevelWorldView();
