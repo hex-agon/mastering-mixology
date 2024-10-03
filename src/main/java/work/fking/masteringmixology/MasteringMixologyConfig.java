@@ -32,30 +32,58 @@ public interface MasteringMixologyConfig extends Config {
     }
 
     @ConfigItem(
+            keyName = "highlightInventory",
+            name = "Highlight inventory",
+            description = "Toggles inventory item highlighting on or off",
+            position = 2
+    )
+    default boolean highlightInventory() { return true; }
+
+    @ConfigItem(
             keyName = "highlightStations",
             name = "Highlight stations",
             description = "Toggles alchemical station highlighting on or off",
-            position = 2
+            position = 3
     )
     default boolean highlightStations() {
         return true;
     }
 
     @ConfigItem(
-            keyName = "stationHighlightColor",
-            name = "Station color",
-            description = "Configures the default station highlight color",
-            position = 3
+            keyName = "alembicHighlightColor",
+            name = "Alembic Station color",
+            description = "Configures the alembic station highlight color",
+            position = 4
     )
-    default Color stationHighlightColor() {
+    default Color alembicHighlightColor() {
         return Color.MAGENTA;
+    }
+
+    @ConfigItem(
+            keyName = "agitatorHighlightColor",
+            name = "Agitator Station color",
+            description = "Configures the agitator station highlight color",
+            position = 5
+    )
+    default Color agitatorHighlightColor() {
+        return Color.CYAN;
+    }
+
+    @ConfigItem(
+            keyName = "retortHighlightColor",
+            name = "Retort Station color",
+            description = "Configures the retort station highlight color",
+            position = 6
+    )
+    default Color retortHighlightColor() {
+        return Color.YELLOW;
     }
 
     @ConfigItem(
             keyName = "stationQuickActionHighlightColor",
             name = "Quick-action color",
             description = "Configures the station quick-action highlight color",
-            position = 4
+            position = 7
     )
     default Color stationQuickActionHighlightColor() {
         return Color.GREEN;
@@ -65,7 +93,7 @@ public interface MasteringMixologyConfig extends Config {
             keyName = "notifyDigweed",
             name = "Notify DigWeed",
             description = "Toggles digweed notifications on or off",
-            position = 5
+            position = 8
     )
     default boolean notifyDigWeed() {
         return true;
@@ -75,7 +103,7 @@ public interface MasteringMixologyConfig extends Config {
             keyName = "highlightDigweed",
             name = "Highlight DigWeed",
             description = "Toggles digweed highlighting on or off",
-            position = 6
+            position = 9
     )
     default boolean highlightDigWeed() {
         return true;
@@ -85,7 +113,7 @@ public interface MasteringMixologyConfig extends Config {
             keyName = "digweedHighlightColor",
             name = "DigWeed color",
             description = "Configures the digweed highlight color",
-            position = 7
+            position = 10
     )
     default Color digweedHighlightColor() {
         return Color.GREEN;

@@ -4,6 +4,9 @@ import work.fking.masteringmixology.PotionComponent;
 import work.fking.masteringmixology.PotionOrder;
 import work.fking.masteringmixology.PotionType;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class FavorComponentEvaluator implements PotionOrderEvaluator {
 
     private final PotionComponent favoredComponent;
@@ -13,7 +16,8 @@ public class FavorComponentEvaluator implements PotionOrderEvaluator {
     }
 
     @Override
-    public PotionOrder evaluate(EvaluatorContext context) {
+    public List<PotionOrder> evaluate(EvaluatorContext context) {
+        List<PotionOrder> bestPotionOrders = new ArrayList<>();
         PotionOrder bestOrder = null;
         var bestScore = 0;
 
@@ -24,7 +28,10 @@ public class FavorComponentEvaluator implements PotionOrderEvaluator {
                 bestScore = score;
             }
         }
-        return bestOrder;
+        if (bestOrder != null) {
+            bestPotionOrders.add(bestOrder);
+        }
+        return bestPotionOrders;
     }
 
     private int computePotionScore(PotionType potionType) {
