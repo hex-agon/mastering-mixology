@@ -9,6 +9,10 @@
 
 ### Changelog
 
+#### V1.3.0
+* Added lever highlighting
+* Fixed potion experience values
+
 #### V1.2.0
 * Fixed a bug where using another station rather than the highlighted would not dismiss it even after delivering the potions
 * Fixed a bug where disabling station highlights would still keep them highlighted until fulfilling an order
