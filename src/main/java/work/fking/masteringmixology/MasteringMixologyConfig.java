@@ -32,6 +32,16 @@ public interface MasteringMixologyConfig extends Config {
     }
 
     @ConfigItem(
+            keyName = "highlightLevers",
+            name = "Highlight levers",
+            description = "Highlight levers",
+            position = 2
+    )
+    default boolean highlightLevers() {
+        return true;
+    }
+
+    @ConfigItem(
             keyName = "highlightStations",
             name = "Highlight stations",
             description = "Toggles alchemical station highlighting on or off",

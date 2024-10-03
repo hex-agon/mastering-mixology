@@ -10,6 +10,7 @@ import net.runelite.api.events.GraphicsObjectCreated;
 import net.runelite.api.events.ScriptPostFired;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.events.WidgetClosed;
+import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetType;
 import net.runelite.client.Notifier;
@@ -29,6 +30,13 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import static work.fking.masteringmixology.AlchemyObject.AGA_LEVER;
+import static work.fking.masteringmixology.AlchemyObject.LYE_LEVER;
+import static work.fking.masteringmixology.AlchemyObject.MOX_LEVER;
+import static work.fking.masteringmixology.PotionComponent.AGA;
+import static work.fking.masteringmixology.PotionComponent.LYE;
+import static work.fking.masteringmixology.PotionComponent.MOX;
 
 @PluginDescriptor(name = "Mastering Mixology")
 public class MasteringMixologyPlugin extends Plugin {
@@ -111,10 +119,20 @@ public class MasteringMixologyPlugin extends Plugin {
     }
 
     @Subscribe
+    public void onWidgetLoaded(WidgetLoaded event) {
+        if (event.getGroupId() != COMPONENT_POTION_ORDERS_GROUP_ID) {
+            return;
+        }
+
+        highlightLevers();
+    }
+
+    @Subscribe
     public void onWidgetClosed(WidgetClosed event) {
         if (event.getGroupId() != COMPONENT_POTION_ORDERS_GROUP_ID) {
             return;
         }
+
         highlightedObjects.clear();
     }
 
@@ -133,6 +151,12 @@ public class MasteringMixologyPlugin extends Plugin {
             unHighlightObject(AlchemyObject.DIGWEED_SOUTH_EAST);
             unHighlightObject(AlchemyObject.DIGWEED_SOUTH_WEST);
             unHighlightObject(AlchemyObject.DIGWEED_NORTH_WEST);
+        }
+
+        if (config.highlightLevers()) {
+            highlightLevers();
+        } else {
+            unHighlightLevers();
         }
     }
 
@@ -296,6 +320,22 @@ public class MasteringMixologyPlugin extends Plugin {
         unHighlightObject(AlchemyObject.RETORT);
         unHighlightObject(AlchemyObject.ALEMBIC);
         unHighlightObject(AlchemyObject.AGITATOR);
+    }
+
+    private void highlightLevers() {
+        if (!config.highlightLevers()) {
+            return;
+        }
+
+        highlightObject(LYE_LEVER, Color.decode("#" + LYE.color()));
+        highlightObject(AGA_LEVER, Color.decode("#" + AGA.color()));
+        highlightObject(MOX_LEVER, Color.decode("#" + MOX.color()));
+    }
+
+    private void unHighlightLevers() {
+        unHighlightObject(LYE_LEVER);
+        unHighlightObject(AGA_LEVER);
+        unHighlightObject(MOX_LEVER);
     }
 
     private void updatePotionOrders() {
