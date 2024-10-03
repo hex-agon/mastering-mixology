@@ -11,6 +11,7 @@ import static work.fking.masteringmixology.MasteringMixologyConfig.CONFIG_GROUP;
 
 @ConfigGroup(CONFIG_GROUP)
 public interface MasteringMixologyConfig extends Config {
+    String GROUP = "masteringmixology";
 
     String CONFIG_GROUP = "masteringmixology";
 
@@ -89,6 +90,17 @@ public interface MasteringMixologyConfig extends Config {
     )
     default Color digweedHighlightColor() {
         return Color.GREEN;
+    }
+
+
+    @ConfigItem(
+            keyName = "showOrdersFulfilledInfobox",
+            name = "Show Orders Fulfilled Infobox",
+            description = "Toggle showing an infobox with the orders fulfilled",
+            position = 8
+    )
+    default boolean showOrdersFulfilledInfobox() {
+        return false;
     }
 
     @ConfigItem(
