@@ -2,9 +2,15 @@ package work.fking.masteringmixology;
 
 import com.google.inject.Provides;
 import net.runelite.api.Client;
+import net.runelite.api.DecorativeObject;
+import net.runelite.api.GameObject;
 import net.runelite.api.GameState;
 import net.runelite.api.TileObject;
 import net.runelite.api.coords.LocalPoint;
+import net.runelite.api.events.DecorativeObjectDespawned;
+import net.runelite.api.events.DecorativeObjectSpawned;
+import net.runelite.api.events.GameObjectDespawned;
+import net.runelite.api.events.GameObjectSpawned;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GraphicsObjectCreated;
 import net.runelite.api.events.ScriptPostFired;
@@ -88,6 +94,9 @@ public class MasteringMixologyPlugin extends Plugin {
     @Inject
     private MasteringMixologyOverlay overlay;
 
+    @Inject
+    private LeverHighlighter leverHighlighter;
+
     private final Map<AlchemyObject, HighlightedObject> highlightedObjects = new LinkedHashMap<>();
     private List<PotionOrder> potionOrders = Collections.emptyList();
     private PotionOrder bestPotionOrder;
@@ -109,6 +118,7 @@ public class MasteringMixologyPlugin extends Plugin {
     @Override
     protected void shutDown() {
         overlayManager.remove(overlay);
+        overlayManager.remove(leverHighlighter);
     }
 
     @Subscribe
@@ -271,12 +281,60 @@ public class MasteringMixologyPlugin extends Plugin {
             return;
         }
         updatePotionOrders();
-
         var bestPotionOrderIdx = bestPotionOrder != null ? bestPotionOrder.idx() : -1;
+
+        if (bestPotionOrderIdx != -1) {
+            var potionModifier = getPotionModifier(bestPotionOrderIdx);
+            var potionType = getPotionType(bestPotionOrderIdx);
+            overlayManager.add(leverHighlighter);
+            leverHighlighter.setOrder(new PotionOrder(bestPotionOrderIdx, potionType, potionModifier));
+        }
 
         for (int orderIdx = 1; orderIdx <= 3; orderIdx++) {
             // The first text widget is always the interface title 'Potion Orders'
             appendPotionRecipe(textComponents.get(orderIdx), orderIdx, bestPotionOrderIdx == orderIdx);
+        }
+    }
+
+    @Subscribe
+    public void onGameObjectSpawned(GameObjectSpawned event) {
+        var object = event.getGameObject();
+
+        int id = object.getId();
+        if (id == AlchemyObject.LYE_LEVER.objectId()) {
+            leverHighlighter.lyeLever = object;
+        } else if (id == AlchemyObject.MOX_LEVER.objectId()) {
+            leverHighlighter.moxLever = object;
+        }
+    }
+
+    @Subscribe
+    public void onGameObjectDespawned(GameObjectDespawned event) {
+        var object = event.getGameObject();
+
+        int id = object.getId();
+        if (id == AlchemyObject.LYE_LEVER.objectId()) {
+            leverHighlighter.lyeLever = null;
+        } else if (id == AlchemyObject.MOX_LEVER.objectId()) {
+            leverHighlighter.moxLever = null;
+        }
+    }
+
+    @Subscribe
+    public void onDecorativeObjectSpawned(DecorativeObjectSpawned event) {
+        var object = event.getDecorativeObject();
+
+        if (object.getId() == AlchemyObject.AGA_LEVER.objectId()) {
+            leverHighlighter.agaLever = object;
+        }
+    }
+
+    @Subscribe
+    public void onDecorativeObjectDespawned(DecorativeObjectDespawned event) {
+        var object = event.getDecorativeObject();
+
+        if (object.getId() == AlchemyObject.AGA_LEVER.objectId()) {
+            leverHighlighter.agaLever = null;
         }
     }
 
