@@ -11,7 +11,6 @@ import net.runelite.api.events.GraphicsObjectCreated;
 import net.runelite.api.events.ScriptPostFired;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.events.WidgetClosed;
-import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetType;
 import net.runelite.client.Notifier;
@@ -63,7 +62,6 @@ public class MasteringMixologyPlugin extends Plugin {
 
     private static final int COMPONENT_POTION_ORDERS_GROUP_ID = 882;
     private static final int COMPONENT_POTION_ORDERS = COMPONENT_POTION_ORDERS_GROUP_ID << 16 | 2;
-    private static final int EXTRA_WIDTH = 30;
 
     @Inject
     private Client client;
@@ -110,18 +108,6 @@ public class MasteringMixologyPlugin extends Plugin {
     public void onGameStateChanged(GameStateChanged event) {
         if (event.getGameState() == GameState.LOGIN_SCREEN || event.getGameState() == GameState.HOPPING) {
             highlightedObjects.clear();
-        }
-    }
-
-    @Subscribe
-    public void onWidgetLoaded(WidgetLoaded event) {
-        if (event.getGroupId() != COMPONENT_POTION_ORDERS_GROUP_ID) {
-            return;
-        }
-        var widget = client.getWidget(COMPONENT_POTION_ORDERS);
-
-        if (widget != null) {
-            widget.setOriginalWidth(widget.getOriginalWidth() + EXTRA_WIDTH);
         }
     }
 
@@ -353,7 +339,6 @@ public class MasteringMixologyPlugin extends Plugin {
         } else {
             component.setText(component.getText() + " (" + potionType.recipe() + ")");
         }
-        component.setOriginalWidth(component.getOriginalWidth() + EXTRA_WIDTH);
     }
 
     private List<PotionOrder> getPotionOrders() {
