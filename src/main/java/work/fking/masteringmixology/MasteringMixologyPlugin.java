@@ -3,7 +3,6 @@ package work.fking.masteringmixology;
 import com.google.inject.Provides;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
-import net.runelite.api.Skill;
 import net.runelite.api.TileObject;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.events.GameStateChanged;
@@ -349,10 +348,6 @@ public class MasteringMixologyPlugin extends Plugin {
             var potionModifier = getPotionModifier(orderIdx);
 
             if (potionType == null || potionModifier == null) {
-                continue;
-            }
-            // Player cannot make the potion so we don't even consider it as an option
-            if (client.getRealSkillLevel(Skill.HERBLORE) < potionType.levelReq()) {
                 continue;
             }
             potionOrders.add(new PotionOrder(orderIdx, potionType, potionModifier));
