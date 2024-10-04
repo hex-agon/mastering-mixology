@@ -62,6 +62,16 @@ public interface MasteringMixologyConfig extends Config {
     }
 
     @ConfigItem(
+            keyName = "identifyPotions",
+            name = "Identify potions",
+            description = "Identify potions in your inventory",
+            position = 2
+    )
+    default boolean identifyPotions() {
+        return true;
+    }
+
+    @ConfigItem(
             keyName = "stationHighlightColor",
             name = "Station color",
             description = "Configures the default station highlight color",
