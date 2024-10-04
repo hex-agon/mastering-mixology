@@ -92,9 +92,13 @@ public class MasteringMixologyPlugin extends Plugin {
     @Inject
     private MasteringMixologyOverlay overlay;
 
+    @Inject
+    private InventoryPotionOverlay potionOverlay;
+
     private final Map<AlchemyObject, HighlightedObject> highlightedObjects = new LinkedHashMap<>();
     private List<PotionOrder> potionOrders = Collections.emptyList();
     private PotionOrder bestPotionOrder;
+    private boolean inLab = false;
 
     private PotionType alembicPotionType;
     private PotionType agitatorPotionType;
@@ -102,6 +106,10 @@ public class MasteringMixologyPlugin extends Plugin {
 
     public Map<AlchemyObject, HighlightedObject> highlightedObjects() {
         return highlightedObjects;
+    }
+
+    public boolean isInLab() {
+        return inLab;
     }
 
     @Provides
@@ -112,11 +120,13 @@ public class MasteringMixologyPlugin extends Plugin {
     @Override
     protected void startUp() {
         overlayManager.add(overlay);
+        overlayManager.add(potionOverlay);
     }
 
     @Override
     protected void shutDown() {
         overlayManager.remove(overlay);
+        overlayManager.remove(potionOverlay);
     }
 
     @Subscribe
@@ -133,6 +143,7 @@ public class MasteringMixologyPlugin extends Plugin {
         }
 
         highlightLevers();
+        inLab = true;
     }
 
     @Subscribe
@@ -142,6 +153,7 @@ public class MasteringMixologyPlugin extends Plugin {
         }
 
         highlightedObjects.clear();
+        inLab = false;
     }
 
     @Subscribe
@@ -185,7 +197,7 @@ public class MasteringMixologyPlugin extends Plugin {
             if (!config.highlightStations() || value == 0) {
                 return;
             }
-            var mixingVesselPotionType = PotionType.from(value - 1);
+            var mixingVesselPotionType = PotionType.fromIdx(value - 1);
             var anyMatch = false;
 
             for (var order : potionOrders) {
@@ -207,7 +219,7 @@ public class MasteringMixologyPlugin extends Plugin {
                 LOGGER.debug("Finished crystalising {}", alembicPotionType);
                 alembicPotionType = null;
             } else {
-                alembicPotionType = PotionType.from(value - 1);
+                alembicPotionType = PotionType.fromIdx(value - 1);
                 LOGGER.debug("Alembic potion type: {}", alembicPotionType);
             }
         } else if (varbitId == VARBIT_AGITATOR_POTION) {
@@ -218,7 +230,7 @@ public class MasteringMixologyPlugin extends Plugin {
                 LOGGER.debug("Finished homogenising {}", agitatorPotionType);
                 agitatorPotionType = null;
             } else {
-                agitatorPotionType = PotionType.from(value - 1);
+                agitatorPotionType = PotionType.fromIdx(value - 1);
                 LOGGER.debug("Agitator potion type: {}", agitatorPotionType);
             }
         } else if (varbitId == VARBIT_RETORT_POTION) {
@@ -229,7 +241,7 @@ public class MasteringMixologyPlugin extends Plugin {
                 LOGGER.debug("Finished concentrating {}", retortPotionType);
                 retortPotionType = null;
             } else {
-                retortPotionType = PotionType.from(value - 1);
+                retortPotionType = PotionType.fromIdx(value - 1);
                 LOGGER.debug("Retort potion type: {}", retortPotionType);
             }
         } else if (varbitId == VARBIT_DIGWEED_NORTH_EAST) {
@@ -463,11 +475,11 @@ public class MasteringMixologyPlugin extends Plugin {
 
     private PotionType getPotionType(int orderIdx) {
         if (orderIdx == 1) {
-            return PotionType.from(client.getVarbitValue(VARBIT_POTION_ORDER_1) - 1);
+            return PotionType.fromIdx(client.getVarbitValue(VARBIT_POTION_ORDER_1) - 1);
         } else if (orderIdx == 2) {
-            return PotionType.from(client.getVarbitValue(VARBIT_POTION_ORDER_2) - 1);
+            return PotionType.fromIdx(client.getVarbitValue(VARBIT_POTION_ORDER_2) - 1);
         } else if (orderIdx == 3) {
-            return PotionType.from(client.getVarbitValue(VARBIT_POTION_ORDER_3) - 1);
+            return PotionType.fromIdx(client.getVarbitValue(VARBIT_POTION_ORDER_3) - 1);
         } else {
             return null;
         }
