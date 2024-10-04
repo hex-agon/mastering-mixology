@@ -52,6 +52,16 @@ public interface MasteringMixologyConfig extends Config {
     }
 
     @ConfigItem(
+            keyName = "highlightQuickActionEvents",
+            name = "Highlight quick-action events",
+            description = "Toggles station quick-action events highlighting on or off",
+            position = 2
+    )
+    default boolean highlightQuickActionEvents() {
+        return true;
+    }
+
+    @ConfigItem(
             keyName = "stationHighlightColor",
             name = "Station color",
             description = "Configures the default station highlight color",
