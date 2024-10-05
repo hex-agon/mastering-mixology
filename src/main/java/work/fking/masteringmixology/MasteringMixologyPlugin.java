@@ -464,7 +464,7 @@ public class MasteringMixologyPlugin extends Plugin {
 
     private void tryFulfillOrder(PotionType potionType, PotionModifier modifier) {
         for (var order : potionOrders) {
-            if (order.potionType() == potionType && order.potionModifier() == modifier) {
+            if (order.potionType() == potionType && order.potionModifier() == modifier && !order.fulfilled()) {
                 LOGGER.debug("Order {} has been fulfilled", order);
                 order.setFulfilled(true);
                 break;
