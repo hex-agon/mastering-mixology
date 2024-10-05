@@ -409,18 +409,16 @@ public class MasteringMixologyPlugin extends Plugin {
         potionOrders = getPotionOrders();
         var strategy = config.strategy();
 
-        if (strategy == Strategy.NONE) {
-            return;
+        if (strategy != Strategy.NONE) {
+            var evaluatorContext = new EvaluatorContext(
+                    potionOrders,
+                    client.getVarpValue(VARP_LYE_RESIN),
+                    client.getVarpValue(VARP_AGA_RESIN),
+                    client.getVarpValue(VARP_MOX_RESIN)
+            );
+            bestPotionOrder = strategy.evaluator().evaluate(evaluatorContext);
+            LOGGER.debug("Best potion order: {}", bestPotionOrder);
         }
-        var evaluatorContext = new EvaluatorContext(
-                potionOrders,
-                client.getVarpValue(VARP_LYE_RESIN),
-                client.getVarpValue(VARP_AGA_RESIN),
-                client.getVarpValue(VARP_MOX_RESIN)
-        );
-        bestPotionOrder = strategy.evaluator().evaluate(evaluatorContext);
-        LOGGER.debug("Best potion order: {}", bestPotionOrder);
-
         // Trigger a fake varbit update to force run the clientscript proc
         var varbitType = client.getVarbit(VARBIT_POTION_ORDER_1);
 
