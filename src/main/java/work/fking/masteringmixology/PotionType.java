@@ -22,15 +22,16 @@ public enum PotionType {
     ANTI_LEECH_LOTION(ItemID.ANTILEECH_LOTION, 3400, AGA, LYE, LYE),
     MIXALOT(ItemID.MIXALOT, 3650, MOX, AGA, LYE);
 
-    private static final PotionType[] TYPES = PotionType.values();
-    private static final Map<Integer, PotionType> MAP;
+    public static final PotionType[] TYPES = PotionType.values();
+
+    private static final Map<Integer, PotionType> ITEM_MAP;
 
     static {
         var builder = new ImmutableMap.Builder<Integer, PotionType>();
         for (var p : PotionType.values()) {
-            builder.put(p.id(), p);
+            builder.put(p.itemId(), p);
         }
-        MAP = builder.build();
+        ITEM_MAP = builder.build();
     }
 
     private final int itemId;
@@ -48,8 +49,8 @@ public enum PotionType {
         this.abbreviation = "" + components[0].character() + components[1].character() + components[2].character();
     }
 
-    public static PotionType fromId(int id) {
-        return MAP.get(id);
+    public static PotionType fromItemId(int itemId) {
+        return ITEM_MAP.get(itemId);
     }
 
     public static PotionType fromIdx(int potionTypeId) {
@@ -72,7 +73,7 @@ public enum PotionType {
         return "<col=" + component.color() + ">" + component.character() + "</col>";
     }
 
-    public int id() {
+    public int itemId() {
         return itemId;
     }
 

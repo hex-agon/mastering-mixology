@@ -26,7 +26,7 @@ public class InventoryPotionOverlay extends WidgetItemOverlay {
             return;
         }
 
-        var potion = PotionType.fromId(itemId);
+        var potion = PotionType.fromItemId(itemId);
         if (potion == null) {
             return;
         }
