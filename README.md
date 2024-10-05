@@ -9,6 +9,12 @@
 
 ### Changelog
 
+#### V1.4.0
+* Separated quick-action from station highlighting
+* Station highlighting is now based on potions in the inventory instead of what you're currently mixing, this should greatly help those who mix multiple potions at the same time
+* Added a `ready!` indicator whenever you finish refining a potion that fulfills an order
+* Added inventory potion identification similar to the Item Identification plugin, this can be disabled in the plugin settings 
+
 #### V1.3.0
 * Added lever highlighting
 * Fixed potion experience values
