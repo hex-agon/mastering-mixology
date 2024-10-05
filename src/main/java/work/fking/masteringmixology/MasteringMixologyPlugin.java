@@ -145,6 +145,7 @@ public class MasteringMixologyPlugin extends Plugin {
         }
 
         highlightLevers();
+        tryHighlightNextStation();
         inLab = true;
     }
 
