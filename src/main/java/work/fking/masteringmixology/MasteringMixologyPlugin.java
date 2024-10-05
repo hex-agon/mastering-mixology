@@ -123,12 +123,17 @@ public class MasteringMixologyPlugin extends Plugin {
     protected void startUp() {
         overlayManager.add(overlay);
         overlayManager.add(potionOverlay);
+
+        if (client.getGameState() == GameState.LOGGED_IN) {
+            clientThread.invokeLater(this::initialize);
+        }
     }
 
     @Override
     protected void shutDown() {
         overlayManager.remove(overlay);
         overlayManager.remove(potionOverlay);
+        inLab = false;
     }
 
     @Subscribe
@@ -144,9 +149,7 @@ public class MasteringMixologyPlugin extends Plugin {
             return;
         }
 
-        highlightLevers();
-        tryHighlightNextStation();
-        inLab = true;
+        initialize();
     }
 
     @Subscribe
@@ -344,6 +347,19 @@ public class MasteringMixologyPlugin extends Plugin {
             // The first text widget is always the interface title 'Potion Orders'
             appendPotionRecipe(textComponents.get(order.idx()), order.idx(), bestPotionOrderIdx == order.idx(), order.fulfilled());
         }
+    }
+
+    private void initialize() {
+        var ordersLayer = client.getWidget(COMPONENT_POTION_ORDERS_GROUP_ID, 0);
+        if (ordersLayer == null || ordersLayer.isSelfHidden()) {
+            return;
+        }
+
+        LOGGER.debug("initialize plugin");
+        inLab = true;
+        updatePotionOrders();
+        highlightLevers();
+        tryHighlightNextStation();
     }
 
     public void highlightObject(AlchemyObject alchemyObject, Color color) {
