@@ -165,6 +165,10 @@ public class MasteringMixologyPlugin extends Plugin {
             return;
         }
 
+        if (event.getKey().equals("strategy")) {
+            clientThread.invokeLater(this::updatePotionOrders);
+        }
+
         if (!config.highlightStations()) {
             unHighlightAllStations();
         }
