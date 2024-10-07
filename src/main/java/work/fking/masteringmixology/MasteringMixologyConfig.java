@@ -72,6 +72,16 @@ public interface MasteringMixologyConfig extends Config {
     }
 
     @ConfigItem(
+            keyName = "displayResin",
+            name = "Display resin amount",
+            description = "Display total resin amounts",
+            position = 2
+    )
+    default boolean displayResin() {
+        return true;
+    }
+
+    @ConfigItem(
             keyName = "stationHighlightColor",
             name = "Station color",
             description = "Configures the default station highlight color",

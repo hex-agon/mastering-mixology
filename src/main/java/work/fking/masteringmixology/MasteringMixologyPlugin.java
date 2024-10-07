@@ -2,6 +2,7 @@ package work.fking.masteringmixology;
 
 import com.google.inject.Provides;
 import net.runelite.api.Client;
+import net.runelite.api.FontID;
 import net.runelite.api.GameState;
 import net.runelite.api.InventoryID;
 import net.runelite.api.TileObject;
@@ -14,6 +15,8 @@ import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.events.WidgetClosed;
 import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.widgets.Widget;
+import net.runelite.api.widgets.WidgetPositionMode;
+import net.runelite.api.widgets.WidgetTextAlignment;
 import net.runelite.api.widgets.WidgetType;
 import net.runelite.client.Notifier;
 import net.runelite.client.callback.ClientThread;
@@ -23,6 +26,7 @@ import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
+import net.runelite.client.util.ColorUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import work.fking.masteringmixology.evaluator.PotionOrderEvaluator.EvaluatorContext;
@@ -48,6 +52,7 @@ public class MasteringMixologyPlugin extends Plugin {
     private static final Logger LOGGER = LoggerFactory.getLogger(MasteringMixologyPlugin.class);
 
     private static final int PROC_MASTERING_MIXOLOGY_BUILD_POTION_ORDER = 7063;
+    private static final int PROC_MASTERING_MIXOLOGY_BUILD_REAGENTS = 7064;
 
     private static final int VARBIT_POTION_ORDER_1 = 11315;
     private static final int VARBIT_POTION_MODIFIER_1 = 11316;
@@ -325,7 +330,7 @@ public class MasteringMixologyPlugin extends Plugin {
 
     @Subscribe
     public void onScriptPostFired(ScriptPostFired event) {
-        if (event.getScriptId() != PROC_MASTERING_MIXOLOGY_BUILD_POTION_ORDER) {
+        if (event.getScriptId() != PROC_MASTERING_MIXOLOGY_BUILD_REAGENTS) {
             return;
         }
         var baseWidget = client.getWidget(COMPONENT_POTION_ORDERS);
@@ -343,6 +348,16 @@ public class MasteringMixologyPlugin extends Plugin {
         for (var order : potionOrders) {
             // The first text widget is always the interface title 'Potion Orders'
             appendPotionRecipe(textComponents.get(order.idx()), order.idx(), bestPotionOrderIdx == order.idx(), order.fulfilled());
+        }
+
+        if (config.displayResin()) {
+            var parentWidth = baseWidget.getWidth();
+            var dx = parentWidth / 3;
+            int x = dx / 2;
+
+            addResinText(baseWidget.createChild(-1, WidgetType.TEXT), x, VARP_MOX_RESIN, MOX);
+            addResinText(baseWidget.createChild(-1, WidgetType.TEXT), x + dx, VARP_AGA_RESIN, AGA);
+            addResinText(baseWidget.createChild(-1, WidgetType.TEXT), x + dx * 2, VARP_LYE_RESIN, LYE);
         }
     }
 
@@ -460,6 +475,25 @@ public class MasteringMixologyPlugin extends Plugin {
             builder.append(" (").append(potionType.recipe()).append(")");
         }
         component.setText(builder.toString());
+    }
+
+    private void addResinText(Widget widget, int x, int varp, PotionComponent component) {
+        var amount = client.getVarpValue(varp);
+        var color = ColorUtil.fromHex(component.color()).getRGB();
+
+        widget.setText(amount + "")
+                .setTextColor(color)
+                .setOriginalWidth(20)
+                .setOriginalHeight(15)
+                .setFontId(FontID.QUILL_8)
+                .setOriginalY(0)
+                .setOriginalX(x)
+                .setYPositionMode(WidgetPositionMode.ABSOLUTE_BOTTOM)
+                .setXTextAlignment(WidgetTextAlignment.CENTER)
+                .setYTextAlignment(WidgetTextAlignment.CENTER);
+
+        widget.revalidate();
+        LOGGER.debug("adding resin text {} at {} with color {}", amount, x, color);
     }
 
     private void tryFulfillOrder(PotionType potionType, PotionModifier modifier) {
