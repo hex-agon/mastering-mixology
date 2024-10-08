@@ -60,6 +60,12 @@ public class MasteringMixologyPlugin extends Plugin {
     private static final int VARP_AGA_RESIN = 4415;
     private static final int VARP_MOX_RESIN = 4416;
 
+    private static final int VARBIT_ALEMBIC_PROGRESS = 11328;
+    private static final int VARBIT_AGITATOR_PROGRESS = 11329;
+
+    private static final int VARBIT_AGITATOR_QUICKACTION = 11337;
+    private static final int VARBIT_ALEMBIC_QUICKACTION = 11338;
+
     private static final int VARBIT_MIXING_VESSEL_POTION = 11339;
     private static final int VARBIT_AGITATOR_POTION = 11340;
     private static final int VARBIT_RETORT_POTION = 11341;
@@ -105,6 +111,12 @@ public class MasteringMixologyPlugin extends Plugin {
     private PotionType alembicPotionType;
     private PotionType agitatorPotionType;
     private PotionType retortPotionType;
+
+    private int previousAgitatorProgess;
+    private int previousAlembicProgress;
+
+    private int agitatorQuickActionTicks = 0;
+    private int alembicQuickActionTicks = 0;
 
     public Map<AlchemyObject, HighlightedObject> highlightedObjects() {
         return highlightedObjects;
@@ -311,6 +323,37 @@ public class MasteringMixologyPlugin extends Plugin {
             } else {
                 unHighlightObject(AlchemyObject.DIGWEED_NORTH_WEST);
             }
+        } else if (varbitId == VARBIT_AGITATOR_PROGRESS) {
+            if (agitatorQuickActionTicks == 2) {
+                // quick action was triggered two ticks ago, so it's now too late
+                resetDefaultHighlight(AlchemyObject.AGITATOR);
+                agitatorQuickActionTicks = 0;
+            }
+            if (agitatorQuickActionTicks == 1) {
+                agitatorQuickActionTicks = 2;
+            }
+            if (value < previousAgitatorProgess) {
+                // progress was set back due to a quick action failure
+                resetDefaultHighlight(AlchemyObject.AGITATOR);
+            }
+            previousAgitatorProgess = value;
+        } else if (varbitId == VARBIT_ALEMBIC_PROGRESS) {
+            if (alembicQuickActionTicks == 1) {
+                // quick action was triggered last tick, so it's now too late
+                resetDefaultHighlight(AlchemyObject.ALEMBIC);
+                alembicQuickActionTicks = 0;
+            }
+            if (value < previousAlembicProgress) {
+                // progress was set back due to a quick action failure
+                resetDefaultHighlight(AlchemyObject.ALEMBIC);
+            }
+            previousAlembicProgress = value;
+        } else if (varbitId == VARBIT_AGITATOR_QUICKACTION) {
+            // agitator quick action was just successfully popped
+            resetDefaultHighlight(AlchemyObject.AGITATOR);
+        } else if (varbitId == VARBIT_ALEMBIC_QUICKACTION) {
+            // alembic quick action was just successfully popped
+            resetDefaultHighlight(AlchemyObject.ALEMBIC);
         }
     }
 
@@ -323,10 +366,16 @@ public class MasteringMixologyPlugin extends Plugin {
         }
         if (spotAnimId == SPOT_ANIM_ALEMBIC && alembicPotionType != null) {
             highlightObject(AlchemyObject.ALEMBIC, config.stationQuickActionHighlightColor());
+            // start counting ticks for alembic so we know to un-highlight on the next alembic varbit update
+            // note this quick action has a 1 tick window, so we use an int that goes 0 -> 1 -> unhighlight
+            alembicQuickActionTicks = 1;
         }
 
         if (spotAnimId == SPOT_ANIM_AGITATOR && agitatorPotionType != null) {
             highlightObject(AlchemyObject.AGITATOR, config.stationQuickActionHighlightColor());
+            // start counting ticks for agitator so we know to un-highlight on the next agitator varbit update
+            // note this quick action has a 2-tick window, so we use an int that goes 0 -> 1 -> 2 -> unhighlight
+            agitatorQuickActionTicks = 1;
         }
     }
 
@@ -395,6 +444,12 @@ public class MasteringMixologyPlugin extends Plugin {
 
         if (decorativeObject != null && decorativeObject.getId() == alchemyObject.objectId()) {
             highlightedObjects.put(alchemyObject, new HighlightedObject(decorativeObject, color, config.highlightBorderWidth(), config.highlightFeather()));
+        }
+    }
+
+    public void resetDefaultHighlight(AlchemyObject alchemyObject) {
+        if (config.highlightStations()) {
+            highlightObject(alchemyObject, config.stationHighlightColor());
         }
     }
 
