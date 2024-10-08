@@ -115,8 +115,8 @@ public class MasteringMixologyPlugin extends Plugin {
     private int previousAgitatorProgess;
     private int previousAlembicProgress;
 
-    private int agitatorQuickActionFlag = 0;
-    private int alembicQuickActionFlag = 0;
+    private int agitatorQuickActionTicks = 0;
+    private int alembicQuickActionTicks = 0;
 
     public Map<AlchemyObject, HighlightedObject> highlightedObjects() {
         return highlightedObjects;
@@ -324,13 +324,13 @@ public class MasteringMixologyPlugin extends Plugin {
                 unHighlightObject(AlchemyObject.DIGWEED_NORTH_WEST);
             }
         } else if (varbitId == VARBIT_AGITATOR_PROGRESS) {
-            if (agitatorQuickActionFlag == 2) {
+            if (agitatorQuickActionTicks == 2) {
                 // quick action was triggered two ticks ago, so it's now too late
                 unHighlightObject(AlchemyObject.AGITATOR);
-                agitatorQuickActionFlag = 0;
+                agitatorQuickActionTicks = 0;
             }
-            if (agitatorQuickActionFlag == 1) {
-                agitatorQuickActionFlag = 2;
+            if (agitatorQuickActionTicks == 1) {
+                agitatorQuickActionTicks = 2;
             }
             if (value < previousAgitatorProgess) {
                 // progress was set back due to a quick action failure
@@ -338,10 +338,10 @@ public class MasteringMixologyPlugin extends Plugin {
             }
             previousAgitatorProgess = value;
         } else if (varbitId == VARBIT_ALEMBIC_PROGRESS) {
-            if (alembicQuickActionFlag == 1) {
+            if (alembicQuickActionTicks == 1) {
                 // quick action was triggered last tick, so it's now too late
                 unHighlightObject(AlchemyObject.ALEMBIC);
-                alembicQuickActionFlag = 0;
+                alembicQuickActionTicks = 0;
             }
             if (value < previousAlembicProgress) {
                 // progress was set back due to a quick action failure
@@ -366,16 +366,16 @@ public class MasteringMixologyPlugin extends Plugin {
         }
         if (spotAnimId == SPOT_ANIM_ALEMBIC && alembicPotionType != null) {
             highlightObject(AlchemyObject.ALEMBIC, config.stationQuickActionHighlightColor());
-            // set flag for alembic so we know to un-highlight on the next alembic update
+            // start counting ticks for alembic so we know to un-highlight on the next alembic varbit update
             // note this quick action has a 1 tick window, so we use an int that goes 0 -> 1 -> unhighlight
-            alembicQuickActionFlag = 1;
+            alembicQuickActionTicks = 1;
         }
 
         if (spotAnimId == SPOT_ANIM_AGITATOR && agitatorPotionType != null) {
             highlightObject(AlchemyObject.AGITATOR, config.stationQuickActionHighlightColor());
-            // set flag for alembic so we know to un-highlight on the next agitator update
+            // start counting ticks for agitator so we know to un-highlight on the next agitator varbit update
             // note this quick action has a 2-tick window, so we use an int that goes 0 -> 1 -> 2 -> unhighlight
-            agitatorQuickActionFlag = 1;
+            agitatorQuickActionTicks = 1;
         }
     }
 
