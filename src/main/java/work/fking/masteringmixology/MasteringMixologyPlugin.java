@@ -60,6 +60,12 @@ public class MasteringMixologyPlugin extends Plugin {
     private static final int VARP_AGA_RESIN = 4415;
     private static final int VARP_MOX_RESIN = 4416;
 
+    private static final int VARBIT_ALEMBIC_PROGRESS = 11328;
+    private static final int VARBIT_AGITATOR_PROGRESS = 11329;
+
+    private static final int VARBIT_AGITATOR_QUICKACTION = 11337;
+    private static final int VARBIT_ALEMBIC_QUICKACTION = 11338;
+
     private static final int VARBIT_MIXING_VESSEL_POTION = 11339;
     private static final int VARBIT_AGITATOR_POTION = 11340;
     private static final int VARBIT_RETORT_POTION = 11341;
@@ -105,6 +111,12 @@ public class MasteringMixologyPlugin extends Plugin {
     private PotionType alembicPotionType;
     private PotionType agitatorPotionType;
     private PotionType retortPotionType;
+
+    private int previousAgitatorProgess;
+    private int previousAlembicProgress;
+
+    private int agitatorQuickActionFlag = 0;
+    private int alembicQuickActionFlag = 0;
 
     public Map<AlchemyObject, HighlightedObject> highlightedObjects() {
         return highlightedObjects;
@@ -311,6 +323,37 @@ public class MasteringMixologyPlugin extends Plugin {
             } else {
                 unHighlightObject(AlchemyObject.DIGWEED_NORTH_WEST);
             }
+        } else if (varbitId == VARBIT_AGITATOR_PROGRESS) {
+            if (agitatorQuickActionFlag == 2) {
+                // quick action was triggered two ticks ago, so it's now too late
+                unHighlightObject(AlchemyObject.AGITATOR);
+                agitatorQuickActionFlag = 0;
+            }
+            if (agitatorQuickActionFlag == 1) {
+                agitatorQuickActionFlag = 2;
+            }
+            if (value < previousAgitatorProgess) {
+                // progress was set back due to a quick action failure
+                unHighlightObject(AlchemyObject.AGITATOR);
+            }
+            previousAgitatorProgess = value;
+        } else if (varbitId == VARBIT_ALEMBIC_PROGRESS) {
+            if (alembicQuickActionFlag == 1) {
+                // quick action was triggered last tick, so it's now too late
+                unHighlightObject(AlchemyObject.ALEMBIC);
+                alembicQuickActionFlag = 0;
+            }
+            if (value < previousAlembicProgress) {
+                // progress was set back due to a quick action failure
+                unHighlightObject(AlchemyObject.ALEMBIC);
+            }
+            previousAlembicProgress = value;
+        } else if (varbitId == VARBIT_AGITATOR_QUICKACTION) {
+            // agitator quick action was just successfully popped
+            unHighlightObject(AlchemyObject.AGITATOR);
+        } else if (varbitId == VARBIT_ALEMBIC_QUICKACTION) {
+            // alembic quick action was just successfully popped
+            unHighlightObject(AlchemyObject.ALEMBIC);
         }
     }
 
@@ -323,10 +366,16 @@ public class MasteringMixologyPlugin extends Plugin {
         }
         if (spotAnimId == SPOT_ANIM_ALEMBIC && alembicPotionType != null) {
             highlightObject(AlchemyObject.ALEMBIC, config.stationQuickActionHighlightColor());
+            // set flag for alembic so we know to un-highlight on the next alembic update
+            // note this quick action has a 1 tick window, so we use an int that goes 0 -> 1 -> unhighlight
+            alembicQuickActionFlag = 1;
         }
 
         if (spotAnimId == SPOT_ANIM_AGITATOR && agitatorPotionType != null) {
             highlightObject(AlchemyObject.AGITATOR, config.stationQuickActionHighlightColor());
+            // set flag for alembic so we know to un-highlight on the next agitator update
+            // note this quick action has a 2-tick window, so we use an int that goes 0 -> 1 -> 2 -> unhighlight
+            agitatorQuickActionFlag = 1;
         }
     }
 
