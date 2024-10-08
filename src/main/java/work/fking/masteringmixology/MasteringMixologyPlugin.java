@@ -326,7 +326,7 @@ public class MasteringMixologyPlugin extends Plugin {
         } else if (varbitId == VARBIT_AGITATOR_PROGRESS) {
             if (agitatorQuickActionTicks == 2) {
                 // quick action was triggered two ticks ago, so it's now too late
-                unHighlightObject(AlchemyObject.AGITATOR);
+                resetDefaultHighlight(AlchemyObject.AGITATOR);
                 agitatorQuickActionTicks = 0;
             }
             if (agitatorQuickActionTicks == 1) {
@@ -334,26 +334,26 @@ public class MasteringMixologyPlugin extends Plugin {
             }
             if (value < previousAgitatorProgess) {
                 // progress was set back due to a quick action failure
-                unHighlightObject(AlchemyObject.AGITATOR);
+                resetDefaultHighlight(AlchemyObject.AGITATOR);
             }
             previousAgitatorProgess = value;
         } else if (varbitId == VARBIT_ALEMBIC_PROGRESS) {
             if (alembicQuickActionTicks == 1) {
                 // quick action was triggered last tick, so it's now too late
-                unHighlightObject(AlchemyObject.ALEMBIC);
+                resetDefaultHighlight(AlchemyObject.ALEMBIC);
                 alembicQuickActionTicks = 0;
             }
             if (value < previousAlembicProgress) {
                 // progress was set back due to a quick action failure
-                unHighlightObject(AlchemyObject.ALEMBIC);
+                resetDefaultHighlight(AlchemyObject.ALEMBIC);
             }
             previousAlembicProgress = value;
         } else if (varbitId == VARBIT_AGITATOR_QUICKACTION) {
             // agitator quick action was just successfully popped
-            unHighlightObject(AlchemyObject.AGITATOR);
+            resetDefaultHighlight(AlchemyObject.AGITATOR);
         } else if (varbitId == VARBIT_ALEMBIC_QUICKACTION) {
             // alembic quick action was just successfully popped
-            unHighlightObject(AlchemyObject.ALEMBIC);
+            resetDefaultHighlight(AlchemyObject.ALEMBIC);
         }
     }
 
@@ -444,6 +444,12 @@ public class MasteringMixologyPlugin extends Plugin {
 
         if (decorativeObject != null && decorativeObject.getId() == alchemyObject.objectId()) {
             highlightedObjects.put(alchemyObject, new HighlightedObject(decorativeObject, color, config.highlightBorderWidth(), config.highlightFeather()));
+        }
+    }
+
+    public void resetDefaultHighlight(AlchemyObject alchemyObject) {
+        if (config.highlightStations()) {
+            highlightObject(alchemyObject, config.stationHighlightColor());
         }
     }
 
