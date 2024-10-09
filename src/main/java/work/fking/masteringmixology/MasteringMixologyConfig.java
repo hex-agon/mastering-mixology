@@ -22,16 +22,6 @@ public interface MasteringMixologyConfig extends Config {
     String HIGHLIGHTS = "Highlights";
 
     @ConfigItem(
-            keyName = "strategy",
-            name = "Strategy",
-            description = "Selects the potion order highlighting strategy",
-            position = 1
-    )
-    default Strategy strategy() {
-        return Strategy.FAVOR_EXPERIENCE;
-    }
-
-    @ConfigItem(
             keyName = "highlightLevers",
             name = "Highlight levers",
             description = "Highlight levers",

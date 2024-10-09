@@ -25,7 +25,6 @@ import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import work.fking.masteringmixology.evaluator.PotionOrderEvaluator.EvaluatorContext;
 
 import javax.inject.Inject;
 import java.awt.Color;
@@ -105,7 +104,6 @@ public class MasteringMixologyPlugin extends Plugin {
 
     private final Map<AlchemyObject, HighlightedObject> highlightedObjects = new LinkedHashMap<>();
     private List<PotionOrder> potionOrders = Collections.emptyList();
-    private PotionOrder bestPotionOrder;
     private boolean inLab = false;
 
     private PotionType alembicPotionType;
@@ -394,11 +392,10 @@ public class MasteringMixologyPlugin extends Plugin {
         if (textComponents.size() < 4) {
             return;
         }
-        var bestPotionOrderIdx = bestPotionOrder != null ? bestPotionOrder.idx() : -1;
 
         for (var order : potionOrders) {
             // The first text widget is always the interface title 'Potion Orders'
-            appendPotionRecipe(textComponents.get(order.idx()), order.idx(), bestPotionOrderIdx == order.idx(), order.fulfilled());
+            appendPotionRecipe(textComponents.get(order.idx()), order.idx(), order.fulfilled());
         }
     }
 
@@ -482,18 +479,7 @@ public class MasteringMixologyPlugin extends Plugin {
     private void updatePotionOrders() {
         LOGGER.debug("Updating potion orders");
         potionOrders = getPotionOrders();
-        var strategy = config.strategy();
 
-        if (strategy != Strategy.NONE) {
-            var evaluatorContext = new EvaluatorContext(
-                    potionOrders,
-                    client.getVarpValue(VARP_LYE_RESIN),
-                    client.getVarpValue(VARP_AGA_RESIN),
-                    client.getVarpValue(VARP_MOX_RESIN)
-            );
-            bestPotionOrder = strategy.evaluator().evaluate(evaluatorContext);
-            LOGGER.debug("Best potion order: {}", bestPotionOrder);
-        }
         // Trigger a fake varbit update to force run the clientscript proc
         var varbitType = client.getVarbit(VARBIT_POTION_ORDER_1);
 
@@ -515,19 +501,13 @@ public class MasteringMixologyPlugin extends Plugin {
         return textComponents;
     }
 
-    private void appendPotionRecipe(Widget component, int orderIdx, boolean highlight, boolean fulfilled) {
+    private void appendPotionRecipe(Widget component, int orderIdx, boolean fulfilled) {
         var potionType = getPotionType(orderIdx);
 
         if (potionType == null) {
             return;
         }
-        var builder = new StringBuilder();
-
-        if (highlight) {
-            builder.append("<col=00ff00>").append(component.getText()).append("</col>");
-        } else {
-            builder.append(component.getText());
-        }
+        var builder = new StringBuilder(component.getText());
 
         if (fulfilled) {
             builder.append(" (<col=00ff00>done!</col>)");
