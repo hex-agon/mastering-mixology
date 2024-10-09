@@ -68,7 +68,7 @@ public interface MasteringMixologyConfig extends Config {
             position = 2
     )
     default boolean displayResin() {
-        return true;
+        return false;
     }
 
     @ConfigItem(
