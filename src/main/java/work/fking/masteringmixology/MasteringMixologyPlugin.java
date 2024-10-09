@@ -105,7 +105,7 @@ public class MasteringMixologyPlugin extends Plugin {
 
     private final Map<AlchemyObject, HighlightedObject> highlightedObjects = new LinkedHashMap<>();
     private List<PotionOrder> potionOrders = Collections.emptyList();
-    private PotionOrder bestPotionOrder;
+    private List<PotionOrder> bestPotionOrders;
     private boolean inLab = false;
 
     private PotionType alembicPotionType;
@@ -394,11 +394,16 @@ public class MasteringMixologyPlugin extends Plugin {
         if (textComponents.size() < 4) {
             return;
         }
-        var bestPotionOrderIdx = bestPotionOrder != null ? bestPotionOrder.idx() : -1;
+        updatePotionOrders();
+
+        List<Integer> bestPotionOrderIdxs = new ArrayList<>();
+        for (var potionOrder : bestPotionOrders) {
+            bestPotionOrderIdxs.add(potionOrder.idx());
+        }
 
         for (var order : potionOrders) {
             // The first text widget is always the interface title 'Potion Orders'
-            appendPotionRecipe(textComponents.get(order.idx()), order.idx(), bestPotionOrderIdx == order.idx(), order.fulfilled());
+            appendPotionRecipe(textComponents.get(order.idx()), order.idx(), bestPotionOrderIdxs.contains(order.idx()), order.fulfilled());
         }
     }
 
