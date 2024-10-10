@@ -9,6 +9,11 @@
 
 ### Changelog
 
+#### V1.5.0
+* Removal of the potion highlighting strategies, these were conceived when you could only deliver one potion at a time, now it is almost always better to fulfill all orders before delivering.
+* Improved quick-action highlighting behavior.
+* An option to display the amount of resin you have has been added, it is set to disabled by default.
+
 #### V1.4.1
 * Fix repeated potion orders not being marked as fulfilled
 * Fix `ready!` indicator when using the `NONE` strategy
