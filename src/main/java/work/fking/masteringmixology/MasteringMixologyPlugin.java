@@ -283,9 +283,7 @@ public class MasteringMixologyPlugin extends Plugin {
                 if (config.highlightDigWeed()) {
                     highlightObject(AlchemyObject.DIGWEED_NORTH_EAST, config.digweedHighlightColor());
                 }
-                if (config.notifyDigWeed()) {
-                    notifier.notify("A digweed has spawned north east.");
-                }
+                notifier.notify(config.notifyDigWeed(), "A digweed has spawned north east.");
             } else {
                 unHighlightObject(AlchemyObject.DIGWEED_NORTH_EAST);
             }
@@ -294,9 +292,7 @@ public class MasteringMixologyPlugin extends Plugin {
                 if (config.highlightDigWeed()) {
                     highlightObject(AlchemyObject.DIGWEED_SOUTH_EAST, config.digweedHighlightColor());
                 }
-                if (config.notifyDigWeed()) {
-                    notifier.notify("A digweed has spawned south east.");
-                }
+                notifier.notify(config.notifyDigWeed(), "A digweed has spawned south east.");
             } else {
                 unHighlightObject(AlchemyObject.DIGWEED_SOUTH_EAST);
             }
@@ -305,9 +301,7 @@ public class MasteringMixologyPlugin extends Plugin {
                 if (config.highlightDigWeed()) {
                     highlightObject(AlchemyObject.DIGWEED_SOUTH_WEST, config.digweedHighlightColor());
                 }
-                if (config.notifyDigWeed()) {
-                    notifier.notify("A digweed has spawned south west.");
-                }
+                notifier.notify(config.notifyDigWeed(), "A digweed has spawned south west.");
             } else {
                 unHighlightObject(AlchemyObject.DIGWEED_SOUTH_WEST);
             }
@@ -316,9 +310,7 @@ public class MasteringMixologyPlugin extends Plugin {
                 if (config.highlightDigWeed()) {
                     highlightObject(AlchemyObject.DIGWEED_NORTH_WEST, config.digweedHighlightColor());
                 }
-                if (config.notifyDigWeed()) {
-                    notifier.notify("A digweed has spawned north west.");
-                }
+                notifier.notify(config.notifyDigWeed(), "A digweed has spawned north west.");
             } else {
                 unHighlightObject(AlchemyObject.DIGWEED_NORTH_WEST);
             }
