@@ -24,6 +24,8 @@ public class MasteringMixologyOverlay extends Overlay {
 
     @Override
     public Dimension render(Graphics2D graphics) {
+        plugin.resetPotionIndex(); // this goes here because fuck you.
+
         for (var highlightedObject : plugin.highlightedObjects().values()) {
             modelOutlineRenderer.drawOutline(highlightedObject.object(), highlightedObject.outlineWidth(), highlightedObject.color(), highlightedObject.feather());
         }

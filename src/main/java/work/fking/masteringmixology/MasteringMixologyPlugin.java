@@ -1,19 +1,10 @@
 package work.fking.masteringmixology;
 
+
 import com.google.inject.Provides;
-import net.runelite.api.Client;
-import net.runelite.api.FontID;
-import net.runelite.api.GameState;
-import net.runelite.api.InventoryID;
-import net.runelite.api.TileObject;
+import net.runelite.api.*;
 import net.runelite.api.coords.LocalPoint;
-import net.runelite.api.events.GameStateChanged;
-import net.runelite.api.events.GraphicsObjectCreated;
-import net.runelite.api.events.ItemContainerChanged;
-import net.runelite.api.events.ScriptPostFired;
-import net.runelite.api.events.VarbitChanged;
-import net.runelite.api.events.WidgetClosed;
-import net.runelite.api.events.WidgetLoaded;
+import net.runelite.api.events.*;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetPositionMode;
 import net.runelite.api.widgets.WidgetTextAlignment;
@@ -29,6 +20,8 @@ import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.ColorUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 import java.awt.Color;
@@ -84,6 +77,7 @@ public class MasteringMixologyPlugin extends Plugin {
     private static final int SPOT_ANIM_ALEMBIC = 2955;
 
     private static final int COMPONENT_POTION_ORDERS_GROUP_ID = 882;
+    private static final int POTION_INSPECT_MESSAGE_BOX_GROUP_ID = 193;
     private static final int COMPONENT_POTION_ORDERS = COMPONENT_POTION_ORDERS_GROUP_ID << 16 | 2;
 
     @Inject
@@ -108,12 +102,19 @@ public class MasteringMixologyPlugin extends Plugin {
     private InventoryPotionOverlay potionOverlay;
 
     private final Map<AlchemyObject, HighlightedObject> highlightedObjects = new LinkedHashMap<>();
+    public final Potion[] inventoryPotions = new Potion[28];
+    private int inventoryPotionIndex = 0;
+    private Potion potionToAdd = null;
+    private int itemSlotClicked = 0;
+    private final Pattern potionModifierRegex = Pattern.compile("(Homogenous|Crystalised|Concentrated)");
+
+    private PotionOrder bestPotionOrder;
     private List<PotionOrder> potionOrders = Collections.emptyList();
     private boolean inLab = false;
 
-    private PotionType alembicPotionType;
-    private PotionType agitatorPotionType;
-    private PotionType retortPotionType;
+    private Potion alembicPotion;
+    private Potion agitatorPotion;
+    private Potion retortPotion;
 
     private int previousAgitatorProgess;
     private int previousAlembicProgress;
@@ -127,6 +128,23 @@ public class MasteringMixologyPlugin extends Plugin {
 
     public boolean isInLab() {
         return inLab;
+    }
+
+    public Potion getNextPotion() {
+        while (inventoryPotionIndex < 28) {
+            var potion = inventoryPotions[inventoryPotionIndex++];
+            if (potion != null) {
+                return potion;
+            }
+        }
+
+        return null;
+    }
+
+
+
+    public void resetPotionIndex() {
+        inventoryPotionIndex = 0;
     }
 
     @Provides
@@ -168,6 +186,24 @@ public class MasteringMixologyPlugin extends Plugin {
     }
 
     @Subscribe
+    public void onMenuOptionClicked(MenuOptionClicked event) {
+        itemSlotClicked = event.getParam0();
+    }
+
+    @Subscribe
+    public void onChatMessage(ChatMessage event)
+    {
+        if (event.getType() == ChatMessageType.MESBOX)
+        {
+            Matcher matcher = potionModifierRegex.matcher(event.getMessage());
+
+            if (matcher.find() && inventoryPotions[itemSlotClicked] != null) {
+                inventoryPotions[itemSlotClicked].modifier = PotionModifier.valueOf(matcher.group(1).toUpperCase());
+            }
+        }
+    }
+
+    @Subscribe
     public void onWidgetClosed(WidgetClosed event) {
         if (event.getGroupId() != COMPONENT_POTION_ORDERS_GROUP_ID) {
             return;
@@ -203,14 +239,17 @@ public class MasteringMixologyPlugin extends Plugin {
 
     @Subscribe
     public void onItemContainerChanged(ItemContainerChanged event) {
-        if (!inLab || !config.highlightStations() || event.getContainerId() != InventoryID.INVENTORY.getId()) {
+        if (!inLab || event.getContainerId() != InventoryID.INVENTORY.getId()) {
             return;
         }
-        // Do not update the highlight if there's a potion in a station
-        if (alembicPotionType != null || agitatorPotionType != null || retortPotionType != null) {
-            return;
-        }
+
+        syncInventoryPotions();
+
         var inventory = event.getItemContainer();
+
+        if (!config.highlightStations()) {
+            return;
+        }
 
         // Find the first potion item and highlight its station
         for (var item : inventory.getItems()) {
@@ -227,6 +266,125 @@ public class MasteringMixologyPlugin extends Plugin {
                 }
             }
         }
+    }
+
+    private int safeGetId(Item[] items, int index) {
+        if (index < 0 || items.length <= index) {
+            return -1;
+        }
+
+        return items[index].getId();
+    }
+
+    public static String potionToString(PotionType type, boolean isModified) {
+        var s = "";
+        if (type != null) {
+            s += type.abbreviation();
+        } else {
+            s += "___";
+        }
+
+        if (isModified) {
+            s += "???_";
+        } else {
+            s += "____";
+        }
+
+        return s;
+    }
+
+    public void printInventoryPotions() {
+        StringBuilder s = new StringBuilder();
+        for (var potion : inventoryPotions) {
+            if (potion != null) {
+                s.append(potion.toString()).append(" ");
+            } else {
+                s.append("_______ ");
+            }
+        }
+
+        LOGGER.info(s.toString());
+    }
+
+    private void syncInventoryPotions() {
+        var currentItems = client.getItemContainer(InventoryID.INVENTORY).getItems();
+        Potion potionToSwap = null;
+        int indexToSwap = -1;
+        LOGGER.info("syncInventoryPotions");
+        printInventoryPotions();
+        StringBuilder s = new StringBuilder();
+
+        for (int i = 0; i < 28; i++) {
+            var id = safeGetId(currentItems, i);
+            var isModified = false;
+
+            if (30020 < id) {
+                isModified = true;
+                id -= 10;
+            }
+
+            var currentPotionType = PotionType.fromItemId(id);
+
+            s.append(potionToString(currentPotionType, isModified)).append(" ");
+
+            if (currentPotionType != null) {
+                if (inventoryPotions[i] != null) {
+                    // real: true
+                    // virt: true
+                    if (!currentPotionType.equals(inventoryPotions[i].type) || isModified != inventoryPotions[i].isModified) {
+                        if (potionToSwap != null) {
+                            inventoryPotions[indexToSwap] = inventoryPotions[i];
+                            inventoryPotions[i] = potionToSwap;
+                        } else {
+                            potionToSwap = inventoryPotions[i];
+                            indexToSwap = i;
+                        }
+                    }
+                } else {
+                    // real: true
+                    // virt: false
+                    if (potionToSwap != null) {
+                        inventoryPotions[i] = potionToSwap;
+                    } else {
+                        inventoryPotions[i] = potionToAdd != null ? potionToAdd : new Potion(currentPotionType, isModified);
+                        potionToAdd = null;
+                        indexToSwap = i;
+                    }
+                }
+            } else {
+                if (inventoryPotions[i] != null) {
+                    // real: false
+                    // virt: true
+                    potionToSwap = inventoryPotions[i];
+                    inventoryPotions[i] = null;
+
+                    if (indexToSwap != -1) {
+                        inventoryPotions[indexToSwap] = potionToSwap;
+                    }
+                } else {
+                    // real: false
+                    // virt: false
+                }
+            }
+        }
+
+        LOGGER.info(s.toString());
+
+//        if (potionToSwap != null && indexToSwap != -1) {
+//            inventoryPotions[indexToSwap] = potionToSwap;
+//        }
+
+        printInventoryPotions();
+    }
+
+    private Potion getTopInventoryPotion(boolean isModified) {
+        for (Potion potion : inventoryPotions) {
+            if (potion != null && potion.isModified == isModified) {
+                return potion;
+            }
+        }
+
+        return null;
     }
 
     @Subscribe
@@ -246,37 +404,43 @@ public class MasteringMixologyPlugin extends Plugin {
             if (value == 0) {
                 // Finished crystalising
                 unHighlightObject(AlchemyObject.ALEMBIC);
-                tryFulfillOrder(alembicPotionType, PotionModifier.CRYSTALISED);
+//                tryFulfillOrder(alembicPotionType, PotionModifier.CRYSTALISED);
                 tryHighlightNextStation();
-                LOGGER.debug("Finished crystalising {}", alembicPotionType);
-                alembicPotionType = null;
+                LOGGER.debug("Finished crystallizing {}", alembicPotion.type);
+                potionToAdd = alembicPotion;
+                potionToAdd.setModifier(PotionModifier.CRYSTALISED);
+                alembicPotion = null;
             } else {
-                alembicPotionType = PotionType.fromIdx(value - 1);
-                LOGGER.debug("Alembic potion type: {}", alembicPotionType);
+                alembicPotion = getTopInventoryPotion(false);
+                LOGGER.debug("Alembic potion type: {}", alembicPotion.type);
             }
         } else if (varbitId == VARBIT_AGITATOR_POTION) {
             if (value == 0) {
                 // Finished homogenising
                 unHighlightObject(AlchemyObject.AGITATOR);
-                tryFulfillOrder(agitatorPotionType, PotionModifier.HOMOGENOUS);
+//                tryFulfillOrder(agitatorPotionType, PotionModifier.HOMOGENOUS);
                 tryHighlightNextStation();
-                LOGGER.debug("Finished homogenising {}", agitatorPotionType);
-                agitatorPotionType = null;
+                LOGGER.debug("Finished homogenising {}", agitatorPotion.type);
+                potionToAdd = agitatorPotion;
+                potionToAdd.setModifier(PotionModifier.HOMOGENOUS);
+                agitatorPotion = null;
             } else {
-                agitatorPotionType = PotionType.fromIdx(value - 1);
-                LOGGER.debug("Agitator potion type: {}", agitatorPotionType);
+                agitatorPotion = getTopInventoryPotion(false);
+                LOGGER.debug("Agitator potion type: {}", agitatorPotion.type);
             }
         } else if (varbitId == VARBIT_RETORT_POTION) {
             if (value == 0) {
                 // Finished concentrating
                 unHighlightObject(AlchemyObject.RETORT);
-                tryFulfillOrder(retortPotionType, PotionModifier.CONCENTRATED);
+//                tryFulfillOrder(retortPotionType, PotionModifier.CONCENTRATED);
                 tryHighlightNextStation();
-                LOGGER.debug("Finished concentrating {}", retortPotionType);
-                retortPotionType = null;
+                LOGGER.debug("Finished concentrating {}", retortPotion.type);
+                potionToAdd = retortPotion;
+                potionToAdd.setModifier(PotionModifier.CONCENTRATED);
+                retortPotion = null;
             } else {
-                retortPotionType = PotionType.fromIdx(value - 1);
-                LOGGER.debug("Retort potion type: {}", retortPotionType);
+                retortPotion = getTopInventoryPotion(false);
+                LOGGER.debug("Retort potion type: {}", retortPotion.type);
             }
         } else if (varbitId == VARBIT_DIGWEED_NORTH_EAST) {
             if (value == 1) {
@@ -363,14 +527,14 @@ public class MasteringMixologyPlugin extends Plugin {
         if (!config.highlightQuickActionEvents()) {
             return;
         }
-        if (spotAnimId == SPOT_ANIM_ALEMBIC && alembicPotionType != null) {
+        if (spotAnimId == SPOT_ANIM_ALEMBIC && alembicPotion != null) {
             highlightObject(AlchemyObject.ALEMBIC, config.stationQuickActionHighlightColor());
             // start counting ticks for alembic so we know to un-highlight on the next alembic varbit update
             // note this quick action has a 1 tick window, so we use an int that goes 0 -> 1 -> unhighlight
             alembicQuickActionTicks = 1;
         }
 
-        if (spotAnimId == SPOT_ANIM_AGITATOR && agitatorPotionType != null) {
+        if (spotAnimId == SPOT_ANIM_AGITATOR && agitatorPotion != null) {
             highlightObject(AlchemyObject.AGITATOR, config.stationQuickActionHighlightColor());
             // start counting ticks for agitator so we know to un-highlight on the next agitator varbit update
             // note this quick action has a 2-tick window, so we use an int that goes 0 -> 1 -> 2 -> unhighlight
@@ -393,6 +557,7 @@ public class MasteringMixologyPlugin extends Plugin {
         if (textComponents.size() < 4) {
             return;
         }
+        var bestPotionOrderIdx = bestPotionOrder != null ? bestPotionOrder.idx() : -1;
 
         for (var order : potionOrders) {
             // The first text widget is always the interface title 'Potion Orders'
@@ -421,6 +586,7 @@ public class MasteringMixologyPlugin extends Plugin {
         updatePotionOrders();
         highlightLevers();
         tryHighlightNextStation();
+        syncInventoryPotions();
     }
 
     public void highlightObject(AlchemyObject alchemyObject, Color color) {
