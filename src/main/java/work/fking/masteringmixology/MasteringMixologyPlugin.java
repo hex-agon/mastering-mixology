@@ -1,6 +1,7 @@
 package work.fking.masteringmixology;
 
 import com.google.inject.Provides;
+import java.util.Comparator;
 import net.runelite.api.Client;
 import net.runelite.api.FontID;
 import net.runelite.api.GameState;
@@ -394,9 +395,16 @@ public class MasteringMixologyPlugin extends Plugin {
             return;
         }
 
-        for (var order : potionOrders) {
-            // The first text widget is always the interface title 'Potion Orders'
-            appendPotionRecipe(textComponents.get(order.idx()), order.idx(), order.fulfilled());
+		if (config.reorderPotions())
+		{
+			potionOrders.sort(Comparator.comparing(po -> po.potionModifier().toString()));
+		}
+
+		for (int i = 0; i < potionOrders.size(); i++)
+		{
+			PotionOrder order = potionOrders.get(i);
+			// The first text widget is always the interface title 'Potion Orders'
+            appendPotionRecipe(textComponents.get(i + 1), order.idx(), order.fulfilled());
         }
 
         if (config.displayResin()) {
@@ -500,8 +508,17 @@ public class MasteringMixologyPlugin extends Plugin {
     }
 
     private List<Widget> findTextComponents(Widget parent) {
-        var children = parent.getDynamicChildren();
-        var textComponents = new ArrayList<Widget>();
+		Widget[] children;
+
+		if (config.reorderPotions())
+		{
+			children = reorderWidget(parent);
+		}
+		else
+		{
+			children = parent.getDynamicChildren();
+		}
+		var textComponents = new ArrayList<Widget>();
 
         for (var child : children) {
             if (child.getType() != WidgetType.TEXT) {
@@ -512,7 +529,50 @@ public class MasteringMixologyPlugin extends Plugin {
         return textComponents;
     }
 
-    private void appendPotionRecipe(Widget component, int orderIdx, boolean fulfilled) {
+	private Widget[] reorderWidget(Widget parent) {
+		Widget[] children = parent.getDynamicChildren();
+
+		ArrayList<PotionWidget> pwArraylist = new ArrayList<>();
+		pwArraylist.add(new PotionWidget(children[1].getSpriteId(), children[2].getText()));
+		pwArraylist.add(new PotionWidget(children[3].getSpriteId(), children[4].getText()));
+		pwArraylist.add(new PotionWidget(children[5].getSpriteId(), children[6].getText()));
+
+		pwArraylist.sort(Comparator.comparingInt(PotionWidget::getSpriteid));
+
+		children[1].setSpriteId(pwArraylist.get(0).getSpriteid());
+		children[2].setText(pwArraylist.get(0).getText());
+		children[3].setSpriteId(pwArraylist.get(1).getSpriteid());
+		children[4].setText(pwArraylist.get(1).getText());
+		children[5].setSpriteId(pwArraylist.get(2).getSpriteid());
+		children[6].setText(pwArraylist.get(2).getText());
+
+		return children;
+	}
+
+	public static class PotionWidget
+	{
+		int spriteid;
+		String text;
+
+		public PotionWidget(int spriteid, String text)
+		{
+			this.spriteid = spriteid;
+			this.text = text;
+		}
+
+		public int getSpriteid()
+		{
+			return spriteid;
+		}
+
+		public String getText()
+		{
+			return text;
+		}
+	}
+
+
+	private void appendPotionRecipe(Widget component, int orderIdx, boolean fulfilled) {
         var potionType = getPotionType(orderIdx);
 
         if (potionType == null) {

@@ -61,6 +61,16 @@ public interface MasteringMixologyConfig extends Config {
         return true;
     }
 
+	@ConfigItem(
+		keyName = "reorderPotions",
+		name = "Order potions",
+		description = "Reorder potions in the order",
+		position = 2
+	)
+	default boolean reorderPotions() {
+		return true;
+	}
+
     @ConfigItem(
             keyName = "displayResin",
             name = "Display resin amount",
