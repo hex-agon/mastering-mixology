@@ -34,7 +34,6 @@ import javax.inject.Inject;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -181,6 +180,10 @@ public class MasteringMixologyPlugin extends Plugin {
     public void onConfigChanged(ConfigChanged event) {
         if (!event.getGroup().equals(MasteringMixologyConfig.CONFIG_GROUP)) {
             return;
+        }
+
+        if (event.getKey().equals("potionOrderSorting")) {
+            clientThread.invokeLater(this::updatePotionOrders);
         }
 
         if (!config.highlightStations()) {
@@ -382,13 +385,13 @@ public class MasteringMixologyPlugin extends Plugin {
             return;
         }
         if (scriptId == PROC_MASTERING_MIXOLOGY_BUILD_POTION_ORDERS) {
-            updatePotionOrders(baseWidget);
+            updatePotionOrdersComponent(baseWidget);
         } else {
             appendResins(baseWidget);
         }
     }
 
-    private void updatePotionOrders(Widget baseWidget) {
+    private void updatePotionOrdersComponent(Widget baseWidget) {
         // https://github.com/Joshua-F/cs2-scripts/blob/7cc261be62a40a6390de3e1f770259038660af10/scripts/%5Bproc%2Cscript7063%5D.cs2#L26
         var children = baseWidget.getChildren();
 
@@ -421,6 +424,7 @@ public class MasteringMixologyPlugin extends Plugin {
                 var y = 20 + (i * 26) + 3;
                 orderGraphic.setOriginalY(y);
                 orderText.setOriginalY(y);
+
                 orderGraphic.revalidate();
                 orderText.revalidate();
             }
@@ -521,9 +525,13 @@ public class MasteringMixologyPlugin extends Plugin {
         LOGGER.debug("Updating potion orders");
         potionOrders = getPotionOrders();
 
-        LOGGER.debug("Orders pre-sort: {}", potionOrders);
-        potionOrders.sort(Comparator.comparing(order -> order.potionModifier().ordinal()));
-        LOGGER.debug("Sorted orders: {}", potionOrders);
+        var potionOrderSorting = config.potionOrderSorting();
+
+        if (potionOrderSorting != PotionOrderSorting.VANILLA) {
+            LOGGER.debug("Orders pre-sort: {}", potionOrders);
+            potionOrders.sort(potionOrderSorting.comparator());
+            LOGGER.debug("Sorted orders: {}", potionOrders);
+        }
 
         // Trigger a fake varbit update to force run the clientscript proc
         var varbitType = client.getVarbit(VARBIT_POTION_ORDER_1);
