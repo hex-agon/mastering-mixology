@@ -23,6 +23,16 @@ public interface MasteringMixologyConfig extends Config {
     String HIGHLIGHTS = "Highlights";
 
     @ConfigItem(
+            keyName = "potionOrderSorting",
+            name = "Order sorting",
+            description = "Determines how potion orders are sorted in the interface",
+            position = 1
+    )
+    default PotionOrderSorting potionOrderSorting() {
+        return PotionOrderSorting.VANILLA;
+    }
+
+    @ConfigItem(
             keyName = "highlightLevers",
             name = "Highlight levers",
             description = "Highlight levers",
