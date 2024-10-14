@@ -43,7 +43,7 @@ public class MasteringMixologyPlugin extends Plugin {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MasteringMixologyPlugin.class);
 
-    private static final int PROC_MASTERING_MIXOLOGY_BUILD_POTION_ORDER = 7063;
+    private static final int PROC_MASTERING_MIXOLOGY_BUILD_POTION_ORDERS = 7063;
     private static final int PROC_MASTERING_MIXOLOGY_BUILD_REAGENTS = 7064;
 
     private static final int VARBIT_POTION_ORDER_1 = 11315;
@@ -194,7 +194,6 @@ public class MasteringMixologyPlugin extends Plugin {
         if (event.getGroupId() != COMPONENT_POTION_ORDERS_GROUP_ID) {
             return;
         }
-
         initialize();
     }
 
@@ -249,6 +248,10 @@ public class MasteringMixologyPlugin extends Plugin {
     public void onConfigChanged(ConfigChanged event) {
         if (!event.getGroup().equals(MasteringMixologyConfig.CONFIG_GROUP)) {
             return;
+        }
+
+        if (event.getKey().equals("potionOrderSorting")) {
+            clientThread.invokeLater(this::updatePotionOrders);
         }
 
         if (!config.highlightStations()) {
@@ -401,9 +404,7 @@ public class MasteringMixologyPlugin extends Plugin {
                 if (config.highlightDigWeed()) {
                     highlightObject(AlchemyObject.DIGWEED_NORTH_EAST, config.digweedHighlightColor());
                 }
-                if (config.notifyDigWeed()) {
-                    notifier.notify("A digweed has spawned north east.");
-                }
+                notifier.notify(config.notifyDigWeed(), "A digweed has spawned north east.");
             } else {
                 unHighlightObject(AlchemyObject.DIGWEED_NORTH_EAST);
             }
@@ -412,9 +413,7 @@ public class MasteringMixologyPlugin extends Plugin {
                 if (config.highlightDigWeed()) {
                     highlightObject(AlchemyObject.DIGWEED_SOUTH_EAST, config.digweedHighlightColor());
                 }
-                if (config.notifyDigWeed()) {
-                    notifier.notify("A digweed has spawned south east.");
-                }
+                notifier.notify(config.notifyDigWeed(), "A digweed has spawned south east.");
             } else {
                 unHighlightObject(AlchemyObject.DIGWEED_SOUTH_EAST);
             }
@@ -423,9 +422,7 @@ public class MasteringMixologyPlugin extends Plugin {
                 if (config.highlightDigWeed()) {
                     highlightObject(AlchemyObject.DIGWEED_SOUTH_WEST, config.digweedHighlightColor());
                 }
-                if (config.notifyDigWeed()) {
-                    notifier.notify("A digweed has spawned south west.");
-                }
+                notifier.notify(config.notifyDigWeed(), "A digweed has spawned south west.");
             } else {
                 unHighlightObject(AlchemyObject.DIGWEED_SOUTH_WEST);
             }
@@ -434,9 +431,7 @@ public class MasteringMixologyPlugin extends Plugin {
                 if (config.highlightDigWeed()) {
                     highlightObject(AlchemyObject.DIGWEED_NORTH_WEST, config.digweedHighlightColor());
                 }
-                if (config.notifyDigWeed()) {
-                    notifier.notify("A digweed has spawned north west.");
-                }
+                notifier.notify(config.notifyDigWeed(), "A digweed has spawned north west.");
             } else {
                 unHighlightObject(AlchemyObject.DIGWEED_NORTH_WEST);
             }
@@ -498,7 +493,8 @@ public class MasteringMixologyPlugin extends Plugin {
 
     @Subscribe
     public void onScriptPostFired(ScriptPostFired event) {
-        if (event.getScriptId() != PROC_MASTERING_MIXOLOGY_BUILD_REAGENTS) {
+        var scriptId = event.getScriptId();
+        if (scriptId != PROC_MASTERING_MIXOLOGY_BUILD_POTION_ORDERS && scriptId != PROC_MASTERING_MIXOLOGY_BUILD_REAGENTS) {
             return;
         }
         var baseWidget = client.getWidget(COMPONENT_POTION_ORDERS);
@@ -506,26 +502,64 @@ public class MasteringMixologyPlugin extends Plugin {
         if (baseWidget == null) {
             return;
         }
-        var textComponents = findTextComponents(baseWidget);
+        if (scriptId == PROC_MASTERING_MIXOLOGY_BUILD_POTION_ORDERS) {
+            updatePotionOrdersComponent(baseWidget);
+        } else {
+            appendResins(baseWidget);
+        }
+    }
 
-        if (textComponents.size() < 4) {
+    private void updatePotionOrdersComponent(Widget baseWidget) {
+        // https://github.com/Joshua-F/cs2-scripts/blob/7cc261be62a40a6390de3e1f770259038660af10/scripts/%5Bproc%2Cscript7063%5D.cs2#L26
+        var children = baseWidget.getChildren();
+
+        if (children == null) {
             return;
         }
 
-        for (var order : potionOrders) {
-            // The first text widget is always the interface title 'Potion Orders'
-            appendPotionRecipe(textComponents.get(order.idx()), order.idx(), order.fulfilled());
-        }
+        for (int i = 0; i < potionOrders.size(); i++) {
+            var order = potionOrders.get(i);
 
-        if (config.displayResin()) {
-            var parentWidth = baseWidget.getWidth();
-            var dx = parentWidth / 3;
-            int x = dx / 2;
+            var orderGraphic = children[order.idx() * 2 + 1];
+            var orderText = children[order.idx() * 2 + 2];
 
-            addResinText(baseWidget.createChild(-1, WidgetType.TEXT), x, VARP_MOX_RESIN, MOX);
-            addResinText(baseWidget.createChild(-1, WidgetType.TEXT), x + dx, VARP_AGA_RESIN, AGA);
-            addResinText(baseWidget.createChild(-1, WidgetType.TEXT), x + dx * 2, VARP_LYE_RESIN, LYE);
+            // If anyone still has orders they don't have the herblore level to deliver there's an extra RECTANGLE component which
+            // causes the idx calculations to select the wrong components
+            if (orderGraphic.getType() != WidgetType.GRAPHIC || orderText.getType() != WidgetType.TEXT) {
+                continue;
+            }
+            var builder = new StringBuilder(orderText.getText());
+
+            if (order.fulfilled()) {
+                builder.append(" (<col=00ff00>done!</col>)");
+            } else {
+                builder.append(" (").append(order.potionType().recipe()).append(")");
+            }
+            orderText.setText(builder.toString());
+
+            if (i != order.idx()) {
+                // update component position
+                var y = 20 + (i * 26) + 3;
+                orderGraphic.setOriginalY(y);
+                orderText.setOriginalY(y);
+
+                orderGraphic.revalidate();
+                orderText.revalidate();
+            }
         }
+    }
+
+    private void appendResins(Widget baseWidget) {
+        if (!config.displayResin()) {
+            return;
+        }
+        var parentWidth = baseWidget.getWidth();
+        var dx = parentWidth / 3;
+        int x = dx / 2;
+
+        addResinText(baseWidget.createChild(-1, WidgetType.TEXT), x, VARP_MOX_RESIN, MOX);
+        addResinText(baseWidget.createChild(-1, WidgetType.TEXT), x + dx, VARP_AGA_RESIN, AGA);
+        addResinText(baseWidget.createChild(-1, WidgetType.TEXT), x + dx * 2, VARP_LYE_RESIN, LYE);
     }
 
     private void initialize() {
@@ -616,6 +650,14 @@ public class MasteringMixologyPlugin extends Plugin {
         potionOrders = getPotionOrders();
         tryFulfillOrder();
 
+        var potionOrderSorting = config.potionOrderSorting();
+
+        if (potionOrderSorting != PotionOrderSorting.VANILLA) {
+            LOGGER.debug("Orders pre-sort: {}", potionOrders);
+            potionOrders.sort(potionOrderSorting.comparator());
+            LOGGER.debug("Sorted orders: {}", potionOrders);
+        }
+
         // Trigger a fake varbit update to force run the clientscript proc
         var varbitType = client.getVarbit(VARBIT_POTION_ORDER_1);
 
@@ -624,49 +666,21 @@ public class MasteringMixologyPlugin extends Plugin {
         }
     }
 
-    private List<Widget> findTextComponents(Widget parent) {
-        var children = parent.getDynamicChildren();
-        var textComponents = new ArrayList<Widget>();
-
-        for (var child : children) {
-            if (child.getType() != WidgetType.TEXT) {
-                continue;
-            }
-            textComponents.add(child);
-        }
-        return textComponents;
-    }
-
-    private void appendPotionRecipe(Widget component, int orderIdx, boolean fulfilled) {
-        var potionType = getPotionType(orderIdx);
-
-        if (potionType == null) {
-            return;
-        }
-        var builder = new StringBuilder(component.getText());
-
-        if (fulfilled) {
-            builder.append(" (<col=00ff00>done!</col>)");
-        } else {
-            builder.append(" (").append(potionType.recipe()).append(")");
-        }
-        component.setText(builder.toString());
-    }
-
     private void addResinText(Widget widget, int x, int varp, PotionComponent component) {
         var amount = client.getVarpValue(varp);
         var color = ColorUtil.fromHex(component.color()).getRGB();
 
         widget.setText(amount + "")
-                .setTextColor(color)
-                .setOriginalWidth(20)
-                .setOriginalHeight(15)
-                .setFontId(FontID.QUILL_8)
-                .setOriginalY(0)
-                .setOriginalX(x)
-                .setYPositionMode(WidgetPositionMode.ABSOLUTE_BOTTOM)
-                .setXTextAlignment(WidgetTextAlignment.CENTER)
-                .setYTextAlignment(WidgetTextAlignment.CENTER);
+              .setTextShadowed(true)
+              .setTextColor(color)
+              .setOriginalWidth(20)
+              .setOriginalHeight(15)
+              .setFontId(FontID.QUILL_8)
+              .setOriginalY(0)
+              .setOriginalX(x)
+              .setYPositionMode(WidgetPositionMode.ABSOLUTE_BOTTOM)
+              .setXTextAlignment(WidgetTextAlignment.CENTER)
+              .setYTextAlignment(WidgetTextAlignment.CENTER);
 
         widget.revalidate();
         LOGGER.debug("adding resin text {} at {} with color {}", amount, x, color);
@@ -713,7 +727,7 @@ public class MasteringMixologyPlugin extends Plugin {
     private List<PotionOrder> getPotionOrders() {
         var potionOrders = new ArrayList<PotionOrder>(3);
 
-        for (int orderIdx = 1; orderIdx <= 3; orderIdx++) {
+        for (int orderIdx = 0; orderIdx < 3; orderIdx++) {
             var potionType = getPotionType(orderIdx);
             var potionModifier = getPotionModifier(orderIdx);
 
@@ -726,11 +740,11 @@ public class MasteringMixologyPlugin extends Plugin {
     }
 
     private PotionType getPotionType(int orderIdx) {
-        if (orderIdx == 1) {
+        if (orderIdx == 0) {
             return PotionType.fromIdx(client.getVarbitValue(VARBIT_POTION_ORDER_1) - 1);
-        } else if (orderIdx == 2) {
+        } else if (orderIdx == 1) {
             return PotionType.fromIdx(client.getVarbitValue(VARBIT_POTION_ORDER_2) - 1);
-        } else if (orderIdx == 3) {
+        } else if (orderIdx == 2) {
             return PotionType.fromIdx(client.getVarbitValue(VARBIT_POTION_ORDER_3) - 1);
         } else {
             return null;
@@ -738,11 +752,11 @@ public class MasteringMixologyPlugin extends Plugin {
     }
 
     private PotionModifier getPotionModifier(int orderIdx) {
-        if (orderIdx == 1) {
+        if (orderIdx == 0) {
             return PotionModifier.from(client.getVarbitValue(VARBIT_POTION_MODIFIER_1) - 1);
-        } else if (orderIdx == 2) {
+        } else if (orderIdx == 1) {
             return PotionModifier.from(client.getVarbitValue(VARBIT_POTION_MODIFIER_2) - 1);
-        } else if (orderIdx == 3) {
+        } else if (orderIdx == 2) {
             return PotionModifier.from(client.getVarbitValue(VARBIT_POTION_MODIFIER_3) - 1);
         } else {
             return null;

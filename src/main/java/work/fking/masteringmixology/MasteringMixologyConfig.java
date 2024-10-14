@@ -4,6 +4,7 @@ import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
+import net.runelite.client.config.Notification;
 
 import java.awt.Color;
 
@@ -20,6 +21,16 @@ public interface MasteringMixologyConfig extends Config {
             position = 10
     )
     String HIGHLIGHTS = "Highlights";
+
+    @ConfigItem(
+            keyName = "potionOrderSorting",
+            name = "Order sorting",
+            description = "Determines how potion orders are sorted in the interface",
+            position = 1
+    )
+    default PotionOrderSorting potionOrderSorting() {
+        return PotionOrderSorting.VANILLA;
+    }
 
     @ConfigItem(
             keyName = "highlightLevers",
@@ -97,8 +108,8 @@ public interface MasteringMixologyConfig extends Config {
             description = "Toggles digweed notifications on or off",
             position = 5
     )
-    default boolean notifyDigWeed() {
-        return true;
+    default Notification notifyDigWeed() {
+        return Notification.ON;
     }
 
     @ConfigItem(
