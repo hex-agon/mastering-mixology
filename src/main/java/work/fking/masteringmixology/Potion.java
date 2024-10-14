@@ -1,7 +1,8 @@
 package work.fking.masteringmixology;
+import java.util.Objects;
 
 public class Potion {
-    public PotionType type;
+    public final PotionType type;
     public PotionModifier modifier = null;
     public boolean isModified;
     public boolean hasDigweed = false;
@@ -11,34 +12,30 @@ public class Potion {
         this.isModified = isModified;
     }
 
-    public void setModifier(PotionModifier modifier) {
+    public void modify(PotionModifier modifier) {
         this.modifier = modifier;
         isModified = true;
     }
 
-    public String toString() {
-        var s = type.abbreviation();
-
-        if (isModified) {
-            if (modifier == null) {
-                s += "???";
-            } else if (modifier == PotionModifier.HOMOGENOUS) {
-                s += "HOM";
-            } else if (modifier == PotionModifier.CONCENTRATED) {
-                s += "CON";
-            } else if (modifier == PotionModifier.CRYSTALISED) {
-                s += "CRY";
-            }
-        } else {
-            s += "___";
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
         }
 
-        if (hasDigweed) {
-            s += "D";
-        } else {
-            s += "_";
+        if (o instanceof Potion) {
+            Potion potion = (Potion) o;
+            return isModified == potion.isModified &&
+                    hasDigweed == potion.hasDigweed &&
+                    type == potion.type &&
+                    Objects.equals(modifier, potion.modifier);
         }
 
-        return s;
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(type, modifier, isModified, hasDigweed);
     }
 }

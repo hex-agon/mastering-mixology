@@ -77,7 +77,6 @@ public class MasteringMixologyPlugin extends Plugin {
     private static final int SPOT_ANIM_ALEMBIC = 2955;
 
     private static final int COMPONENT_POTION_ORDERS_GROUP_ID = 882;
-    private static final int POTION_INSPECT_MESSAGE_BOX_GROUP_ID = 193;
     private static final int COMPONENT_POTION_ORDERS = COMPONENT_POTION_ORDERS_GROUP_ID << 16 | 2;
 
     @Inject
@@ -106,9 +105,9 @@ public class MasteringMixologyPlugin extends Plugin {
     private int inventoryPotionIndex = 0;
     private Potion potionToAdd = null;
     private int itemSlotClicked = 0;
+    private int previousItemSlotClicked = 0;
     private final Pattern potionModifierRegex = Pattern.compile("(Homogenous|Crystalised|Concentrated)");
-
-    private PotionOrder bestPotionOrder;
+    private boolean shouldSyncInventoryPotions = false;
     private List<PotionOrder> potionOrders = Collections.emptyList();
     private boolean inLab = false;
 
@@ -130,6 +129,13 @@ public class MasteringMixologyPlugin extends Plugin {
         return inLab;
     }
 
+    // The edge case where you can pull an unfinished potion out a station will put the potion overlay into a bad state.
+    // It added too much complexity to handle that case so we call this method when a bad state is detected.
+    // It just does an inventory sync between frames.
+    public void syncInventoryPotionsAtEndOfFrame() {
+        shouldSyncInventoryPotions = true;
+    }
+
     public Potion getNextPotion() {
         while (inventoryPotionIndex < 28) {
             var potion = inventoryPotions[inventoryPotionIndex++];
@@ -141,9 +147,16 @@ public class MasteringMixologyPlugin extends Plugin {
         return null;
     }
 
-
-
     public void resetPotionIndex() {
+        if (shouldSyncInventoryPotions) {
+            shouldSyncInventoryPotions = false;
+            var inventory = client.getItemContainer(InventoryID.INVENTORY);
+
+            if (inventory != null) {
+                syncInventoryPotions(inventory);
+            }
+        }
+
         inventoryPotionIndex = 0;
     }
 
@@ -187,19 +200,38 @@ public class MasteringMixologyPlugin extends Plugin {
 
     @Subscribe
     public void onMenuOptionClicked(MenuOptionClicked event) {
+        previousItemSlotClicked = itemSlotClicked;
         itemSlotClicked = event.getParam0();
     }
 
     @Subscribe
     public void onChatMessage(ChatMessage event)
     {
-        if (event.getType() == ChatMessageType.MESBOX)
-        {
-            Matcher matcher = potionModifierRegex.matcher(event.getMessage());
+        if (event.getType() == ChatMessageType.MESBOX) {
+            String message = event.getMessage();
+            Matcher matcher = potionModifierRegex.matcher(message);
 
-            if (matcher.find() && inventoryPotions[itemSlotClicked] != null) {
-                inventoryPotions[itemSlotClicked].modifier = PotionModifier.valueOf(matcher.group(1).toUpperCase());
+            if (!matcher.find() || inventoryPotions[itemSlotClicked] == null) {
+                return;
             }
+
+            var modifier = PotionModifier.valueOf(matcher.group(1).toUpperCase());
+            inventoryPotions[itemSlotClicked].modify(modifier);
+
+            if (message.endsWith("Its quality has been improved!")) {
+                inventoryPotions[itemSlotClicked].hasDigweed = true;
+            }
+
+            updatePotionOrders();
+        } else if (event.getType() == ChatMessageType.GAMEMESSAGE
+                && event.getMessage().startsWith("You mix the digweed into the")) {
+            var clickedPotion = inventoryPotions[itemSlotClicked];
+
+            if (clickedPotion == null) {
+                clickedPotion = inventoryPotions[previousItemSlotClicked];
+            }
+
+            clickedPotion.hasDigweed = true;
         }
     }
 
@@ -243,76 +275,25 @@ public class MasteringMixologyPlugin extends Plugin {
             return;
         }
 
-        syncInventoryPotions();
-
         var inventory = event.getItemContainer();
 
-        if (!config.highlightStations()) {
-            return;
-        }
-
-        // Find the first potion item and highlight its station
-        for (var item : inventory.getItems()) {
-            var potionType = PotionType.fromItemId(item.getId());
-
-            if (potionType == null) {
-                continue;
-            }
-            for (var order : potionOrders) {
-                if (order.potionType() == potionType && !order.fulfilled()) {
-                    unHighlightAllStations();
-                    highlightObject(order.potionModifier().alchemyObject(), config.stationHighlightColor());
-                    return;
-                }
-            }
-        }
+        syncInventoryPotions(inventory);
+        tryFulfillOrder();
+        tryHighlightNextStation(inventory);
     }
 
     private int safeGetId(Item[] items, int index) {
-        if (index < 0 || items.length <= index) {
+        if (items == null || index < 0 || items.length <= index) {
             return -1;
         }
 
         return items[index].getId();
     }
 
-    public static String potionToString(PotionType type, boolean isModified) {
-        var s = "";
-        if (type != null) {
-            s += type.abbreviation();
-        } else {
-            s += "___";
-        }
-
-        if (isModified) {
-            s += "???_";
-        } else {
-            s += "____";
-        }
-
-        return s;
-    }
-
-    public void printInventoryPotions() {
-        StringBuilder s = new StringBuilder();
-        for (var potion : inventoryPotions) {
-            if (potion != null) {
-                s.append(potion.toString()).append(" ");
-            } else {
-                s.append("_______ ");
-            }
-        }
-
-        LOGGER.info(s.toString());
-    }
-
-    private void syncInventoryPotions() {
-        var currentItems = client.getItemContainer(InventoryID.INVENTORY).getItems();
+    private void syncInventoryPotions(ItemContainer inventory) {
+        var currentItems = inventory.getItems();
         Potion potionToSwap = null;
         int indexToSwap = -1;
-        LOGGER.info("syncInventoryPotions");
-        printInventoryPotions();
-        StringBuilder s = new StringBuilder();
 
         for (int i = 0; i < 28; i++) {
             var id = safeGetId(currentItems, i);
@@ -325,12 +306,8 @@ public class MasteringMixologyPlugin extends Plugin {
 
             var currentPotionType = PotionType.fromItemId(id);
 
-            s.append(potionToString(currentPotionType, isModified)).append(" ");
-
             if (currentPotionType != null) {
                 if (inventoryPotions[i] != null) {
-                    // real: true
-                    // virt: true
                     if (!currentPotionType.equals(inventoryPotions[i].type) || isModified != inventoryPotions[i].isModified) {
                         if (potionToSwap != null) {
                             inventoryPotions[indexToSwap] = inventoryPotions[i];
@@ -341,8 +318,6 @@ public class MasteringMixologyPlugin extends Plugin {
                         }
                     }
                 } else {
-                    // real: true
-                    // virt: false
                     if (potionToSwap != null) {
                         inventoryPotions[i] = potionToSwap;
                     } else {
@@ -353,28 +328,15 @@ public class MasteringMixologyPlugin extends Plugin {
                 }
             } else {
                 if (inventoryPotions[i] != null) {
-                    // real: false
-                    // virt: true
                     potionToSwap = inventoryPotions[i];
                     inventoryPotions[i] = null;
 
                     if (indexToSwap != -1) {
                         inventoryPotions[indexToSwap] = potionToSwap;
                     }
-                } else {
-                    // real: false
-                    // virt: false
                 }
             }
         }
-
-        LOGGER.info(s.toString());
-
-//        if (potionToSwap != null && indexToSwap != -1) {
-//            inventoryPotions[indexToSwap] = potionToSwap;
-//        }
-
-        printInventoryPotions();
     }
 
     private Potion getTopInventoryPotion(boolean isModified) {
@@ -399,16 +361,14 @@ public class MasteringMixologyPlugin extends Plugin {
                 unHighlightAllStations();
             } else {
                 clientThread.invokeAtTickEnd(this::updatePotionOrders);
+
             }
         } else if (varbitId == VARBIT_ALEMBIC_POTION) {
             if (value == 0) {
                 // Finished crystalising
-                unHighlightObject(AlchemyObject.ALEMBIC);
-//                tryFulfillOrder(alembicPotionType, PotionModifier.CRYSTALISED);
-                tryHighlightNextStation();
                 LOGGER.debug("Finished crystallizing {}", alembicPotion.type);
                 potionToAdd = alembicPotion;
-                potionToAdd.setModifier(PotionModifier.CRYSTALISED);
+                potionToAdd.modify(PotionModifier.CRYSTALISED);
                 alembicPotion = null;
             } else {
                 alembicPotion = getTopInventoryPotion(false);
@@ -417,12 +377,9 @@ public class MasteringMixologyPlugin extends Plugin {
         } else if (varbitId == VARBIT_AGITATOR_POTION) {
             if (value == 0) {
                 // Finished homogenising
-                unHighlightObject(AlchemyObject.AGITATOR);
-//                tryFulfillOrder(agitatorPotionType, PotionModifier.HOMOGENOUS);
-                tryHighlightNextStation();
                 LOGGER.debug("Finished homogenising {}", agitatorPotion.type);
                 potionToAdd = agitatorPotion;
-                potionToAdd.setModifier(PotionModifier.HOMOGENOUS);
+                potionToAdd.modify(PotionModifier.HOMOGENOUS);
                 agitatorPotion = null;
             } else {
                 agitatorPotion = getTopInventoryPotion(false);
@@ -431,12 +388,9 @@ public class MasteringMixologyPlugin extends Plugin {
         } else if (varbitId == VARBIT_RETORT_POTION) {
             if (value == 0) {
                 // Finished concentrating
-                unHighlightObject(AlchemyObject.RETORT);
-//                tryFulfillOrder(retortPotionType, PotionModifier.CONCENTRATED);
-                tryHighlightNextStation();
                 LOGGER.debug("Finished concentrating {}", retortPotion.type);
                 potionToAdd = retortPotion;
-                potionToAdd.setModifier(PotionModifier.CONCENTRATED);
+                potionToAdd.modify(PotionModifier.CONCENTRATED);
                 retortPotion = null;
             } else {
                 retortPotion = getTopInventoryPotion(false);
@@ -557,7 +511,6 @@ public class MasteringMixologyPlugin extends Plugin {
         if (textComponents.size() < 4) {
             return;
         }
-        var bestPotionOrderIdx = bestPotionOrder != null ? bestPotionOrder.idx() : -1;
 
         for (var order : potionOrders) {
             // The first text widget is always the interface title 'Potion Orders'
@@ -585,8 +538,13 @@ public class MasteringMixologyPlugin extends Plugin {
         inLab = true;
         updatePotionOrders();
         highlightLevers();
-        tryHighlightNextStation();
-        syncInventoryPotions();
+
+        var inventory = client.getItemContainer(InventoryID.INVENTORY);
+
+        if (inventory != null) {
+            syncInventoryPotions(inventory);
+            tryHighlightNextStation(inventory);
+        }
     }
 
     public void highlightObject(AlchemyObject alchemyObject, Color color) {
@@ -656,6 +614,7 @@ public class MasteringMixologyPlugin extends Plugin {
     private void updatePotionOrders() {
         LOGGER.debug("Updating potion orders");
         potionOrders = getPotionOrders();
+        tryFulfillOrder();
 
         // Trigger a fake varbit update to force run the clientscript proc
         var varbitType = client.getVarbit(VARBIT_POTION_ORDER_1);
@@ -713,31 +672,40 @@ public class MasteringMixologyPlugin extends Plugin {
         LOGGER.debug("adding resin text {} at {} with color {}", amount, x, color);
     }
 
-    private void tryFulfillOrder(PotionType potionType, PotionModifier modifier) {
-        for (var order : potionOrders) {
-            if (order.potionType() == potionType && order.potionModifier() == modifier && !order.fulfilled()) {
-                LOGGER.debug("Order {} has been fulfilled", order);
-                order.setFulfilled(true);
-                break;
+    private void tryFulfillOrder() {
+        for (var potion : inventoryPotions) {
+            if (potion == null) {
+                continue;
+            }
+
+            for (var order : potionOrders) {
+                if (order.potionType() == potion.type && order.potionModifier() == potion.modifier && !order.fulfilled()) {
+                    LOGGER.debug("Order {} has been fulfilled", order);
+                    order.setFulfilled(true);
+                }
             }
         }
     }
 
-    private void tryHighlightNextStation() {
-        var inventory = client.getItemContainer(InventoryID.INVENTORY);
-
-        if (inventory == null) {
+    private void tryHighlightNextStation(ItemContainer inventory) {
+        if (!config.highlightStations()) {
             return;
         }
 
-        for (var order : potionOrders) {
-            if (order.fulfilled()) {
-                continue;
-            }
-            if (inventory.contains(order.potionType().itemId())) {
-                LOGGER.debug("Highlighting station for order {}", order);
-                highlightObject(order.potionModifier().alchemyObject(), config.stationHighlightColor());
-                break;
+        // Find the first potion item and highlight its station
+        for (var item : inventory.getItems()) {
+            var potionType = PotionType.fromItemId(item.getId());
+
+            if (potionType != null) {
+                unHighlightAllStations();
+
+                for (var order : potionOrders) {
+                    if (order.potionType() == potionType && !order.fulfilled()) {
+                        highlightObject(order.potionModifier().alchemyObject(), config.stationHighlightColor());
+                    }
+                }
+
+                return;
             }
         }
     }
@@ -782,7 +750,6 @@ public class MasteringMixologyPlugin extends Plugin {
     }
 
     public static class HighlightedObject {
-
         private final TileObject object;
         private final Color color;
         private final int outlineWidth;
