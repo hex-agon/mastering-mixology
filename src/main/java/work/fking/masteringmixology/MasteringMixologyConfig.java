@@ -4,6 +4,7 @@ import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
+import net.runelite.client.config.Notification;
 
 import java.awt.Color;
 
@@ -97,8 +98,8 @@ public interface MasteringMixologyConfig extends Config {
             description = "Toggles digweed notifications on or off",
             position = 5
     )
-    default boolean notifyDigWeed() {
-        return true;
+    default Notification notifyDigWeed() {
+        return Notification.ON;
     }
 
     @ConfigItem(
