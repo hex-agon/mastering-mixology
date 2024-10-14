@@ -396,16 +396,14 @@ public class MasteringMixologyPlugin extends Plugin {
             return;
         }
 
-		if (config.reorderPotions())
-		{
+		if (config.reorderPotions()) {
 			// ordering by alphabetical order on the potion modifier is the same as the spriteId
 			// 5672,5673,5674
 			// CONCENTRATED,CRYSTALISED,HOMOGENOUS
 			potionOrders.sort(Comparator.comparing(po -> po.potionModifier().toString()));
 		}
 
-		for (int i = 0; i < potionOrders.size(); i++)
-		{
+		for (int i = 0; i < potionOrders.size(); i++) {
 			PotionOrder order = potionOrders.get(i);
 			// The first text widget is always the interface title 'Potion Orders'
             appendPotionRecipe(textComponents.get(i + 1), order.idx(), order.fulfilled());
@@ -514,8 +512,7 @@ public class MasteringMixologyPlugin extends Plugin {
     private List<Widget> findTextComponents(Widget parent) {
 		var children = parent.getDynamicChildren();
 
-		if (config.reorderPotions())
-		{
+		if (config.reorderPotions()) {
 			ArrayList<PotionWidget> pwArraylist = Lists.newArrayList(
 				new PotionWidget(children[1].getSpriteId(), children[2].getText()),
 				new PotionWidget(children[3].getSpriteId(), children[4].getText()),
@@ -649,24 +646,20 @@ public class MasteringMixologyPlugin extends Plugin {
         }
     }
 
-	public static class PotionWidget
-	{
+	public static class PotionWidget {
 		int spriteId;
 		String text;
 
-		public PotionWidget(int spriteId, String text)
-		{
+		public PotionWidget(int spriteId, String text) {
 			this.spriteId = spriteId;
 			this.text = text;
 		}
 
-		public int getSpriteId()
-		{
+		public int getSpriteId() {
 			return spriteId;
 		}
 
-		public String getText()
-		{
+		public String getText() {
 			return text;
 		}
 	}
