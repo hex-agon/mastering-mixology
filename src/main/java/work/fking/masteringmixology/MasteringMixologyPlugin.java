@@ -546,6 +546,7 @@ public class MasteringMixologyPlugin extends Plugin {
         var color = ColorUtil.fromHex(component.color()).getRGB();
 
         widget.setText(amount + "")
+              .setTextShadowed(true)
               .setTextColor(color)
               .setOriginalWidth(20)
               .setOriginalHeight(15)
