@@ -1,10 +1,24 @@
 package work.fking.masteringmixology;
 
-
 import com.google.inject.Provides;
-import net.runelite.api.*;
+import net.runelite.api.Client;
+import net.runelite.api.FontID;
+import net.runelite.api.GameState;
+import net.runelite.api.InventoryID;
+import net.runelite.api.TileObject;
+import net.runelite.api.ChatMessageType;
+import net.runelite.api.ItemContainer;
+import net.runelite.api.Item;
 import net.runelite.api.coords.LocalPoint;
-import net.runelite.api.events.*;
+import net.runelite.api.events.GameStateChanged;
+import net.runelite.api.events.GraphicsObjectCreated;
+import net.runelite.api.events.ItemContainerChanged;
+import net.runelite.api.events.ScriptPostFired;
+import net.runelite.api.events.VarbitChanged;
+import net.runelite.api.events.WidgetClosed;
+import net.runelite.api.events.WidgetLoaded;
+import net.runelite.api.events.ChatMessage;
+import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetPositionMode;
 import net.runelite.api.widgets.WidgetTextAlignment;
@@ -18,6 +32,7 @@ import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.ColorUtil;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.regex.Matcher;
@@ -284,7 +299,7 @@ public class MasteringMixologyPlugin extends Plugin {
         var inventory = event.getItemContainer();
 
         syncInventoryPotions(inventory);
-        tryFulfillOrder();
+        tryFulfillOrders();
         tryHighlightNextStation(inventory);
     }
 
@@ -651,7 +666,7 @@ public class MasteringMixologyPlugin extends Plugin {
     private void updatePotionOrders() {
         LOGGER.debug("Updating potion orders");
         potionOrders = getPotionOrders();
-        tryFulfillOrder();
+        tryFulfillOrders();
 
         var potionOrderSorting = config.potionOrderSorting();
 
@@ -689,7 +704,7 @@ public class MasteringMixologyPlugin extends Plugin {
         LOGGER.debug("adding resin text {} at {} with color {}", amount, x, color);
     }
 
-    private void tryFulfillOrder() {
+    private void tryFulfillOrders() {
         for (var potion : inventoryPotions) {
             if (potion == null) {
                 continue;
