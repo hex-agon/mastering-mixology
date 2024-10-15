@@ -124,8 +124,7 @@ public class InventoryPotionOverlay extends WidgetItemOverlay {
 
         var potion = plugin.getNextPotion();
 
-        if (potion == null || potionType != potion.type) {
-            plugin.syncInventoryPotionsAtEndOfFrame();
+        if (potion == null) {
             return;
         }
 

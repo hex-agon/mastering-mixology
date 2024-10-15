@@ -101,13 +101,13 @@ public class MasteringMixologyPlugin extends Plugin {
     private InventoryPotionOverlay potionOverlay;
 
     private final Map<AlchemyObject, HighlightedObject> highlightedObjects = new LinkedHashMap<>();
-    public final Potion[] inventoryPotions = new Potion[28];
+    private Potion[] inventoryPotions = new Potion[28];
     private int inventoryPotionIndex = 0;
     private Potion potionToAdd = null;
     private int itemSlotClicked = 0;
     private int previousItemSlotClicked = 0;
     private final Pattern potionModifierRegex = Pattern.compile("(Homogenous|Crystalised|Concentrated)");
-    private boolean shouldSyncInventoryPotions = false;
+    private boolean shouldResetInventoryPotions = false;
     private List<PotionOrder> potionOrders = Collections.emptyList();
     private boolean inLab = false;
 
@@ -129,13 +129,6 @@ public class MasteringMixologyPlugin extends Plugin {
         return inLab;
     }
 
-    // The edge case where you can pull an unfinished potion out a station will put the potion overlay into a bad state.
-    // It added too much complexity to handle that case so we call this method when a bad state is detected.
-    // It just does an inventory sync between frames.
-    public void syncInventoryPotionsAtEndOfFrame() {
-        shouldSyncInventoryPotions = true;
-    }
-
     public Potion getNextPotion() {
         while (inventoryPotionIndex < 28) {
             var potion = inventoryPotions[inventoryPotionIndex++];
@@ -144,20 +137,30 @@ public class MasteringMixologyPlugin extends Plugin {
             }
         }
 
+        // There are some edge cases with the buggy ass agitator that result in bad states.
+        // It added too much complexity to handle these states explicitly. So we just call this if the overly falls out of sync.
+        // Hard reset wipes out the inventory potions, soft reset just syncs at the end of the frame.
+        shouldResetInventoryPotions = true;
+
         return null;
     }
 
     public void resetPotionIndex() {
-        if (shouldSyncInventoryPotions) {
-            shouldSyncInventoryPotions = false;
-            var inventory = client.getItemContainer(InventoryID.INVENTORY);
+        inventoryPotionIndex = 0;
 
-            if (inventory != null) {
-                syncInventoryPotions(inventory);
-            }
+        if (!shouldResetInventoryPotions) {
+            return;
         }
 
-        inventoryPotionIndex = 0;
+        LOGGER.info("Resetting inventory potions");
+        shouldResetInventoryPotions = false;
+        var inventory = client.getItemContainer(InventoryID.INVENTORY);
+
+        if (inventory == null) {
+            return;
+        }
+
+        syncInventoryPotions(inventory);
     }
 
     @Provides
