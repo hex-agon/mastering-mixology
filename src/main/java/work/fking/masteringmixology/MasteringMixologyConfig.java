@@ -23,6 +23,16 @@ public interface MasteringMixologyConfig extends Config {
     String HIGHLIGHTS = "Highlights";
 
     @ConfigItem(
+            keyName = "inventoryPotionTags",
+            name = "Inventory Potion Tags",
+            description = "How potions should be tagged in the inventory",
+            position = 1
+    )
+    default InventoryPotionTagType inventoryPotionTagType() {
+        return InventoryPotionTagType.COLORED;
+    }
+
+    @ConfigItem(
             keyName = "potionOrderSorting",
             name = "Order sorting",
             description = "Determines how potion orders are sorted in the interface",
