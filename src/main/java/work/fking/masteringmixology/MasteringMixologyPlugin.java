@@ -213,23 +213,8 @@ public class MasteringMixologyPlugin extends Plugin {
         if (alembicPotionType != null || agitatorPotionType != null || retortPotionType != null) {
             return;
         }
-        var inventory = event.getItemContainer();
 
-        // Find the first potion item and highlight its station
-        for (var item : inventory.getItems()) {
-            var potionType = PotionType.fromItemId(item.getId());
-
-            if (potionType == null) {
-                continue;
-            }
-            for (var order : potionOrders) {
-                if (order.potionType() == potionType && !order.fulfilled()) {
-                    unHighlightAllStations();
-                    highlightObject(order.potionModifier().alchemyObject(), config.stationHighlightColor());
-                    return;
-                }
-            }
-        }
+        tryHighlightNextStation();
     }
 
     @Subscribe
@@ -248,9 +233,7 @@ public class MasteringMixologyPlugin extends Plugin {
         } else if (varbitId == VARBIT_ALEMBIC_POTION) {
             if (value == 0) {
                 // Finished crystalising
-                unHighlightObject(AlchemyObject.ALEMBIC);
                 tryFulfillOrder(alembicPotionType, PotionModifier.CRYSTALISED);
-                tryHighlightNextStation();
                 LOGGER.debug("Finished crystalising {}", alembicPotionType);
                 alembicPotionType = null;
             } else {
@@ -260,9 +243,7 @@ public class MasteringMixologyPlugin extends Plugin {
         } else if (varbitId == VARBIT_AGITATOR_POTION) {
             if (value == 0) {
                 // Finished homogenising
-                unHighlightObject(AlchemyObject.AGITATOR);
                 tryFulfillOrder(agitatorPotionType, PotionModifier.HOMOGENOUS);
-                tryHighlightNextStation();
                 LOGGER.debug("Finished homogenising {}", agitatorPotionType);
                 agitatorPotionType = null;
             } else {
@@ -272,9 +253,7 @@ public class MasteringMixologyPlugin extends Plugin {
         } else if (varbitId == VARBIT_RETORT_POTION) {
             if (value == 0) {
                 // Finished concentrating
-                unHighlightObject(AlchemyObject.RETORT);
                 tryFulfillOrder(retortPotionType, PotionModifier.CONCENTRATED);
-                tryHighlightNextStation();
                 LOGGER.debug("Finished concentrating {}", retortPotionType);
                 retortPotionType = null;
             } else {
@@ -578,14 +557,23 @@ public class MasteringMixologyPlugin extends Plugin {
             return;
         }
 
+        unHighlightAllStations();
+
         for (var order : potionOrders) {
             if (order.fulfilled()) {
                 continue;
             }
-            if (inventory.contains(order.potionType().itemId())) {
-                LOGGER.debug("Highlighting station for order {}", order);
-                highlightObject(order.potionModifier().alchemyObject(), config.stationHighlightColor());
-                break;
+
+            for (var item : inventory.getItems()) {
+                var potion = PotionType.fromItemId(item.getId());
+                if (potion != null) {
+                    if (potion == order.potionType()) {
+                        LOGGER.debug("Highlighting station for order {}", order);
+                        highlightObject(order.potionModifier().alchemyObject(), config.stationHighlightColor());
+                    }
+
+                    break;
+                }
             }
         }
     }
