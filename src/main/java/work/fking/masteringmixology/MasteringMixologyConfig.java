@@ -4,6 +4,7 @@ import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
+import net.runelite.client.config.Notification;
 
 import java.awt.Color;
 
@@ -22,13 +23,23 @@ public interface MasteringMixologyConfig extends Config {
     String HIGHLIGHTS = "Highlights";
 
     @ConfigItem(
-            keyName = "strategy",
-            name = "Strategy",
-            description = "Selects the potion order highlighting strategy",
+            keyName = "potionOrderSorting",
+            name = "Order sorting",
+            description = "Determines how potion orders are sorted in the interface",
             position = 1
     )
-    default Strategy strategy() {
-        return Strategy.FAVOR_EXPERIENCE;
+    default PotionOrderSorting potionOrderSorting() {
+        return PotionOrderSorting.VANILLA;
+    }
+
+    @ConfigItem(
+            keyName = "highlightLevers",
+            name = "Highlight levers",
+            description = "Highlight levers",
+            position = 2
+    )
+    default boolean highlightLevers() {
+        return true;
     }
 
     @ConfigItem(
@@ -39,6 +50,36 @@ public interface MasteringMixologyConfig extends Config {
     )
     default boolean highlightStations() {
         return true;
+    }
+
+    @ConfigItem(
+            keyName = "highlightQuickActionEvents",
+            name = "Highlight quick-action events",
+            description = "Toggles station quick-action events highlighting on or off",
+            position = 2
+    )
+    default boolean highlightQuickActionEvents() {
+        return true;
+    }
+
+    @ConfigItem(
+            keyName = "identifyPotions",
+            name = "Identify potions",
+            description = "Identify potions in your inventory",
+            position = 2
+    )
+    default boolean identifyPotions() {
+        return true;
+    }
+
+    @ConfigItem(
+            keyName = "displayResin",
+            name = "Display resin amount",
+            description = "Display total resin amounts",
+            position = 2
+    )
+    default boolean displayResin() {
+        return false;
     }
 
     @ConfigItem(
@@ -67,8 +108,8 @@ public interface MasteringMixologyConfig extends Config {
             description = "Toggles digweed notifications on or off",
             position = 5
     )
-    default boolean notifyDigWeed() {
-        return true;
+    default Notification notifyDigWeed() {
+        return Notification.ON;
     }
 
     @ConfigItem(

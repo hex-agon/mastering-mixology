@@ -6,6 +6,8 @@ public class PotionOrder {
     private final PotionType potionType;
     private final PotionModifier potionModifier;
 
+    private boolean fulfilled;
+
     public PotionOrder(int idx, PotionType potionType, PotionModifier potionModifier) {
         this.idx = idx;
         this.potionType = potionType;
@@ -22,6 +24,14 @@ public class PotionOrder {
 
     public PotionModifier potionModifier() {
         return potionModifier;
+    }
+
+    public void setFulfilled(boolean fulfilled) {
+        this.fulfilled = fulfilled;
+    }
+
+    public boolean fulfilled() {
+        return fulfilled;
     }
 
     @Override
