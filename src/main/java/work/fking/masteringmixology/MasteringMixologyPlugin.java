@@ -217,7 +217,7 @@ public class MasteringMixologyPlugin extends Plugin {
 
         // Find the first potion item and highlight its station
         for (var item : inventory.getItems()) {
-            var potionType = PotionType.fromItemId(item.getId());
+            var potionType = PotionType.fromItemId(item.getId(), false);
 
             if (potionType == null) {
                 continue;
