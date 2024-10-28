@@ -9,6 +9,10 @@
 
 ### Changelog
 
+#### V1.6.0
+* Adds support for potion order reordering in the interface. For now, the only available options are: Vanilla (default) & By Station type
+* Customizable notifications for digweed spawns
+
 #### V1.5.0
 * Removal of the potion highlighting strategies, these were conceived when you could only deliver one potion at a time, now it is almost always better to fulfill all orders before delivering.
 * Improved quick-action highlighting behavior.
