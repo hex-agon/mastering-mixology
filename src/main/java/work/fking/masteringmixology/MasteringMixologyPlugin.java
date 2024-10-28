@@ -186,6 +186,7 @@ public class MasteringMixologyPlugin extends Plugin {
 
         highlightedObjects.clear();
         inLab = false;
+        updateInfoboxes();
     }
 
     @Subscribe
@@ -474,6 +475,7 @@ public class MasteringMixologyPlugin extends Plugin {
         updatePotionOrders();
         highlightLevers();
         tryHighlightNextStation();
+        updateInfoboxes();
     }
 
     public void highlightObject(AlchemyObject alchemyObject, Color color) {
@@ -650,7 +652,7 @@ public class MasteringMixologyPlugin extends Plugin {
 
     private void updateInfoboxes() {
         // Setup the orders fulfilled infobox
-        if (config.showOrdersFulfilledInfobox()) {
+        if (config.showOrdersFulfilledInfobox() && inLab) {
             int ordersFulfilled = client.getVarpValue(VARP_ORDERS_FULFILLED);
             if (ordersFulfilledInfoBox == null) {
                 BufferedImage image = itemManager.getImage(ItemID.ALDARIUM);
