@@ -186,10 +186,6 @@ public class MasteringMixologyPlugin extends Plugin {
             clientThread.invokeLater(this::updatePotionOrders);
         }
 
-        if (event.getKey().equals("inventoryPotionTags")) {
-            potionOverlay.clearCache();
-        }
-
         if (!config.highlightStations()) {
             unHighlightAllStations();
         }

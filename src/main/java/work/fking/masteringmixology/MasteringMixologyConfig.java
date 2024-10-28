@@ -29,7 +29,7 @@ public interface MasteringMixologyConfig extends Config {
             position = 1
     )
     default InventoryPotionTagType inventoryPotionTagType() {
-        return InventoryPotionTagType.COLORED;
+        return InventoryPotionTagType.WHITE;
     }
 
     @ConfigItem(

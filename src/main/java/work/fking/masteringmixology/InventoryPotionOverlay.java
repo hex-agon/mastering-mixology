@@ -1,7 +1,6 @@
 package work.fking.masteringmixology;
 
 import net.runelite.api.widgets.WidgetItem;
-import net.runelite.api.ItemID;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.WidgetItemOverlay;
 
@@ -9,16 +8,8 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.image.BufferedImage;
-import java.util.HashMap;
-
-import static work.fking.masteringmixology.PotionComponent.AGA;
-import static work.fking.masteringmixology.PotionComponent.LYE;
-import static work.fking.masteringmixology.PotionComponent.MOX;
 
 public class InventoryPotionOverlay extends WidgetItemOverlay {
-    private static final int MODIFIED_POTION_ID_DIFF = ItemID.MIXALOT_30030 - ItemID.MIXALOT;
-    private final HashMap<PotionType, BufferedImage> imageCache = new HashMap<>();
     private final MasteringMixologyPlugin plugin;
     private final MasteringMixologyConfig config;
 
@@ -29,43 +20,30 @@ public class InventoryPotionOverlay extends WidgetItemOverlay {
         showOnInventory();
     }
 
-    public void clearCache() {
-        imageCache.clear();
-    }
-
     @Override
     public void renderItemOverlay(Graphics2D graphics2D, int itemId, WidgetItem widgetItem) {
         if (!plugin.isInLab() || config.inventoryPotionTagType() == InventoryPotionTagType.NONE) {
             return;
         }
 
-        var potion = PotionType.fromItemId(itemId <= ItemID.MIXALOT ? itemId : itemId - MODIFIED_POTION_ID_DIFF);
+        var potion = PotionType.fromItemId(itemId);
 
         if (potion == null) {
             return;
         }
 
-        if (!imageCache.containsKey(potion)) {
-            imageCache.put(potion, createRecipeImage(potion));
-        }
-
         var bounds = widgetItem.getCanvasBounds();
-        graphics2D.drawImage(imageCache.get(potion), bounds.x, bounds.y, null);
-    }
+        var x = bounds.x;
+        var y = bounds.y + 13;
 
-    private BufferedImage createRecipeImage(PotionType potion) {
-        // Font measurements come from: graphics2D.getFontMetrics(FontManager.getRunescapeSmallFont())
-        var image = new BufferedImage(25, 13, BufferedImage.TYPE_INT_ARGB);
-        var graphics2D = image.createGraphics();
-        drawRecipe(graphics2D, potion, 1, 13, Color.BLACK); // Drop shadow
+        drawRecipe(graphics2D, potion, x + 1, y + 1, Color.BLACK); // Drop shadow
 
         if (config.inventoryPotionTagType() == InventoryPotionTagType.COLORED) {
-            drawRecipe(graphics2D, potion, 0, 12, null);
-            return image;
+            drawRecipe(graphics2D, potion, x, y, null);
+            return;
         }
 
-        drawRecipe(graphics2D, potion, 0, 12, Color.WHITE);
-        return image;
+        drawRecipe(graphics2D, potion, x, y, Color.WHITE);
     }
 
     private void drawRecipe(Graphics2D graphics2D, PotionType potion, int x, int y, @Nullable Color color) {
@@ -78,19 +56,9 @@ public class InventoryPotionOverlay extends WidgetItemOverlay {
         }
 
         for (var component : potion.components()) {
-            if (component == MOX) {
-                graphics2D.setColor(Color.decode("#" + MOX.color()));
-                graphics2D.drawString("M", x, y);
-                x += 8;
-            } else if (component == AGA) {
-                graphics2D.setColor(Color.decode("#" + AGA.color()));
-                graphics2D.drawString("A", x, y);
-                x += 7;
-            } else if (component == LYE) {
-                graphics2D.setColor(Color.decode("#" + LYE.color()));
-                graphics2D.drawString("L", x, y);
-                x += 5;
-            }
+            graphics2D.setColor(Color.decode("#" + component.color()));
+            graphics2D.drawString(String.valueOf(component.character()), x, y);
+            x += graphics2D.getFontMetrics().charWidth(component.character());
         }
     }
 }
