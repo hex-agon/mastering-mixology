@@ -561,6 +561,9 @@ public class MasteringMixologyPlugin extends Plugin {
             LOGGER.debug("Sorted orders: {}", potionOrders);
         }
 
+        // Sort the orders so that skipped potions are at the bottom
+        potionOrders.sort((o1, o2) -> Boolean.compare(shouldSkipPotion(o1.potionType()), shouldSkipPotion(o2.potionType())));
+
         // Trigger a fake varbit update to force run the clientscript proc
         var varbitType = client.getVarbit(VARBIT_POTION_ORDER_1);
 
