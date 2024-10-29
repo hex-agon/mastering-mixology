@@ -186,7 +186,7 @@ public class MasteringMixologyPlugin extends Plugin {
         }
 
         String key = event.getKey();
-        if (key.equals("potionOrderSorting") || key.equals("potionsToSkip") || key.equals("enableStrategy")) {
+        if (key.equals("potionOrderSorting") || key.equals("potionsToSkip")) {
             clientThread.invokeLater(this::updatePotionOrders);
         }
 
