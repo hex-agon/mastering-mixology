@@ -73,16 +73,6 @@ public interface MasteringMixologyConfig extends Config {
     }
 
     @ConfigItem(
-            keyName = "identifyPotions",
-            name = "Identify potions",
-            description = "Identify potions in your inventory",
-            position = 2
-    )
-    default boolean identifyPotions() {
-        return true;
-    }
-
-    @ConfigItem(
             keyName = "displayResin",
             name = "Display resin amount",
             description = "Display total resin amounts",

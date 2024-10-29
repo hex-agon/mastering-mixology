@@ -56,16 +56,6 @@ public enum PotionType {
         return ITEM_MAP.get(itemId);
     }
 
-    public static PotionType fromItemId(int itemId, boolean isModified) {
-        var potionType = ITEM_MAP.get(itemId);
-
-        if (potionType == null || isModified != (potionType.modifiedItemId() == itemId)) {
-            return null;
-        }
-
-        return potionType;
-    }
-
     public static PotionType fromIdx(int potionTypeId) {
         if (potionTypeId < 0 || potionTypeId >= TYPES.length) {
             return null;
