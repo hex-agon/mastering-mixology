@@ -55,7 +55,7 @@ public class MasteringMixologyPanel extends OverlayPanel {
     @Override
     public Dimension render(Graphics2D graphics) {
         // Hide the overlay if conditions are not met
-        if (!plugin.isInLabRegion() || !config.displayPanel() || (!config.showPanelInLab() && plugin.isInLab())) {
+        if (!plugin.isInLabRegion() || !config.displayPanel() || !config.showPanelInLab() && plugin.isInLab()) {
             return null;
         }
 
