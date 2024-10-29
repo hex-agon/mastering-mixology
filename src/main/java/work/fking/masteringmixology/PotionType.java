@@ -86,9 +86,13 @@ public enum PotionType {
         return itemId;
     }
 
-    public String recipe() { return recipe; }
+    public String recipe() {
+        return recipe;
+    }
 
-    public String rawRecipe() { return rawRecipe; }
+    public String rawRecipe() {
+        return rawRecipe;
+    }
 
     public int experience() {
         return experience;
