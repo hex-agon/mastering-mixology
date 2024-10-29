@@ -401,6 +401,14 @@ public class MasteringMixologyPlugin extends Plugin {
             return;
         }
 
+        boolean containsMAL = false;
+        for (PotionOrder order : potionOrders) {
+            if (order.potionType() == PotionType.MIXALOT) {
+                containsMAL = config.ignoreSkipWhenMAL();
+                break;
+            }
+        }
+
         for (int i = 0; i < potionOrders.size(); i++) {
             var order = potionOrders.get(i);
 
@@ -414,7 +422,7 @@ public class MasteringMixologyPlugin extends Plugin {
             }
             var builder = new StringBuilder();
 
-            boolean skipPotion = shouldSkipPotion(order.potionType());
+            boolean skipPotion = !containsMAL && shouldSkipPotion(order.potionType());
             if (skipPotion) {
                 builder.append("<col=999999>");
             }

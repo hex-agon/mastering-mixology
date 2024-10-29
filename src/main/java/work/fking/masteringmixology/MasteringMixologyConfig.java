@@ -22,6 +22,13 @@ public interface MasteringMixologyConfig extends Config {
     )
     String HIGHLIGHTS = "Highlights";
 
+    @ConfigSection(
+            name = "Strategy",
+            description = "Strategy related configuration",
+            position = 20
+    )
+    String STRATEGY = "Strategy";
+
     @ConfigItem(
             keyName = "potionOrderSorting",
             name = "Order sorting",
@@ -133,14 +140,6 @@ public interface MasteringMixologyConfig extends Config {
     }
 
     @ConfigItem(
-            keyName = "potionsToSkip",
-            name = "Potions To Skip",
-            description = "Type the potion recipes you want to skip, separated by commas",
-            position = 8
-    )
-    default String potionsToSkip() { return ""; }
-
-    @ConfigItem(
             section = HIGHLIGHTS,
             keyName = "highlightBorderWidth",
             name = "Border width",
@@ -159,4 +158,22 @@ public interface MasteringMixologyConfig extends Config {
     default int highlightFeather() {
         return 1;
     }
+
+    @ConfigItem(
+            section = STRATEGY,
+            keyName = "potionsToSkip",
+            name = "Potions To Skip",
+            description = "Type the potion recipes you want to skip, separated by commas",
+            position = 1
+    )
+    default String potionsToSkip() { return ""; }
+
+    @ConfigItem(
+            section = STRATEGY,
+            keyName = "ignoreSkipWhenMAL",
+            name = "Ignore When MAL is in Order",
+            description = "Do not skip potions if the order contains a Mixalot potion.",
+            position = 2
+    )
+    default boolean ignoreSkipWhenMAL() { return true; }
 }
