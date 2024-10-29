@@ -36,6 +36,7 @@ public enum PotionType {
 
     private final int itemId;
     private final String recipe;
+    private final String rawRecipe;
     private final String abbreviation;
     private final int experience;
     private final PotionComponent[] components;
@@ -44,6 +45,7 @@ public enum PotionType {
     PotionType(int itemId, int experience, PotionComponent... components) {
         this.itemId = itemId;
         this.recipe = colorizeRecipe(components);
+        this.rawRecipe = buildRecipe(components);
         this.experience = experience;
         this.components = components;
         this.abbreviation = "" + components[0].character() + components[1].character() + components[2].character();
@@ -69,6 +71,13 @@ public enum PotionType {
                 + colorizeRecipeComponent(components[2]);
     }
 
+    private static String buildRecipe(PotionComponent[] components) {
+        if (components.length != 3) {
+            throw new IllegalArgumentException("Invalid potion components: " + Arrays.toString(components));
+        }
+        return ("" + components[0].character() + components[1].character() + components[2].character());
+    }
+
     private static String colorizeRecipeComponent(PotionComponent component) {
         return "<col=" + component.color() + ">" + component.character() + "</col>";
     }
@@ -77,9 +86,9 @@ public enum PotionType {
         return itemId;
     }
 
-    public String recipe() {
-        return recipe;
-    }
+    public String recipe() { return recipe; }
+
+    public String rawRecipe() { return rawRecipe; }
 
     public int experience() {
         return experience;

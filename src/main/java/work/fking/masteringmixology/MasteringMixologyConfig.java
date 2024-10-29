@@ -133,6 +133,14 @@ public interface MasteringMixologyConfig extends Config {
     }
 
     @ConfigItem(
+            keyName = "potionsToSkip",
+            name = "Potions To Skip",
+            description = "Type the potion recipes you want to skip, separated by commas",
+            position = 8
+    )
+    default String potionsToSkip() { return ""; }
+
+    @ConfigItem(
             section = HIGHLIGHTS,
             keyName = "highlightBorderWidth",
             name = "Border width",
