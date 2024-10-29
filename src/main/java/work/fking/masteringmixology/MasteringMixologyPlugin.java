@@ -61,9 +61,9 @@ public class MasteringMixologyPlugin extends Plugin {
     private static final int VARBIT_POTION_ORDER_3 = 11319;
     private static final int VARBIT_POTION_MODIFIER_3 = 11320;
 
-    public static final int MOX_PASTE_VARBIT = 11431;
-    public static final int AGA_PASTE_VARBIT = 11432;
-    public static final int LYE_PASTE_VARBIT = 11433;
+    public static final int VARBIT_MOX_PASTE = 11431;
+    public static final int VARBIT_AGA_PASTE = 11432;
+    public static final int VARBIT_LYE_PASTE = 11433;
 
     static final int VARP_LYE_RESIN = 4414;
     static final int VARP_AGA_RESIN = 4415;

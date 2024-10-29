@@ -127,9 +127,9 @@ public class MasteringMixologyPanel extends OverlayPanel {
 
     private void displayResinAndPaste() {
         // Create components for each resin and paste
-        LayoutableRenderableEntity moxComponent = createResinAndPasteComponent(PotionComponent.MOX, MasteringMixologyPlugin.MOX_PASTE_VARBIT, MasteringMixologyPlugin.VARP_MOX_RESIN);
-        LayoutableRenderableEntity agaComponent = createResinAndPasteComponent(PotionComponent.AGA, MasteringMixologyPlugin.AGA_PASTE_VARBIT, MasteringMixologyPlugin.VARP_AGA_RESIN);
-        LayoutableRenderableEntity lyeComponent = createResinAndPasteComponent(PotionComponent.LYE, MasteringMixologyPlugin.LYE_PASTE_VARBIT, MasteringMixologyPlugin.VARP_LYE_RESIN);
+        LayoutableRenderableEntity moxComponent = createResinAndPasteComponent(PotionComponent.MOX, MasteringMixologyPlugin.VARBIT_MOX_PASTE, MasteringMixologyPlugin.VARP_MOX_RESIN);
+        LayoutableRenderableEntity agaComponent = createResinAndPasteComponent(PotionComponent.AGA, MasteringMixologyPlugin.VARBIT_AGA_PASTE, MasteringMixologyPlugin.VARP_AGA_RESIN);
+        LayoutableRenderableEntity lyeComponent = createResinAndPasteComponent(PotionComponent.LYE, MasteringMixologyPlugin.VARBIT_LYE_PASTE, MasteringMixologyPlugin.VARP_LYE_RESIN);
 
         // Combine them horizontally
         SplitComponent resinSplit = SplitComponent.builder()
