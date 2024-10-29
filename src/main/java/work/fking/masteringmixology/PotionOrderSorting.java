@@ -4,7 +4,10 @@ import java.util.Comparator;
 
 public enum PotionOrderSorting {
     VANILLA("Vanilla (random)", null),
-    BY_STATION("By station", Comparator.comparing(order -> order.potionModifier().ordinal()));
+    BY_STATION("By station", Comparator.comparing(order -> order.potionModifier().ordinal())),
+    CONCENTRATE_LAST("Concentrate Last", Comparator.comparing((PotionOrder order) ->
+                    order.potionModifier() == PotionModifier.CONCENTRATED ? 1 : 0)
+            .thenComparing(order -> order.potionModifier().ordinal()));
 
     private final String name;
     private final Comparator<PotionOrder> comparator;
