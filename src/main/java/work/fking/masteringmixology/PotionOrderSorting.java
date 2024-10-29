@@ -4,10 +4,19 @@ import java.util.Comparator;
 
 public enum PotionOrderSorting {
     VANILLA("Vanilla (random)", null),
-    BY_STATION("By station", Comparator.comparing(order -> order.potionModifier().ordinal())),
-    CONCENTRATE_LAST("Concentrate Last", Comparator.comparing((PotionOrder order) ->
-                    order.potionModifier() == PotionModifier.CONCENTRATED ? 1 : 0)
-            .thenComparing(order -> order.potionModifier().ordinal()));
+    // Sort by modifier, in the order CRYSTALISED > HOMOGENOUS > CONCENTRATED
+    BY_STATION("By station", Comparator.comparingInt(order -> {
+        switch (order.potionModifier()) {
+            case CRYSTALISED:
+                return 0;
+            case HOMOGENOUS:
+                return 1;
+            case CONCENTRATED:
+                return 2;
+            default:
+                return Integer.MAX_VALUE;
+        }
+    }));
 
     private final String name;
     private final Comparator<PotionOrder> comparator;
