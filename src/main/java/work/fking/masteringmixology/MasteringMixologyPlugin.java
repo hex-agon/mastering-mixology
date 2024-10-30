@@ -5,6 +5,7 @@ import net.runelite.api.Client;
 import net.runelite.api.FontID;
 import net.runelite.api.GameState;
 import net.runelite.api.InventoryID;
+import net.runelite.api.Player;
 import net.runelite.api.TileObject;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.events.GameStateChanged;
@@ -60,9 +61,13 @@ public class MasteringMixologyPlugin extends Plugin {
     private static final int VARBIT_POTION_ORDER_3 = 11319;
     private static final int VARBIT_POTION_MODIFIER_3 = 11320;
 
-    private static final int VARP_LYE_RESIN = 4414;
-    private static final int VARP_AGA_RESIN = 4415;
-    private static final int VARP_MOX_RESIN = 4416;
+    public static final int VARBIT_MOX_PASTE = 11431;
+    public static final int VARBIT_AGA_PASTE = 11432;
+    public static final int VARBIT_LYE_PASTE = 11433;
+
+    static final int VARP_LYE_RESIN = 4414;
+    static final int VARP_AGA_RESIN = 4415;
+    static final int VARP_MOX_RESIN = 4416;
 
     private static final int VARBIT_ALEMBIC_PROGRESS = 11328;
     private static final int VARBIT_AGITATOR_PROGRESS = 11329;
@@ -86,6 +91,9 @@ public class MasteringMixologyPlugin extends Plugin {
     private static final int COMPONENT_POTION_ORDERS_GROUP_ID = 882;
     private static final int COMPONENT_POTION_ORDERS = COMPONENT_POTION_ORDERS_GROUP_ID << 16 | 2;
 
+    private static final int LABS_REGION_ID = 5521;
+    private static final int LABS_REGION_PLANE = 0;
+
     @Inject
     private Client client;
 
@@ -106,6 +114,9 @@ public class MasteringMixologyPlugin extends Plugin {
 
     @Inject
     private InventoryPotionOverlay potionOverlay;
+
+    @Inject
+    private MasteringMixologyPanel masteringMixologyPanel;
 
     private final Map<AlchemyObject, HighlightedObject> highlightedObjects = new LinkedHashMap<>();
     private List<PotionOrder> potionOrders = Collections.emptyList();
@@ -129,6 +140,16 @@ public class MasteringMixologyPlugin extends Plugin {
         return inLab;
     }
 
+    /**
+     * @return true if the player is in the labs region (the area where the minigame takes place)
+     * the isInlab method only checks if they are inside the actual lab room where the UI is active
+     */
+    public boolean isInLabRegion() {
+        Player player = client.getLocalPlayer();
+        return player != null && player.getWorldLocation().getRegionID() == LABS_REGION_ID
+                && player.getWorldLocation().getPlane() == LABS_REGION_PLANE;
+    }
+
     @Provides
     MasteringMixologyConfig provideConfig(ConfigManager configManager) {
         return configManager.getConfig(MasteringMixologyConfig.class);
@@ -138,6 +159,7 @@ public class MasteringMixologyPlugin extends Plugin {
     protected void startUp() {
         overlayManager.add(overlay);
         overlayManager.add(potionOverlay);
+        overlayManager.add(masteringMixologyPanel);
 
         if (client.getGameState() == GameState.LOGGED_IN) {
             clientThread.invokeLater(this::initialize);
@@ -148,6 +170,7 @@ public class MasteringMixologyPlugin extends Plugin {
     protected void shutDown() {
         overlayManager.remove(overlay);
         overlayManager.remove(potionOverlay);
+        overlayManager.remove(masteringMixologyPanel);
         inLab = false;
     }
 
@@ -184,6 +207,10 @@ public class MasteringMixologyPlugin extends Plugin {
 
         if (event.getKey().equals("potionOrderSorting")) {
             clientThread.invokeLater(this::updatePotionOrders);
+        }
+
+        if (event.getKey().equals("panelBackgroundColor")) {
+            masteringMixologyPanel.updateBackgroundColor();
         }
 
         if (!config.highlightStations()) {
@@ -523,7 +550,7 @@ public class MasteringMixologyPlugin extends Plugin {
 
     private void updatePotionOrders() {
         LOGGER.debug("Updating potion orders");
-        potionOrders = getPotionOrders();
+        potionOrders = getPotionOrdersFromVarbit();
 
         var potionOrderSorting = config.potionOrderSorting();
 
@@ -590,7 +617,11 @@ public class MasteringMixologyPlugin extends Plugin {
         }
     }
 
-    private List<PotionOrder> getPotionOrders() {
+    public List<PotionOrder> getPotionOrders() {
+        return potionOrders;
+    }
+
+    private List<PotionOrder> getPotionOrdersFromVarbit() {
         var potionOrders = new ArrayList<PotionOrder>(3);
 
         for (int orderIdx = 0; orderIdx < 3; orderIdx++) {
