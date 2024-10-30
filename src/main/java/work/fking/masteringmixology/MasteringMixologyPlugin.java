@@ -220,7 +220,7 @@ public class MasteringMixologyPlugin extends Plugin {
         for (var item : inventory.getItems()) {
             var potionType = PotionType.fromItemId(item.getId());
 
-            if (potionType == null) {
+            if (potionType == null || potionType.modifiedItemId() == item.getId()) {
                 continue;
             }
             for (var order : potionOrders) {

@@ -23,6 +23,16 @@ public interface MasteringMixologyConfig extends Config {
     String HIGHLIGHTS = "Highlights";
 
     @ConfigItem(
+            keyName = "inventoryPotionTags",
+            name = "Inventory Potion Tags",
+            description = "How potions should be tagged in the inventory",
+            position = 1
+    )
+    default InventoryPotionTagType inventoryPotionTagType() {
+        return InventoryPotionTagType.WHITE;
+    }
+
+    @ConfigItem(
             keyName = "potionOrderSorting",
             name = "Order sorting",
             description = "Determines how potion orders are sorted in the interface",
@@ -78,18 +88,7 @@ public interface MasteringMixologyConfig extends Config {
             description = "Highlight the mixing vessel red when you have the wrong ingredients",
             position = 6
     )
-    // used to enable highlighting the vessel red when you have the wrong ingredients
     default boolean highlightMixingVesselInvalid() {
-        return true;
-    }
-
-    @ConfigItem(
-            keyName = "identifyPotions",
-            name = "Identify potions",
-            description = "Identify potions in your inventory",
-            position = 7
-    )
-    default boolean identifyPotions() {
         return true;
     }
 
