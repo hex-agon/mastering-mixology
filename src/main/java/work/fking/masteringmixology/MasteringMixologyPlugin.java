@@ -399,16 +399,19 @@ public class MasteringMixologyPlugin extends Plugin {
             return;
         }
 
+        int indexOffset = 0;
         for (int i = 0; i < potionOrders.size(); i++) {
             var order = potionOrders.get(i);
 
-            var orderGraphic = children[order.idx() * 2 + 1];
-            var orderText = children[order.idx() * 2 + 2];
+            var orderGraphic = children[order.idx() * 2 + 1 + indexOffset];
+            var orderText = children[order.idx() * 2 + 2 + indexOffset];
 
             // If anyone still has orders they don't have the herblore level to deliver there's an extra RECTANGLE component which
             // causes the idx calculations to select the wrong components
             if (orderGraphic.getType() != WidgetType.GRAPHIC || orderText.getType() != WidgetType.TEXT) {
-                continue;
+                indexOffset++;
+                orderGraphic = children[order.idx() * 2 + 1 + indexOffset];
+                orderText = children[order.idx() * 2 + 2 + indexOffset];
             }
             var builder = new StringBuilder(orderText.getText());
 
