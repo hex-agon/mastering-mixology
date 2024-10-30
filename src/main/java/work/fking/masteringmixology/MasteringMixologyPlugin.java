@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.awt.Color;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -196,14 +195,8 @@ public class MasteringMixologyPlugin extends Plugin {
         }
 
         if (event.getKey().equals("displayResin")) {
-            var baseWidget = client.getWidget(COMPONENT_POTION_ORDERS);
-            if (baseWidget != null) {
-                if (!config.displayResin()) {
-                    clientThread.invokeLater(() -> removeResinText(baseWidget));
-                } else {
-                    clientThread.invokeLater(() -> appendResins(baseWidget));
-                }
-            }
+            // Trigger the potion order update to refresh the resin display
+            clientThread.invokeLater(this::triggerPotionOrderUpdate);
         }
 
         if (!config.highlightDigWeed()) {
@@ -256,6 +249,7 @@ public class MasteringMixologyPlugin extends Plugin {
         // Whenever a potion is delivered, all the potion order related varbits are reset to 0 first then
         // set to the new values. We can use this to clear all the stations.
         if (varbitId == VARBIT_POTION_ORDER_1) {
+            System.out.println("Got varbit change with value " + value);
             if (value == 0) {
                 unHighlightAllStations();
             } else {
@@ -447,26 +441,6 @@ public class MasteringMixologyPlugin extends Plugin {
         }
     }
 
-    private void removeResinText(Widget widget) {
-        Widget[] children = widget.getChildren();
-        if (children == null || children.length < 3) {
-            return;
-        }
-
-        // Get the balance of all resins
-        String moxResinAmount = String.valueOf(client.getVarpValue(VARP_MOX_RESIN));
-        String agaResinAmount = String.valueOf(client.getVarpValue(VARP_AGA_RESIN));
-        String lyeResinAmount = String.valueOf(client.getVarpValue(VARP_LYE_RESIN));
-
-        // Check if the last three children have texts matching the resin amounts and remove them
-        if (children[children.length - 1].getText().equals(lyeResinAmount) &&
-                children[children.length - 2].getText().equals(agaResinAmount) &&
-                children[children.length - 3].getText().equals(moxResinAmount)) {
-            widget.setChildren(Arrays.copyOf(children, children.length - 3));
-            widget.revalidate();
-        }
-    }
-
     private void appendResins(Widget baseWidget) {
         if (!config.displayResin()) {
             return;
@@ -569,6 +543,10 @@ public class MasteringMixologyPlugin extends Plugin {
             LOGGER.debug("Sorted orders: {}", potionOrders);
         }
 
+        triggerPotionOrderUpdate();
+    }
+
+    public void triggerPotionOrderUpdate() {
         // Trigger a fake varbit update to force run the clientscript proc
         var varbitType = client.getVarbit(VARBIT_POTION_ORDER_1);
 
