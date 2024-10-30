@@ -4,19 +4,8 @@ import java.util.Comparator;
 
 public enum PotionOrderSorting {
     VANILLA("Vanilla (random)", null),
-    BY_STATION("By station", Comparator.comparing(order -> order.potionModifier().ordinal())),
-    SHORTEST_PATH("Shortest Path", Comparator.comparing(order -> {
-        switch (order.potionModifier()) {
-            case CRYSTALISED:
-                return 1;
-            case CONCENTRATED:
-                return 2;
-            case HOMOGENOUS:
-                return 3;
-            default:
-                throw new IllegalStateException("Unexpected value: " + order.potionModifier().toString());
-        }
-    }));
+    BY_STATION("By station", PotionComparators.byStation()),
+    SHORTEST_PATH("Shortest Path", PotionComparators.shortestPath());
     private final String name;
     private final Comparator<PotionOrder> comparator;
 
