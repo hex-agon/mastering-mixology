@@ -27,23 +27,23 @@ public interface MasteringMixologyConfig extends Config {
     }
 
     @ConfigItem(
-            keyName = "displayResin",
-            name = "Display resin amount",
-            description = "Display total resin amounts",
+            keyName = "inventoryPotionTags",
+            name = "Inventory Potion Tags",
+            description = "How potions should be tagged in the inventory",
             position = 2
     )
-    default boolean displayResin() {
-        return false;
+    default InventoryPotionTagType inventoryPotionTagType() {
+        return InventoryPotionTagType.WHITE;
     }
 
     @ConfigItem(
-            keyName = "identifyPotions",
-            name = "Identify potions",
-            description = "Identify potions in your inventory",
+            keyName = "displayResin",
+            name = "Display resin amount",
+            description = "Display total resin amounts",
             position = 3
     )
-    default boolean identifyPotions() {
-        return true;
+    default boolean displayResin() {
+        return false;
     }
 
 
@@ -163,17 +163,6 @@ public interface MasteringMixologyConfig extends Config {
     )
     default HighlightedObject.HighlightStyle stationQuickActionHighlightStyle() {
         return HighlightedObject.HighlightStyle.CLICK_BOX;
-    }
-
-    @ConfigItem(
-            section = HIGHLIGHTS,
-            keyName = "digweedHighlightStyle",
-            name = "DigWeed Style",
-            description = "Configures the DigWeed highlight style",
-            position = 11
-    )
-    default HighlightedObject.HighlightStyle digweedHighlightStyle() {
-        return HighlightedObject.HighlightStyle.OUTLINE;
     }
 
     @ConfigItem(

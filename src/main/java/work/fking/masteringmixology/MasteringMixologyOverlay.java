@@ -61,16 +61,14 @@ public class MasteringMixologyOverlay extends Overlay {
 
     private HighlightedObject.HighlightStyle getHighlightStyle(HighlightedObject.HighlightReason reason) {
         switch (reason) {
-            case STATION:
-                return config.highlightStyle();
             case QUICK_ACTION:
                 return config.stationQuickActionHighlightStyle();
             case LEVER:
                 return config.leverHighlightStyle();
+            case STATION:
             case DIGWEED:
-                return config.digweedHighlightStyle();
             default:
-                return HighlightedObject.HighlightStyle.OUTLINE;
+                return config.highlightStyle();
         }
     }
 
