@@ -5,7 +5,6 @@ import net.runelite.api.Client;
 import net.runelite.api.FontID;
 import net.runelite.api.GameState;
 import net.runelite.api.InventoryID;
-import net.runelite.api.TileObject;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GraphicsObjectCreated;
@@ -225,7 +224,7 @@ public class MasteringMixologyPlugin extends Plugin {
             for (var order : potionOrders) {
                 if (order.potionType() == potionType && !order.fulfilled()) {
                     unHighlightAllStations();
-                    highlightObject(order.potionModifier().alchemyObject(), config.stationHighlightColor());
+                    highlightObject(order.potionModifier().alchemyObject(), config.stationHighlightColor(), HighlightedObject.HighlightReason.STATION);
                     return;
                 }
             }
@@ -284,7 +283,7 @@ public class MasteringMixologyPlugin extends Plugin {
         } else if (varbitId == VARBIT_DIGWEED_NORTH_EAST) {
             if (value == 1) {
                 if (config.highlightDigWeed()) {
-                    highlightObject(AlchemyObject.DIGWEED_NORTH_EAST, config.digweedHighlightColor());
+                    highlightObject(AlchemyObject.DIGWEED_NORTH_EAST, config.digweedHighlightColor(), HighlightedObject.HighlightReason.DIGWEED);
                 }
                 notifier.notify(config.notifyDigWeed(), "A digweed has spawned north east.");
             } else {
@@ -293,7 +292,7 @@ public class MasteringMixologyPlugin extends Plugin {
         } else if (varbitId == VARBIT_DIGWEED_SOUTH_EAST) {
             if (value == 1) {
                 if (config.highlightDigWeed()) {
-                    highlightObject(AlchemyObject.DIGWEED_SOUTH_EAST, config.digweedHighlightColor());
+                    highlightObject(AlchemyObject.DIGWEED_SOUTH_EAST, config.digweedHighlightColor(), HighlightedObject.HighlightReason.DIGWEED);
                 }
                 notifier.notify(config.notifyDigWeed(), "A digweed has spawned south east.");
             } else {
@@ -302,7 +301,7 @@ public class MasteringMixologyPlugin extends Plugin {
         } else if (varbitId == VARBIT_DIGWEED_SOUTH_WEST) {
             if (value == 1) {
                 if (config.highlightDigWeed()) {
-                    highlightObject(AlchemyObject.DIGWEED_SOUTH_WEST, config.digweedHighlightColor());
+                    highlightObject(AlchemyObject.DIGWEED_SOUTH_WEST, config.digweedHighlightColor(), HighlightedObject.HighlightReason.DIGWEED);
                 }
                 notifier.notify(config.notifyDigWeed(), "A digweed has spawned south west.");
             } else {
@@ -311,7 +310,7 @@ public class MasteringMixologyPlugin extends Plugin {
         } else if (varbitId == VARBIT_DIGWEED_NORTH_WEST) {
             if (value == 1) {
                 if (config.highlightDigWeed()) {
-                    highlightObject(AlchemyObject.DIGWEED_NORTH_WEST, config.digweedHighlightColor());
+                    highlightObject(AlchemyObject.DIGWEED_NORTH_WEST, config.digweedHighlightColor(), HighlightedObject.HighlightReason.DIGWEED);
                 }
                 notifier.notify(config.notifyDigWeed(), "A digweed has spawned north west.");
             } else {
@@ -359,14 +358,14 @@ public class MasteringMixologyPlugin extends Plugin {
             return;
         }
         if (spotAnimId == SPOT_ANIM_ALEMBIC && alembicPotionType != null) {
-            highlightObject(AlchemyObject.ALEMBIC, config.stationQuickActionHighlightColor());
+            highlightObject(AlchemyObject.ALEMBIC, config.stationQuickActionHighlightColor(), HighlightedObject.HighlightReason.QUICK_ACTION);
             // start counting ticks for alembic so we know to un-highlight on the next alembic varbit update
             // note this quick action has a 1 tick window, so we use an int that goes 0 -> 1 -> unhighlight
             alembicQuickActionTicks = 1;
         }
 
         if (spotAnimId == SPOT_ANIM_AGITATOR && agitatorPotionType != null) {
-            highlightObject(AlchemyObject.AGITATOR, config.stationQuickActionHighlightColor());
+            highlightObject(AlchemyObject.AGITATOR, config.stationQuickActionHighlightColor(), HighlightedObject.HighlightReason.QUICK_ACTION);
             // start counting ticks for agitator so we know to un-highlight on the next agitator varbit update
             // note this quick action has a 2-tick window, so we use an int that goes 0 -> 1 -> 2 -> unhighlight
             agitatorQuickActionTicks = 1;
@@ -457,7 +456,7 @@ public class MasteringMixologyPlugin extends Plugin {
         tryHighlightNextStation();
     }
 
-    public void highlightObject(AlchemyObject alchemyObject, Color color) {
+    public void highlightObject(AlchemyObject alchemyObject, Color color, HighlightedObject.HighlightReason reason) {
         var worldView = client.getTopLevelWorldView();
 
         if (worldView == null) {
@@ -477,7 +476,7 @@ public class MasteringMixologyPlugin extends Plugin {
             }
 
             if (gameObject.getId() == alchemyObject.objectId()) {
-                highlightedObjects.put(alchemyObject, new HighlightedObject(gameObject, color, config.highlightBorderWidth(), config.highlightFeather()));
+                highlightedObjects.put(alchemyObject, new HighlightedObject(gameObject, color, reason));
                 return;
             }
         }
@@ -485,13 +484,13 @@ public class MasteringMixologyPlugin extends Plugin {
         var decorativeObject = tile.getDecorativeObject();
 
         if (decorativeObject != null && decorativeObject.getId() == alchemyObject.objectId()) {
-            highlightedObjects.put(alchemyObject, new HighlightedObject(decorativeObject, color, config.highlightBorderWidth(), config.highlightFeather()));
+            highlightedObjects.put(alchemyObject, new HighlightedObject(decorativeObject, color, reason));
         }
     }
 
     public void resetDefaultHighlight(AlchemyObject alchemyObject) {
         if (config.highlightStations()) {
-            highlightObject(alchemyObject, config.stationHighlightColor());
+            highlightObject(alchemyObject, config.stationHighlightColor(), HighlightedObject.HighlightReason.STATION);
         }
     }
 
@@ -510,9 +509,9 @@ public class MasteringMixologyPlugin extends Plugin {
             return;
         }
 
-        highlightObject(LYE_LEVER, Color.decode("#" + LYE.color()));
-        highlightObject(AGA_LEVER, Color.decode("#" + AGA.color()));
-        highlightObject(MOX_LEVER, Color.decode("#" + MOX.color()));
+        highlightObject(LYE_LEVER, Color.decode("#" + LYE.color()), HighlightedObject.HighlightReason.LEVER);
+        highlightObject(AGA_LEVER, Color.decode("#" + AGA.color()), HighlightedObject.HighlightReason.LEVER);
+        highlightObject(MOX_LEVER, Color.decode("#" + MOX.color()), HighlightedObject.HighlightReason.LEVER);
     }
 
     private void unHighlightLevers() {
@@ -584,7 +583,7 @@ public class MasteringMixologyPlugin extends Plugin {
             }
             if (inventory.contains(order.potionType().itemId())) {
                 LOGGER.debug("Highlighting station for order {}", order);
-                highlightObject(order.potionModifier().alchemyObject(), config.stationHighlightColor());
+                highlightObject(order.potionModifier().alchemyObject(), config.stationHighlightColor(), HighlightedObject.HighlightReason.STATION);
                 break;
             }
         }
@@ -626,37 +625,6 @@ public class MasteringMixologyPlugin extends Plugin {
             return PotionModifier.from(client.getVarbitValue(VARBIT_POTION_MODIFIER_3) - 1);
         } else {
             return null;
-        }
-    }
-
-    public static class HighlightedObject {
-
-        private final TileObject object;
-        private final Color color;
-        private final int outlineWidth;
-        private final int feather;
-
-        private HighlightedObject(TileObject object, Color color, int outlineWidth, int feather) {
-            this.object = object;
-            this.color = color;
-            this.outlineWidth = outlineWidth;
-            this.feather = feather;
-        }
-
-        public TileObject object() {
-            return object;
-        }
-
-        public Color color() {
-            return color;
-        }
-
-        public int outlineWidth() {
-            return outlineWidth;
-        }
-
-        public int feather() {
-            return feather;
         }
     }
 }

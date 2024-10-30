@@ -15,13 +15,7 @@ public interface MasteringMixologyConfig extends Config {
 
     String CONFIG_GROUP = "masteringmixology";
 
-    @ConfigSection(
-            name = "Highlights",
-            description = "Highlighting related configuration",
-            position = 10
-    )
-    String HIGHLIGHTS = "Highlights";
-
+    // General Configurations
     @ConfigItem(
             keyName = "potionOrderSorting",
             name = "Order sorting",
@@ -30,46 +24,6 @@ public interface MasteringMixologyConfig extends Config {
     )
     default PotionOrderSorting potionOrderSorting() {
         return PotionOrderSorting.VANILLA;
-    }
-
-    @ConfigItem(
-            keyName = "highlightLevers",
-            name = "Highlight levers",
-            description = "Highlight levers",
-            position = 2
-    )
-    default boolean highlightLevers() {
-        return true;
-    }
-
-    @ConfigItem(
-            keyName = "highlightStations",
-            name = "Highlight stations",
-            description = "Toggles alchemical station highlighting on or off",
-            position = 2
-    )
-    default boolean highlightStations() {
-        return true;
-    }
-
-    @ConfigItem(
-            keyName = "highlightQuickActionEvents",
-            name = "Highlight quick-action events",
-            description = "Toggles station quick-action events highlighting on or off",
-            position = 2
-    )
-    default boolean highlightQuickActionEvents() {
-        return true;
-    }
-
-    @ConfigItem(
-            keyName = "identifyPotions",
-            name = "Identify potions",
-            description = "Identify potions in your inventory",
-            position = 2
-    )
-    default boolean identifyPotions() {
-        return true;
     }
 
     @ConfigItem(
@@ -83,26 +37,70 @@ public interface MasteringMixologyConfig extends Config {
     }
 
     @ConfigItem(
-            keyName = "stationHighlightColor",
-            name = "Station color",
-            description = "Configures the default station highlight color",
+            keyName = "identifyPotions",
+            name = "Identify potions",
+            description = "Identify potions in your inventory",
             position = 3
     )
-    default Color stationHighlightColor() {
-        return Color.MAGENTA;
+    default boolean identifyPotions() {
+        return true;
+    }
+
+
+    // Highlights Section
+    @ConfigSection(
+            name = "Highlights",
+            description = "Highlighting related configuration",
+            position = 10
+    )
+    String HIGHLIGHTS = "Highlights";
+
+    @ConfigItem(
+            section = HIGHLIGHTS,
+            keyName = "highlightLevers",
+            name = "Highlight levers",
+            description = "Highlight levers",
+            position = 1
+    )
+    default boolean highlightLevers() {
+        return true;
     }
 
     @ConfigItem(
-            keyName = "stationQuickActionHighlightColor",
-            name = "Quick-action color",
-            description = "Configures the station quick-action highlight color",
+            section = HIGHLIGHTS,
+            keyName = "highlightStations",
+            name = "Highlight stations",
+            description = "Toggles alchemical station highlighting on or off",
+            position = 2
+    )
+    default boolean highlightStations() {
+        return true;
+    }
+
+    @ConfigItem(
+            section = HIGHLIGHTS,
+            keyName = "highlightQuickActionEvents",
+            name = "Highlight quick-action events",
+            description = "Toggles station quick-action events highlighting on or off",
+            position = 3
+    )
+    default boolean highlightQuickActionEvents() {
+        return true;
+    }
+
+    @ConfigItem(
+            section = HIGHLIGHTS,
+            keyName = "highlightDigweed",
+            name = "Highlight DigWeed",
+            description = "Toggles digweed highlighting on or off",
             position = 4
     )
-    default Color stationQuickActionHighlightColor() {
-        return Color.GREEN;
+    default boolean highlightDigWeed() {
+        return true;
     }
 
     @ConfigItem(
+            section = HIGHLIGHTS,
             keyName = "notifyDigweed",
             name = "Notify DigWeed",
             description = "Toggles digweed notifications on or off",
@@ -113,20 +111,33 @@ public interface MasteringMixologyConfig extends Config {
     }
 
     @ConfigItem(
-            keyName = "highlightDigweed",
-            name = "Highlight DigWeed",
-            description = "Toggles digweed highlighting on or off",
+            section = HIGHLIGHTS,
+            keyName = "stationHighlightColor",
+            name = "Station color",
+            description = "Configures the default station highlight color",
             position = 6
     )
-    default boolean highlightDigWeed() {
-        return true;
+    default Color stationHighlightColor() {
+        return Color.MAGENTA;
     }
 
     @ConfigItem(
+            section = HIGHLIGHTS,
+            keyName = "stationQuickActionHighlightColor",
+            name = "Quick-action color",
+            description = "Configures the station quick-action highlight color",
+            position = 7
+    )
+    default Color stationQuickActionHighlightColor() {
+        return Color.GREEN;
+    }
+
+    @ConfigItem(
+            section = HIGHLIGHTS,
             keyName = "digweedHighlightColor",
             name = "DigWeed color",
             description = "Configures the digweed highlight color",
-            position = 7
+            position = 8
     )
     default Color digweedHighlightColor() {
         return Color.GREEN;
@@ -134,9 +145,54 @@ public interface MasteringMixologyConfig extends Config {
 
     @ConfigItem(
             section = HIGHLIGHTS,
+            keyName = "highlightStyle",
+            name = "Highlight Style",
+            description = "Change the style of the highlight",
+            position = 9
+    )
+    default HighlightedObject.HighlightStyle highlightStyle() {
+        return HighlightedObject.HighlightStyle.OUTLINE;
+    }
+
+    @ConfigItem(
+            section = HIGHLIGHTS,
+            keyName = "stationQuickActionHighlightStyle",
+            name = "Quick-action Style",
+            description = "Configures the station quick-action highlight style",
+            position = 10
+    )
+    default HighlightedObject.HighlightStyle stationQuickActionHighlightStyle() {
+        return HighlightedObject.HighlightStyle.CLICK_BOX;
+    }
+
+    @ConfigItem(
+            section = HIGHLIGHTS,
+            keyName = "digweedHighlightStyle",
+            name = "DigWeed Style",
+            description = "Configures the DigWeed highlight style",
+            position = 11
+    )
+    default HighlightedObject.HighlightStyle digweedHighlightStyle() {
+        return HighlightedObject.HighlightStyle.OUTLINE;
+    }
+
+    @ConfigItem(
+            section = HIGHLIGHTS,
+            keyName = "leverHighlightStyle",
+            name = "Lever Style",
+            description = "Configures the lever highlight style",
+            position = 12
+    )
+    default HighlightedObject.HighlightStyle leverHighlightStyle() {
+        return HighlightedObject.HighlightStyle.OUTLINE;
+    }
+
+    @ConfigItem(
+            section = HIGHLIGHTS,
             keyName = "highlightBorderWidth",
             name = "Border width",
-            description = "Configures the border width of the object highlights"
+            description = "Configures the border width of the object highlights",
+            position = 13
     )
     default int highlightBorderWidth() {
         return 2;
@@ -146,7 +202,8 @@ public interface MasteringMixologyConfig extends Config {
             section = HIGHLIGHTS,
             keyName = "highlightFeather",
             name = "Feather",
-            description = "Configures the amount of 'feathering' to be applied to the object highlights"
+            description = "Configures the amount of 'feathering' to be applied to the object highlights",
+            position = 14
     )
     default int highlightFeather() {
         return 1;
