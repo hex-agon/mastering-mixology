@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -191,6 +192,17 @@ public class MasteringMixologyPlugin extends Plugin {
                 unHighlightAllStations();
             } else {
                 clientThread.invokeLater(this::tryHighlightNextStation);
+            }
+        }
+
+        if (event.getKey().equals("displayResin")) {
+            var baseWidget = client.getWidget(COMPONENT_POTION_ORDERS);
+            if (baseWidget != null) {
+                if (!config.displayResin()) {
+                    clientThread.invokeLater(() -> removeResinText(baseWidget));
+                } else {
+                    clientThread.invokeLater(() -> appendResins(baseWidget));
+                }
             }
         }
 
@@ -432,6 +444,26 @@ public class MasteringMixologyPlugin extends Plugin {
                 orderGraphic.revalidate();
                 orderText.revalidate();
             }
+        }
+    }
+
+    private void removeResinText(Widget widget) {
+        Widget[] children = widget.getChildren();
+        if (children == null || children.length < 3) {
+            return;
+        }
+
+        // Get the balance of all resins
+        String moxResinAmount = String.valueOf(client.getVarpValue(VARP_MOX_RESIN));
+        String agaResinAmount = String.valueOf(client.getVarpValue(VARP_AGA_RESIN));
+        String lyeResinAmount = String.valueOf(client.getVarpValue(VARP_LYE_RESIN));
+
+        // Check if the last three children have texts matching the resin amounts and remove them
+        if (children[children.length - 1].getText().equals(lyeResinAmount) &&
+                children[children.length - 2].getText().equals(agaResinAmount) &&
+                children[children.length - 3].getText().equals(moxResinAmount)) {
+            widget.setChildren(Arrays.copyOf(children, children.length - 3));
+            widget.revalidate();
         }
     }
 
