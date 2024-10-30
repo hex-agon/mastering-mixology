@@ -29,10 +29,20 @@ public interface MasteringMixologyConfig extends Config {
     }
 
     @ConfigItem(
+            keyName = "inventoryPotionTags",
+            name = "Inventory Potion Tags",
+            description = "How potions should be tagged in the inventory",
+            position = 2
+    )
+    default InventoryPotionTagType inventoryPotionTagType() {
+        return InventoryPotionTagType.WHITE;
+    }
+
+    @ConfigItem(
             keyName = "displayResin",
             name = "Display resin amount",
             description = "Display total resin amounts",
-            position = 2
+            position = 3
     )
     default boolean displayResin() {
         return false;
@@ -77,17 +87,6 @@ public interface MasteringMixologyConfig extends Config {
             position = 3
     )
     default boolean highlightQuickActionEvents() {
-        return true;
-    }
-
-    @ConfigItem(
-            section = HIGHLIGHTS,
-            keyName = "identifyPotions",
-            name = "Identify potions",
-            description = "Identify potions in your inventory",
-            position = 4
-    )
-    default boolean identifyPotions() {
         return true;
     }
 
