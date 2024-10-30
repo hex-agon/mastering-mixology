@@ -249,7 +249,6 @@ public class MasteringMixologyPlugin extends Plugin {
         // Whenever a potion is delivered, all the potion order related varbits are reset to 0 first then
         // set to the new values. We can use this to clear all the stations.
         if (varbitId == VARBIT_POTION_ORDER_1) {
-            System.out.println("Got varbit change with value " + value);
             if (value == 0) {
                 unHighlightAllStations();
             } else {
