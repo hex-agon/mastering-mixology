@@ -46,7 +46,7 @@ public interface MasteringMixologyConfig extends Config {
             keyName = "highlightStations",
             name = "Highlight stations",
             description = "Toggles alchemical station highlighting on or off",
-            position = 2
+            position = 3
     )
     default boolean highlightStations() {
         return true;
@@ -56,9 +56,30 @@ public interface MasteringMixologyConfig extends Config {
             keyName = "highlightQuickActionEvents",
             name = "Highlight quick-action events",
             description = "Toggles station quick-action events highlighting on or off",
-            position = 2
+            position = 4
     )
     default boolean highlightQuickActionEvents() {
+        return true;
+    }
+
+    @ConfigItem(
+            keyName = "highlightMixingVessel",
+            name = "Highlight mixing vessel",
+            description = "Highlight the mixing vessel",
+            position = 5
+    )
+    default boolean highlightMixingVessel() {
+        return true;
+    }
+
+    @ConfigItem(
+            keyName = "highlightMixingVesselInvalid",
+            name = "Highlight invalid mixing vessel",
+            description = "Highlight the mixing vessel red when you have the wrong ingredients",
+            position = 6
+    )
+    // used to enable highlighting the vessel red when you have the wrong ingredients
+    default boolean highlightMixingVesselInvalid() {
         return true;
     }
 
@@ -66,7 +87,7 @@ public interface MasteringMixologyConfig extends Config {
             keyName = "identifyPotions",
             name = "Identify potions",
             description = "Identify potions in your inventory",
-            position = 2
+            position = 7
     )
     default boolean identifyPotions() {
         return true;
@@ -76,7 +97,7 @@ public interface MasteringMixologyConfig extends Config {
             keyName = "displayResin",
             name = "Display resin amount",
             description = "Display total resin amounts",
-            position = 2
+            position = 8
     )
     default boolean displayResin() {
         return false;
@@ -86,7 +107,7 @@ public interface MasteringMixologyConfig extends Config {
             keyName = "stationHighlightColor",
             name = "Station color",
             description = "Configures the default station highlight color",
-            position = 3
+            position = 9
     )
     default Color stationHighlightColor() {
         return Color.MAGENTA;
@@ -96,7 +117,7 @@ public interface MasteringMixologyConfig extends Config {
             keyName = "stationQuickActionHighlightColor",
             name = "Quick-action color",
             description = "Configures the station quick-action highlight color",
-            position = 4
+            position = 10
     )
     default Color stationQuickActionHighlightColor() {
         return Color.GREEN;
@@ -106,7 +127,7 @@ public interface MasteringMixologyConfig extends Config {
             keyName = "notifyDigweed",
             name = "Notify DigWeed",
             description = "Toggles digweed notifications on or off",
-            position = 5
+            position = 11
     )
     default Notification notifyDigWeed() {
         return Notification.ON;
@@ -116,7 +137,7 @@ public interface MasteringMixologyConfig extends Config {
             keyName = "highlightDigweed",
             name = "Highlight DigWeed",
             description = "Toggles digweed highlighting on or off",
-            position = 6
+            position = 12
     )
     default boolean highlightDigWeed() {
         return true;
@@ -126,7 +147,7 @@ public interface MasteringMixologyConfig extends Config {
             keyName = "digweedHighlightColor",
             name = "DigWeed color",
             description = "Configures the digweed highlight color",
-            position = 7
+            position = 13
     )
     default Color digweedHighlightColor() {
         return Color.GREEN;

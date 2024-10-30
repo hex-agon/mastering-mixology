@@ -186,8 +186,9 @@ public class MasteringMixologyPlugin extends Plugin {
             clientThread.invokeLater(this::updatePotionOrders);
         }
 
-        if (!config.highlightStations()) {
-            unHighlightAllStations();
+        // Refresh the highlight on the vessel if the config changes
+        if (event.getKey().equals("highlightMixingVessel") || event.getKey().equals("highlightMixingVesselInvalid")) {
+            clientThread.invokeLater(() -> validateVesselPotion(client.getVarbitValue(VARBIT_MIXING_VESSEL_POTION)));
         }
 
         if (!config.highlightDigWeed()) {
@@ -348,6 +349,45 @@ public class MasteringMixologyPlugin extends Plugin {
         } else if (varbitId == VARBIT_ALEMBIC_QUICKACTION) {
             // alembic quick action was just successfully popped
             resetDefaultHighlight(AlchemyObject.ALEMBIC);
+        } else if (varbitId == VARBIT_MIXING_VESSEL_POTION) {
+            validateVesselPotion(value);
+        }
+    }
+
+    private void validateVesselPotion(int value) {
+        // Reset when they take out the potion
+        if (value == 0) {
+            unHighlightObject(AlchemyObject.MIXING_VESSEL);
+            return;
+        }
+
+        // Remove the highlight if the config is disabled
+        if (!config.highlightMixingVessel()) {
+            unHighlightObject(AlchemyObject.MIXING_VESSEL);
+            return;
+        }
+
+        // Find the potion in the vessel
+        PotionType potionInVessel = PotionType.fromIdx(value - 1);
+        if (potionInVessel == null) {
+            return;
+        }
+
+        // Check if the potion is valid
+        boolean validPotion = potionOrders.stream()
+                .anyMatch(order -> order.potionType() == potionInVessel && !order.fulfilled());
+
+        if (validPotion) {
+            // Highlight the vessel if it contains a valid potion
+            highlightObject(AlchemyObject.MIXING_VESSEL, Color.GREEN, potionInVessel.abbreviation());
+        } else {
+            // Highlight the vessel red if it contains an invalid potion
+            if (config.highlightMixingVesselInvalid()) {
+                highlightObject(AlchemyObject.MIXING_VESSEL, Color.RED, potionInVessel.abbreviation() + "</br>Invalid potion");
+            } else {
+                // Remove the highlight if the invalid config is disabled
+                unHighlightObject(AlchemyObject.MIXING_VESSEL);
+            }
         }
     }
 
@@ -458,6 +498,10 @@ public class MasteringMixologyPlugin extends Plugin {
     }
 
     public void highlightObject(AlchemyObject alchemyObject, Color color) {
+        highlightObject(alchemyObject, color, null);
+    }
+
+    public void highlightObject(AlchemyObject alchemyObject, Color color, String text) {
         var worldView = client.getTopLevelWorldView();
 
         if (worldView == null) {
@@ -477,7 +521,7 @@ public class MasteringMixologyPlugin extends Plugin {
             }
 
             if (gameObject.getId() == alchemyObject.objectId()) {
-                highlightedObjects.put(alchemyObject, new HighlightedObject(gameObject, color, config.highlightBorderWidth(), config.highlightFeather()));
+                highlightedObjects.put(alchemyObject, new HighlightedObject(gameObject, color, text, config.highlightBorderWidth(), config.highlightFeather()));
                 return;
             }
         }
@@ -485,7 +529,7 @@ public class MasteringMixologyPlugin extends Plugin {
         var decorativeObject = tile.getDecorativeObject();
 
         if (decorativeObject != null && decorativeObject.getId() == alchemyObject.objectId()) {
-            highlightedObjects.put(alchemyObject, new HighlightedObject(decorativeObject, color, config.highlightBorderWidth(), config.highlightFeather()));
+            highlightedObjects.put(alchemyObject, new HighlightedObject(decorativeObject, color, text, config.highlightBorderWidth(), config.highlightFeather()));
         }
     }
 
@@ -633,12 +677,14 @@ public class MasteringMixologyPlugin extends Plugin {
 
         private final TileObject object;
         private final Color color;
+        private final String text;
         private final int outlineWidth;
         private final int feather;
 
-        private HighlightedObject(TileObject object, Color color, int outlineWidth, int feather) {
+        private HighlightedObject(TileObject object, Color color, String text, int outlineWidth, int feather) {
             this.object = object;
             this.color = color;
+            this.text = text;
             this.outlineWidth = outlineWidth;
             this.feather = feather;
         }
@@ -649,6 +695,10 @@ public class MasteringMixologyPlugin extends Plugin {
 
         public Color color() {
             return color;
+        }
+
+        public String text() {
+            return text;
         }
 
         public int outlineWidth() {
