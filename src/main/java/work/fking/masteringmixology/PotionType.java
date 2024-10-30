@@ -5,6 +5,7 @@ import net.runelite.api.ItemID;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static work.fking.masteringmixology.PotionComponent.AGA;
 import static work.fking.masteringmixology.PotionComponent.LYE;
@@ -36,7 +37,6 @@ public enum PotionType {
 
     private final int itemId;
     private final String recipe;
-    private final String rawRecipe;
     private final String abbreviation;
     private final int experience;
     private final PotionComponent[] components;
@@ -45,7 +45,6 @@ public enum PotionType {
     PotionType(int itemId, int experience, PotionComponent... components) {
         this.itemId = itemId;
         this.recipe = colorizeRecipe(components);
-        this.rawRecipe = buildRecipe(components);
         this.experience = experience;
         this.components = components;
         this.abbreviation = "" + components[0].character() + components[1].character() + components[2].character();
@@ -71,13 +70,6 @@ public enum PotionType {
                 + colorizeRecipeComponent(components[2]);
     }
 
-    private static String buildRecipe(PotionComponent[] components) {
-        if (components.length != 3) {
-            throw new IllegalArgumentException("Invalid potion components: " + Arrays.toString(components));
-        }
-        return ("" + components[0].character() + components[1].character() + components[2].character());
-    }
-
     private static String colorizeRecipeComponent(PotionComponent component) {
         return "<col=" + component.color() + ">" + component.character() + "</col>";
     }
@@ -90,10 +82,6 @@ public enum PotionType {
         return recipe;
     }
 
-    public String rawRecipe() {
-        return rawRecipe;
-    }
-
     public int experience() {
         return experience;
     }
@@ -104,5 +92,17 @@ public enum PotionType {
 
     public String abbreviation() {
         return abbreviation;
+    }
+
+    // Used to display the potion type in the config UI
+    @Override
+    public String toString() {
+        return abbreviation() + " - " + toTitleCase(super.toString());
+    }
+
+    private static String toTitleCase(String s) {
+        return Arrays.stream(s.toLowerCase().split("_"))
+                .map(word -> Character.toUpperCase(word.charAt(0)) + word.substring(1))
+                .collect(Collectors.joining(" "));
     }
 }

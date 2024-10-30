@@ -39,7 +39,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-
 import static work.fking.masteringmixology.AlchemyObject.AGA_LEVER;
 import static work.fking.masteringmixology.AlchemyObject.LYE_LEVER;
 import static work.fking.masteringmixology.AlchemyObject.MOX_LEVER;
@@ -126,7 +125,6 @@ public class MasteringMixologyPlugin extends Plugin {
     public Map<AlchemyObject, HighlightedObject> highlightedObjects() {
         return highlightedObjects;
     }
-    private List<String> potionsToSkip = new ArrayList<>();
 
     public boolean isInLab() {
         return inLab;
@@ -205,10 +203,6 @@ public class MasteringMixologyPlugin extends Plugin {
             highlightLevers();
         } else {
             unHighlightLevers();
-        }
-
-        if (key.equals("potionsToSkip")) {
-            updatePotionsToSkip();
         }
     }
 
@@ -479,7 +473,6 @@ public class MasteringMixologyPlugin extends Plugin {
 
         LOGGER.debug("initialize plugin");
         inLab = true;
-        updatePotionsToSkip();
         updatePotionOrders();
         highlightLevers();
         tryHighlightNextStation();
@@ -660,25 +653,8 @@ public class MasteringMixologyPlugin extends Plugin {
         }
     }
 
-    private void updatePotionsToSkip() {
-        potionsToSkip.clear();
-
-        String potionsToSkipString = config.potionsToSkip().toLowerCase();
-        String[] potions = potionsToSkipString.split(",");
-        for (String potion : potions) {
-            potionsToSkip.add(sortChars(potion.trim()));
-        }
-    }
-
     private boolean shouldSkipPotion(PotionType potionType) {
-        String recipe = potionType.rawRecipe().toLowerCase();
-        return potionsToSkip.contains(sortChars(recipe));
-    }
-
-    private static String sortChars(String s) {
-        char[] chars = s.toCharArray();
-        Arrays.sort(chars);
-        return new String(chars);
+        return config.potionsToSkip().contains(potionType);
     }
 
     public static class HighlightedObject {

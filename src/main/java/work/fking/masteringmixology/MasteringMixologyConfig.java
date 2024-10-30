@@ -7,6 +7,8 @@ import net.runelite.client.config.ConfigSection;
 import net.runelite.client.config.Notification;
 
 import java.awt.Color;
+import java.util.Collections;
+import java.util.Set;
 
 import static work.fking.masteringmixology.MasteringMixologyConfig.CONFIG_GROUP;
 
@@ -162,17 +164,17 @@ public interface MasteringMixologyConfig extends Config {
     @ConfigItem(
             section = STRATEGY,
             keyName = "potionsToSkip",
-            name = "Potions To Skip",
-            description = "Type the potion recipes you want to skip, separated by commas",
+            name = "Blacklist",
+            description = "Choose the potions you want to skip, hold ctrl to select multiple",
             position = 1
     )
-    default String potionsToSkip() { return ""; }
+    default Set<PotionType> potionsToSkip() { return Collections.emptySet(); }
 
     @ConfigItem(
             section = STRATEGY,
             keyName = "ignoreSkipWhenMAL",
-            name = "Ignore When MAL is in Order",
-            description = "Do not skip potions if the order contains a Mixalot potion.",
+            name = "Ignore When Mixalot is in Order",
+            description = "Do not skip any potions if the order contains a Mixalot potion.",
             position = 2
     )
     default boolean ignoreSkipWhenMAL() { return true; }
