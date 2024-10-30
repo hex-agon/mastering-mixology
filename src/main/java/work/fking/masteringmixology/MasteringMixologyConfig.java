@@ -23,6 +23,16 @@ public interface MasteringMixologyConfig extends Config {
     String HIGHLIGHTS = "Highlights";
 
     @ConfigItem(
+            keyName = "inventoryPotionTags",
+            name = "Inventory Potion Tags",
+            description = "How potions should be tagged in the inventory",
+            position = 1
+    )
+    default InventoryPotionTagType inventoryPotionTagType() {
+        return InventoryPotionTagType.WHITE;
+    }
+
+    @ConfigItem(
             keyName = "potionOrderSorting",
             name = "Order sorting",
             description = "Determines how potion orders are sorted in the interface",
@@ -59,16 +69,6 @@ public interface MasteringMixologyConfig extends Config {
             position = 2
     )
     default boolean highlightQuickActionEvents() {
-        return true;
-    }
-
-    @ConfigItem(
-            keyName = "identifyPotions",
-            name = "Identify potions",
-            description = "Identify potions in your inventory",
-            position = 2
-    )
-    default boolean identifyPotions() {
         return true;
     }
 
