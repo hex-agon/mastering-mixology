@@ -9,11 +9,10 @@ import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.components.ComponentOrientation;
 import net.runelite.client.ui.overlay.components.ImageComponent;
 import net.runelite.client.ui.overlay.components.LayoutableRenderableEntity;
+import net.runelite.client.ui.overlay.components.LineComponent;
 import net.runelite.client.ui.overlay.components.SplitComponent;
 import net.runelite.client.ui.overlay.components.TitleComponent;
 import net.runelite.client.util.ImageUtil;
-import work.fking.masteringmixology.ui.RichTextComponent;
-import work.fking.masteringmixology.ui.TextElement;
 
 import javax.inject.Inject;
 import java.awt.Color;
@@ -91,24 +90,14 @@ public class MasteringMixologyPanel extends OverlayPanel {
     private void addPotionOrderComponent(PotionOrder order) {
         BufferedImage modifierIcon = getScaledSprite(order.potionModifier().spriteId(), config.orderIconSize());
         String potionName = itemManager.getItemComposition(order.potionType().itemId()).getName();
-        Font font = getFont(config.orderFontSize());
 
-        // Build the text elements
-        List<TextElement> textElements = new ArrayList<>();
-
-        // potionName in white
-        textElements.add(new TextElement(potionName + " (", Color.WHITE));
-
-        // For each component, add the character with its color
-        for (PotionComponent component : order.potionType().components()) {
-            textElements.add(new TextElement(String.valueOf(component.character()), Color.decode("#" + component.color())));
-        }
-
-        // Add closing parenthesis in white
-        textElements.add(new TextElement(")", Color.WHITE));
-
-        // Create RichTextComponent with drop shadow
-        RichTextComponent richTextComponent = new RichTextComponent(textElements, font, true);
+        // Create text component for the potion order
+        // We have to remove </col> from the recipe string since TextComponent doesn't do that
+        String recipe = order.potionType().recipe().replaceAll("</col>", "");
+        String text = potionName + " (" + recipe + "<col=ffffff>)";
+        LineComponent lineComponent = LineComponent.builder()
+                .left(text)
+                .build();
 
         // Create ImageComponent for the icon
         ImageComponent iconComponent = new ImageComponent(modifierIcon);
@@ -116,7 +105,7 @@ public class MasteringMixologyPanel extends OverlayPanel {
         // Combine icon and text horizontally using SplitComponent
         SplitComponent orderComponent = SplitComponent.builder()
                 .first(iconComponent)
-                .second(richTextComponent)
+                .second(lineComponent)
                 .orientation(ComponentOrientation.HORIZONTAL)
                 .gap(new Point(5, 0))
                 .build();
@@ -156,13 +145,20 @@ public class MasteringMixologyPanel extends OverlayPanel {
 
         if (config.displayPasteInPanel()) {
             int pasteAmount = client.getVarbitValue(pasteVarbitId);
-            RichTextComponent pasteTextComponent = new RichTextComponent(String.valueOf(pasteAmount), Color.WHITE, font, true);
+            LineComponent pasteTextComponent = LineComponent.builder()
+                    .left(String.valueOf(pasteAmount))
+                    .leftFont(font)
+                    .build();
             amountComponents.add(pasteTextComponent);
         }
 
         if (config.displayResinInPanel()) {
             int resinAmount = client.getVarpValue(resinVarpId);
-            RichTextComponent resinTextComponent = new RichTextComponent(String.valueOf(resinAmount), Color.decode("#" + component.color()), font, true);
+            LineComponent resinTextComponent = LineComponent.builder()
+                    .left(String.valueOf(resinAmount))
+                    .leftFont(font)
+                    .leftColor(Color.decode("#" + component.color()))
+                    .build();
             amountComponents.add(resinTextComponent);
         }
 
