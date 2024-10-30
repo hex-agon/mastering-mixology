@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.awt.Color;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -86,6 +85,13 @@ public class MasteringMixologyPlugin extends Plugin {
 
     private static final int COMPONENT_POTION_ORDERS_GROUP_ID = 882;
     private static final int COMPONENT_POTION_ORDERS = COMPONENT_POTION_ORDERS_GROUP_ID << 16 | 2;
+
+    // Config keys that should trigger an update of the potion orders ui
+    private static final List<String> UPDATE_POTION_UI_KEYS = List.of(
+            "potionOrderSorting",
+            "potionBlacklist",
+            "ignoreBlacklistWhenMAL"
+    );
 
     @Inject
     private Client client;
@@ -183,8 +189,7 @@ public class MasteringMixologyPlugin extends Plugin {
             return;
         }
 
-        String key = event.getKey();
-        if (key.equals("potionOrderSorting") || key.equals("potionsToSkip")) {
+        if (UPDATE_POTION_UI_KEYS.contains(event.getKey())) {
             clientThread.invokeLater(this::updatePotionOrders);
         }
 
@@ -401,13 +406,7 @@ public class MasteringMixologyPlugin extends Plugin {
             return;
         }
 
-        boolean containsMAL = false;
-        for (PotionOrder order : potionOrders) {
-            if (order.potionType() == PotionType.MIXALOT) {
-                containsMAL = config.ignoreSkipWhenMAL();
-                break;
-            }
-        }
+        boolean useBlacklist = useBlacklistForOrder(potionOrders);
 
         for (int i = 0; i < potionOrders.size(); i++) {
             var order = potionOrders.get(i);
@@ -422,7 +421,7 @@ public class MasteringMixologyPlugin extends Plugin {
             }
             var builder = new StringBuilder();
 
-            boolean skipPotion = !containsMAL && shouldSkipPotion(order.potionType());
+            boolean skipPotion = useBlacklist && isPotionBlacklisted(order.potionType());
             if (skipPotion) {
                 builder.append("<col=999999>");
             }
@@ -554,8 +553,10 @@ public class MasteringMixologyPlugin extends Plugin {
             LOGGER.debug("Sorted orders: {}", potionOrders);
         }
 
-        // Sort the orders so that skipped potions are at the bottom
-        potionOrders.sort((o1, o2) -> Boolean.compare(shouldSkipPotion(o1.potionType()), shouldSkipPotion(o2.potionType())));
+        // Sort the orders so that blacklisted potions are at the bottom
+        if (useBlacklistForOrder(potionOrders)) {
+            potionOrders.sort((o1, o2) -> Boolean.compare(isPotionBlacklisted(o1.potionType()), isPotionBlacklisted(o2.potionType())));
+        }
 
         // Trigger a fake varbit update to force run the clientscript proc
         var varbitType = client.getVarbit(VARBIT_POTION_ORDER_1);
@@ -653,8 +654,21 @@ public class MasteringMixologyPlugin extends Plugin {
         }
     }
 
-    private boolean shouldSkipPotion(PotionType potionType) {
-        return config.potionsToSkip().contains(potionType);
+    private boolean isPotionBlacklisted(PotionType potionType) {
+        return config.potionBlacklist().contains(potionType);
+    }
+
+    private boolean useBlacklistForOrder(List<PotionOrder> orders) {
+        return !(config.ignoreBlacklistForMixalot() && doesOrderContainMixalot(orders));
+    }
+
+    private static boolean doesOrderContainMixalot(List<PotionOrder> orders) {
+        for (PotionOrder order : orders) {
+            if (order.potionType() == PotionType.MIXALOT) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static class HighlightedObject {
