@@ -37,7 +37,6 @@ public class HighlightedObject {
 
     public enum HighlightStyle {
         OUTLINE,
-        CLICK_BOX,
-        HULL,
+        CLICK_BOX
     }
 }

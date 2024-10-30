@@ -1,7 +1,5 @@
 package work.fking.masteringmixology;
 
-import net.runelite.api.DecorativeObject;
-import net.runelite.api.GameObject;
 import net.runelite.api.TileObject;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
@@ -46,13 +44,6 @@ public class MasteringMixologyOverlay extends Overlay {
                     break;
                 case CLICK_BOX:
                     drawShape(graphics, object.getClickbox(), color);
-                    break;
-                case HULL:
-                    if (object instanceof GameObject) {
-                        drawShape(graphics, ((GameObject) object).getConvexHull(), color);
-                    } else if (object instanceof DecorativeObject) {
-                        drawShape(graphics, ((DecorativeObject) object).getConvexHull(), color);
-                    }
                     break;
             }
         }
