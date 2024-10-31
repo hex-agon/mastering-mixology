@@ -419,25 +419,23 @@ public class MasteringMixologyPlugin extends Plugin {
             if (orderGraphic.getType() != WidgetType.GRAPHIC || orderText.getType() != WidgetType.TEXT) {
                 continue;
             }
-            var builder = new StringBuilder();
 
             boolean skipPotion = useBlacklist && isPotionBlacklisted(order.potionType());
-            if (skipPotion) {
-                builder.append("<col=999999>");
-            }
-            builder.append(orderText.getText());
-            if (skipPotion) {
-                builder.append("</col>");
-            }
+            String newOrderText = orderText.getText();
 
+            newOrderText += " (";
             if (order.fulfilled()) {
-                builder.append(" (<col=00ff00>done!</col>)");
-            } else if (skipPotion) {
-                builder.append(" (SKIP)");
+                newOrderText += skipPotion ? "done!" : colorText("done!", "00ff00");
             } else {
-                builder.append(" (").append(order.potionType().recipe()).append(")");
+                PotionType potionType = order.potionType();
+                newOrderText += skipPotion ? potionType.abbreviation() : potionType.recipe();
             }
-            orderText.setText(builder.toString());
+            newOrderText += ")";
+
+            if (skipPotion) {
+                newOrderText = colorText(newOrderText, "999999");
+            }
+            orderText.setText(newOrderText);
 
             if (i != order.idx()) {
                 // update component position
@@ -449,6 +447,10 @@ public class MasteringMixologyPlugin extends Plugin {
                 orderText.revalidate();
             }
         }
+    }
+
+    private String colorText(String text, String colorCode) {
+        return "<col=" + colorCode + ">" + text + "</col>";
     }
 
     private void appendResins(Widget baseWidget) {
