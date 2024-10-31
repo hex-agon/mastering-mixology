@@ -5,6 +5,7 @@ import net.runelite.api.Client;
 import net.runelite.api.FontID;
 import net.runelite.api.GameState;
 import net.runelite.api.InventoryID;
+import net.runelite.api.ItemID;
 import net.runelite.api.TileObject;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.events.GameStateChanged;
@@ -23,15 +24,18 @@ import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.game.ItemManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
+import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
 import net.runelite.client.util.ColorUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.awt.Color;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -63,6 +67,7 @@ public class MasteringMixologyPlugin extends Plugin {
     private static final int VARP_LYE_RESIN = 4414;
     private static final int VARP_AGA_RESIN = 4415;
     private static final int VARP_MOX_RESIN = 4416;
+    private static final int VARP_ORDERS_FULFILLED = 4480;
 
     private static final int VARBIT_ALEMBIC_PROGRESS = 11328;
     private static final int VARBIT_AGITATOR_PROGRESS = 11329;
@@ -102,7 +107,13 @@ public class MasteringMixologyPlugin extends Plugin {
     private ClientThread clientThread;
 
     @Inject
+    ItemManager itemManager;
+
+    @Inject
     private MasteringMixologyOverlay overlay;
+    @Inject
+    private InfoBoxManager infoBoxManager;
+    private OrdersFulfilledInfoBox ordersFulfilledInfoBox;
 
     @Inject
     private InventoryPotionOverlay potionOverlay;
@@ -174,6 +185,7 @@ public class MasteringMixologyPlugin extends Plugin {
 
         highlightedObjects.clear();
         inLab = false;
+        refreshInfoboxes();
     }
 
     @Subscribe
@@ -195,6 +207,10 @@ public class MasteringMixologyPlugin extends Plugin {
             unHighlightObject(AlchemyObject.DIGWEED_SOUTH_EAST);
             unHighlightObject(AlchemyObject.DIGWEED_SOUTH_WEST);
             unHighlightObject(AlchemyObject.DIGWEED_NORTH_WEST);
+        }
+
+        if (event.getKey().equals("showOrdersFulfilledInfobox")) {
+            clientThread.invokeLater(this::refreshInfoboxes);
         }
 
         if (config.highlightLevers()) {
@@ -235,6 +251,7 @@ public class MasteringMixologyPlugin extends Plugin {
     @Subscribe
     public void onVarbitChanged(VarbitChanged event) {
         var varbitId = event.getVarbitId();
+        var varpId = event.getVarpId();
         var value = event.getValue();
 
         // Whenever a potion is delivered, all the potion order related varbits are reset to 0 first then
@@ -348,6 +365,8 @@ public class MasteringMixologyPlugin extends Plugin {
         } else if (varbitId == VARBIT_ALEMBIC_QUICKACTION) {
             // alembic quick action was just successfully popped
             resetDefaultHighlight(AlchemyObject.ALEMBIC);
+        } else if (varpId == VARP_ORDERS_FULFILLED) {
+            refreshInfoboxes();
         }
     }
 
@@ -455,6 +474,7 @@ public class MasteringMixologyPlugin extends Plugin {
         updatePotionOrders();
         highlightLevers();
         tryHighlightNextStation();
+        refreshInfoboxes();
     }
 
     public void highlightObject(AlchemyObject alchemyObject, Color color) {
@@ -626,6 +646,22 @@ public class MasteringMixologyPlugin extends Plugin {
             return PotionModifier.from(client.getVarbitValue(VARBIT_POTION_MODIFIER_3) - 1);
         } else {
             return null;
+        }
+    }
+
+    private void refreshInfoboxes() {
+        if (config.showOrdersFulfilledInfobox() && inLab) {
+            int ordersFulfilled = client.getVarpValue(VARP_ORDERS_FULFILLED);
+            // Create the infobox if it doesn't exist
+            if (ordersFulfilledInfoBox == null) {
+                BufferedImage image = itemManager.getImage(ItemID.ALDARIUM);
+                ordersFulfilledInfoBox = new OrdersFulfilledInfoBox(this, image, "Orders Fulfilled", ordersFulfilled);
+                infoBoxManager.addInfoBox(ordersFulfilledInfoBox);
+            }
+            ordersFulfilledInfoBox.setCount(ordersFulfilled);
+        } else if (ordersFulfilledInfoBox != null) {
+            infoBoxManager.removeInfoBox(ordersFulfilledInfoBox);
+            ordersFulfilledInfoBox = null;
         }
     }
 

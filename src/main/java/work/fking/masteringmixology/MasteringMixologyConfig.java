@@ -132,6 +132,17 @@ public interface MasteringMixologyConfig extends Config {
         return Color.GREEN;
     }
 
+
+    @ConfigItem(
+            keyName = "showOrdersFulfilledInfobox",
+            name = "Show Orders Fulfilled Infobox",
+            description = "Toggle showing an infobox with the orders fulfilled",
+            position = 8
+    )
+    default boolean showOrdersFulfilledInfobox() {
+        return false;
+    }
+
     @ConfigItem(
             section = HIGHLIGHTS,
             keyName = "highlightBorderWidth",
