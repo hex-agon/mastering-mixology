@@ -56,7 +56,7 @@ public class InventoryPotionOverlay extends WidgetItemOverlay {
         }
 
         for (var component : potion.components()) {
-            graphics2D.setColor(Color.decode("#" + component.color()));
+            graphics2D.setColor(component.color());
             graphics2D.drawString(String.valueOf(component.character()), x, y);
             x += graphics2D.getFontMetrics().charWidth(component.character());
         }

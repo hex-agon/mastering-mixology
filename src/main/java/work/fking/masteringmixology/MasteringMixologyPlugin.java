@@ -27,7 +27,6 @@ import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
-import net.runelite.client.util.ColorUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -216,7 +215,7 @@ public class MasteringMixologyPlugin extends Plugin {
             unHighlightObject(AlchemyObject.DIGWEED_NORTH_WEST);
         }
 
-        if (event.getKey().equals("selectedReward") || event.getKey().equals("fullProgressBarBehavior")) {
+        if (event.getKey().equals("selectedReward") || event.getKey().equals("rewardQuantity") || event.getKey().equals("progressDisplayMode") || event.getKey().equals("showResinBars")) {
             goalInfoBoxOverlay.markDataAsDirty();
         }
 
@@ -536,9 +535,9 @@ public class MasteringMixologyPlugin extends Plugin {
             return;
         }
 
-        highlightObject(LYE_LEVER, Color.decode("#" + LYE.color()));
-        highlightObject(AGA_LEVER, Color.decode("#" + AGA.color()));
-        highlightObject(MOX_LEVER, Color.decode("#" + MOX.color()));
+        highlightObject(LYE_LEVER, LYE.color());
+        highlightObject(AGA_LEVER, AGA.color());
+        highlightObject(MOX_LEVER, MOX.color());
     }
 
     private void unHighlightLevers() {
@@ -569,7 +568,7 @@ public class MasteringMixologyPlugin extends Plugin {
 
     private void addResinText(Widget widget, int x, int varp, PotionComponent component) {
         var amount = client.getVarpValue(varp);
-        var color = ColorUtil.fromHex(component.color()).getRGB();
+        var color = component.color().getRGB();
 
         widget.setText(amount + "")
               .setTextShadowed(true)
