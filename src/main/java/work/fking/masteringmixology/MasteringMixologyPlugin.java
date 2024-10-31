@@ -186,6 +186,10 @@ public class MasteringMixologyPlugin extends Plugin {
             clientThread.invokeLater(this::updatePotionOrders);
         }
 
+        if (!config.highlightStations()) {
+            unHighlightAllStations();
+        }
+
         // Refresh the highlight on the vessel if the config changes
         if (event.getKey().equals("highlightMixingVessel") || event.getKey().equals("highlightMixingVesselInvalid")) {
             clientThread.invokeLater(() -> validateVesselPotion(client.getVarbitValue(VARBIT_MIXING_VESSEL_POTION)));
