@@ -8,12 +8,14 @@ public enum PotionComponent {
     LYE('L', "e91e63", 5668, MasteringMixologyPlugin.VARP_LYE_RESIN);
 
     private final char character;
+    private final String colorCode;
     private final Color color;
     private final int spriteId;
     private final int resinVarpId;
 
     PotionComponent(char character, String colorCode, int spriteId, int resinVarpId) {
         this.character = character;
+        this.colorCode = colorCode;
         this.color = Color.decode("#" + colorCode);
         this.spriteId = spriteId;
         this.resinVarpId = resinVarpId;
@@ -21,6 +23,10 @@ public enum PotionComponent {
 
     public char character() {
         return character;
+    }
+
+    public String colorCode() {
+        return colorCode;
     }
 
     public Color color() {
