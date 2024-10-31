@@ -168,7 +168,9 @@ public interface MasteringMixologyConfig extends Config {
             description = "Select the potions you want to skip, hold ctrl to select multiple",
             position = 1
     )
-    default Set<PotionType> potionBlacklist() { return Collections.emptySet(); }
+    default Set<PotionType> potionBlacklist() {
+        return Collections.emptySet();
+    }
 
     @ConfigItem(
             section = STRATEGY,
@@ -177,5 +179,7 @@ public interface MasteringMixologyConfig extends Config {
             description = "Do not skip any potions if the order contains a Mixalot potion.",
             position = 2
     )
-    default boolean ignoreBlacklistForMixalot() { return true; }
+    default boolean ignoreBlacklistForMixalot() {
+        return true;
+    }
 }
