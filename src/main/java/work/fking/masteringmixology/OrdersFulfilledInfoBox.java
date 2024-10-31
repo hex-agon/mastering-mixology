@@ -1,8 +1,7 @@
-package work.fking.masteringmixology.ui;
+package work.fking.masteringmixology;
 
 import net.runelite.client.ui.overlay.infobox.Counter;
 import net.runelite.client.util.QuantityFormatter;
-import work.fking.masteringmixology.MasteringMixologyPlugin;
 
 import java.awt.image.BufferedImage;
 

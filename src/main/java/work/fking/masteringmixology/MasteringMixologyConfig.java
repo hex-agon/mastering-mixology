@@ -12,6 +12,7 @@ import static work.fking.masteringmixology.MasteringMixologyConfig.CONFIG_GROUP;
 
 @ConfigGroup(CONFIG_GROUP)
 public interface MasteringMixologyConfig extends Config {
+
     String CONFIG_GROUP = "masteringmixology";
 
     @ConfigSection(

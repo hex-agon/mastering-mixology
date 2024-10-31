@@ -3,7 +3,6 @@ package work.fking.masteringmixology;
 import java.util.Comparator;
 
 public class PotionComparators {
-
     // Sort by modifier, in the order CRYSTALISED > HOMOGENOUS > CONCENTRATED
     // And then by PotionType name alphabetically
     public static Comparator<PotionOrder> byStation() {

@@ -32,7 +32,6 @@ import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
 import net.runelite.client.util.ColorUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import work.fking.masteringmixology.ui.OrdersFulfilledInfoBox;
 
 import javax.inject.Inject;
 import java.awt.Color;
