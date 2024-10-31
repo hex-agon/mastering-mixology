@@ -155,38 +155,38 @@ public interface MasteringMixologyConfig extends Config {
     @ConfigSection(
             name = "Tooltip",
             description = "Tooltip related configuration",
-            position = 11
+            position = 20
     )
-    String tooltipSection = "tooltipSection";
+    String TOOLTIP = "tooltipSection";
 
     @ConfigItem(
+            section = TOOLTIP,
             keyName = "showTooltip",
-            name = "Show Paste Tooltips",
-            description = "Whether items in the bank should show a tooltip",
-            position = 12,
-            section = tooltipSection
+            name = "Enable Tooltips",
+            description = "Show tooltips for items in the bank.",
+            position = 1
     )
     default boolean showTooltip() {
         return false;
     }
 
     @ConfigItem(
+            section = TOOLTIP,
             keyName = "showTooltipEach",
-            name = "Show how much paste each herb gives",
-            description = "Whether the tooltip should include the paster per single item",
-            position = 13,
-            section = tooltipSection
+            name = "Show Per-Item Amount",
+            description = "Include the paste amount per single item in the tooltip.",
+            position = 2
     )
     default boolean showTooltipEach() {
         return true;
     }
 
     @ConfigItem(
+            section = TOOLTIP,
             keyName = "showPricePerPaste",
-            name = "Show GE price per paste",
-            description = "Whether the tooltip should show price per paste",
-            position = 14,
-            section = tooltipSection
+            name = "Include Price Per Paste",
+            description = "Show GE price per paste in the tooltip.",
+            position = 3
     )
     default boolean showPricePerPaste() {
         return false;

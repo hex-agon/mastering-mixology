@@ -1,22 +1,22 @@
 package work.fking.masteringmixology;
 
 public enum PotionComponent {
-    AGA("Aga", 'A', "00e676"),
-    LYE("Lye", 'L', "e91e63"),
-    MOX("Mox", 'M', "03a9f4");
+    AGA("00e676"),
+    LYE("e91e63"),
+    MOX("03a9f4");
 
-    private final String name;
+    private final String formattedName;
     private final char character;
     private final String color;
 
-    PotionComponent(String name, char character, String color) {
-        this.name = name;
-        this.character = character;
+    PotionComponent(String color) {
+        this.formattedName = name().charAt(0) + name().substring(1).toLowerCase();
+        this.character = name().charAt(0);
         this.color = color;
     }
 
-    public String getName() {
-        return name;
+    public String formattedName() {
+        return formattedName;
     }
 
     public char character() {

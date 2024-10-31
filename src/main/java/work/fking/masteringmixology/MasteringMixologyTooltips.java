@@ -14,11 +14,9 @@ import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.tooltip.Tooltip;
 import net.runelite.client.ui.overlay.tooltip.TooltipManager;
-import net.runelite.client.util.ColorUtil;
 import net.runelite.client.util.QuantityFormatter;
 
 import javax.inject.Inject;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 
@@ -27,14 +25,14 @@ public class MasteringMixologyTooltips extends Overlay {
     private final Client client;
     private final MasteringMixologyConfig config;
     private final TooltipManager tooltipManager;
-    @Inject
-    private ItemManager itemManager;
+    private final ItemManager itemManager;
 
     @Inject
-    MasteringMixologyTooltips(Client client, MasteringMixologyConfig config, TooltipManager tooltipManager) {
+    MasteringMixologyTooltips(Client client, MasteringMixologyConfig config, TooltipManager tooltipManager, ItemManager itemManager) {
         this.client = client;
         this.config = config;
         this.tooltipManager = tooltipManager;
+        this.itemManager = itemManager;
 
         setPosition(OverlayPosition.DYNAMIC);
     }
@@ -57,37 +55,21 @@ public class MasteringMixologyTooltips extends Overlay {
         final int widgetId = menuEntry.getParam1();
         final int groupId = WidgetUtil.componentToInterface(widgetId);
 
-        // Tooltip for inventory item
-        if (action == MenuAction.WIDGET_TARGET && menuEntry.getWidget().getId() == ComponentID.INVENTORY_CONTAINER) {
-            makeTooltip(menuEntry);
-        }
-
-        // Tooltip for bank items (inventory & bank)
-        if (action == MenuAction.CC_OP  && (groupId == InterfaceID.INVENTORY || groupId == InterfaceID.BANK || groupId == InterfaceID.BANK_INVENTORY)) {
-            makeTooltip(menuEntry);
-        }
-
-        return null;
-    }
-
-    private void makeTooltip(MenuEntry menuEntry) {
-        // Get the item container
-        ItemContainer itemContainer = getContainer(menuEntry);
+        ItemContainer itemContainer = getItemContainer(action, menuEntry, groupId);
         if (itemContainer == null) {
-            return;
+            return null;
         }
 
         // Find the item in the container to get stack size
         final int index = menuEntry.getParam0();
         final Item item = itemContainer.getItem(index);
         if (item == null) {
-            return;
+            return null;
         }
 
-        // Get the herb
-        Herb herb = Herb.getHerbFromItemId(item.getId());
-        if (herb == null) {
-            return;
+        PasteIngredient pasteIngredient = PasteIngredient.getFromItemId(item.getId());
+        if (pasteIngredient == null) {
+            return null;
         }
 
         // Get the GE Price of the item if enabled
@@ -98,31 +80,30 @@ public class MasteringMixologyTooltips extends Overlay {
         }
 
         // Create the text and add it to the tooltip manager
-        String text = stackValueText(herb, item.getQuantity(), gePrice);
-        tooltipManager.add(new Tooltip(ColorUtil.prependColorTag(text, new Color(238, 238, 238))));
-    }
-
-    private ItemContainer getContainer(MenuEntry menuEntry) {
-        final int widgetId = menuEntry.getParam1();
-
-        // Inventory item
-        if (widgetId == ComponentID.INVENTORY_CONTAINER || widgetId == ComponentID.BANK_INVENTORY_ITEM_CONTAINER) {
-            return client.getItemContainer(InventoryID.INVENTORY);
-        }
-
-        // Bank item
-        if (widgetId == ComponentID.BANK_ITEM_CONTAINER) {
-            return client.getItemContainer(InventoryID.BANK);
-        }
+        String text = stackValueText(pasteIngredient, item.getQuantity(), gePrice);
+        tooltipManager.add(new Tooltip(text));
 
         return null;
     }
 
-    private String stackValueText(Herb herb, int qty, int gePrice) {
-        int amount = herb.pastePerHerb();
+    private ItemContainer getItemContainer(MenuAction action, MenuEntry menuEntry, int groupId) {
+        if (action == MenuAction.WIDGET_TARGET && menuEntry.getWidget() != null && menuEntry.getWidget().getId() == ComponentID.INVENTORY_CONTAINER) {
+            return client.getItemContainer(InventoryID.INVENTORY);
+        } else if (action == MenuAction.CC_OP) {
+            if (groupId == InterfaceID.BANK) {
+                return client.getItemContainer(InventoryID.BANK);
+            } else if (groupId == InterfaceID.INVENTORY || groupId == InterfaceID.BANK_INVENTORY) {
+                return client.getItemContainer(InventoryID.INVENTORY);
+            }
+        }
+        return null;
+    }
+
+    private String stackValueText(PasteIngredient pasteIngredient, int qty, int gePrice) {
+        int amount = pasteIngredient.pastePerItem();
 
         // Append the ingredient name and result amount
-        String text = herb.potionComponent().getName() + ": "
+        String text = pasteIngredient.potionComponent().formattedName() + ": "
                 + QuantityFormatter.quantityToStackSize((long) amount * qty);
 
         // Append the value of each item
