@@ -186,7 +186,7 @@ public class MasteringMixologyPlugin extends Plugin {
 
         highlightedObjects.clear();
         inLab = false;
-        updateInfoboxes();
+        refreshInfoboxes();
     }
 
     @Subscribe
@@ -210,8 +210,9 @@ public class MasteringMixologyPlugin extends Plugin {
             unHighlightObject(AlchemyObject.DIGWEED_NORTH_WEST);
         }
 
-        // This has to be run on the client thread
-        clientThread.invokeLater(this::updateInfoboxes);
+        if (event.getKey().equals("showOrdersFulfilledInfobox")) {
+            clientThread.invokeLater(this::refreshInfoboxes);
+        }
 
         if (config.highlightLevers()) {
             highlightLevers();
@@ -334,9 +335,6 @@ public class MasteringMixologyPlugin extends Plugin {
             } else {
                 unHighlightObject(AlchemyObject.DIGWEED_NORTH_WEST);
             }
-        } else if (varpId == VARP_ORDERS_FULFILLED) {
-            // Update the infoboxes when the orders fulfilled is updated
-            updateInfoboxes();
         } else if (varbitId == VARBIT_AGITATOR_PROGRESS) {
             if (agitatorQuickActionTicks == 2) {
                 // quick action was triggered two ticks ago, so it's now too late
@@ -368,6 +366,8 @@ public class MasteringMixologyPlugin extends Plugin {
         } else if (varbitId == VARBIT_ALEMBIC_QUICKACTION) {
             // alembic quick action was just successfully popped
             resetDefaultHighlight(AlchemyObject.ALEMBIC);
+        } else if (varpId == VARP_ORDERS_FULFILLED) {
+            refreshInfoboxes();
         }
     }
 
@@ -475,7 +475,7 @@ public class MasteringMixologyPlugin extends Plugin {
         updatePotionOrders();
         highlightLevers();
         tryHighlightNextStation();
-        updateInfoboxes();
+        refreshInfoboxes();
     }
 
     public void highlightObject(AlchemyObject alchemyObject, Color color) {
@@ -650,10 +650,10 @@ public class MasteringMixologyPlugin extends Plugin {
         }
     }
 
-    private void updateInfoboxes() {
-        // Setup the orders fulfilled infobox
+    private void refreshInfoboxes() {
         if (config.showOrdersFulfilledInfobox() && inLab) {
             int ordersFulfilled = client.getVarpValue(VARP_ORDERS_FULFILLED);
+            // Create the infobox if it doesn't exist
             if (ordersFulfilledInfoBox == null) {
                 BufferedImage image = itemManager.getImage(ItemID.ALDARIUM);
                 ordersFulfilledInfoBox = new OrdersFulfilledInfoBox(this, image, "Orders Fulfilled", ordersFulfilled);
