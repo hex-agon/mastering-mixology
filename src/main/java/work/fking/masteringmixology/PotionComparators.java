@@ -21,4 +21,19 @@ public class PotionComparators {
                 })
                 .thenComparing(order -> order.potionType().name());
     }
+
+    public static Comparator<PotionOrder> shortestPath() {
+        return Comparator.comparing(order -> {
+            switch (order.potionModifier()) {
+                case CRYSTALISED:
+                    return 1;
+                case CONCENTRATED:
+                    return 2;
+                case HOMOGENOUS:
+                    return 3;
+                default:
+                    throw new IllegalStateException("Unexpected value: " + order.potionModifier().toString());
+            }
+        });
+    }
 }
