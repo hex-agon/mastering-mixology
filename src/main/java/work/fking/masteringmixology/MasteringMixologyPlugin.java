@@ -559,21 +559,17 @@ public class MasteringMixologyPlugin extends Plugin {
 
         unHighlightAllStations();
 
-        for (var order : potionOrders) {
-            if (order.fulfilled()) {
-                continue;
-            }
-
-            for (var item : inventory.getItems()) {
-                var potion = PotionType.fromItemId(item.getId());
-                if (potion != null) {
-                    if (potion == order.potionType()) {
+        for (var item : inventory.getItems()) {
+            var potion = PotionType.fromItemId(item.getId());
+            if (potion != null) {
+                for (var order : potionOrders) {
+                    if (!order.fulfilled() && potion == order.potionType()) {
                         LOGGER.debug("Highlighting station for order {}", order);
                         highlightObject(order.potionModifier().alchemyObject(), config.stationHighlightColor());
                     }
-
-                    break;
                 }
+
+                return;
             }
         }
     }
