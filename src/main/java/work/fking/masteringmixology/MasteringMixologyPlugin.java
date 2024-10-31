@@ -215,7 +215,7 @@ public class MasteringMixologyPlugin extends Plugin {
             unHighlightObject(AlchemyObject.DIGWEED_NORTH_WEST);
         }
 
-        if (event.getKey().equals("selectedReward") || event.getKey().equals("rewardQuantity") || event.getKey().equals("progressDisplayMode") || event.getKey().equals("showResinBars")) {
+        if (event.getKey().equals("selectedReward") || event.getKey().equals("rewardQuantity") || event.getKey().equals("showResinBars")) {
             goalInfoBoxOverlay.markDataAsDirty();
         }
 
