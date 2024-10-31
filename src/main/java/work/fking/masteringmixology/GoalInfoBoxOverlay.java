@@ -67,7 +67,7 @@ class GoalInfoBoxOverlay extends OverlayPanel {
 
         setPosition(OverlayPosition.TOP_RIGHT);
         setPriority(PRIORITY_MED);
-        panelComponent.setPreferredSize(new Dimension(200, 0));
+        panelComponent.setPreferredSize(new Dimension(250, 0));
         panelComponent.setBorder(new Rectangle(BORDER_SIZE, BORDER_SIZE, BORDER_SIZE, BORDER_SIZE));
         panelComponent.setGap(new Point(0, VERTICAL_GAP));
 
