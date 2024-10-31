@@ -156,6 +156,10 @@ public class MasteringMixologyPlugin extends Plugin {
         overlayManager.add(overlay);
         overlayManager.add(potionOverlay);
         overlayManager.add(goalInfoBoxOverlay);
+
+        if (client.getGameState() == GameState.LOGGED_IN) {
+            clientThread.invokeLater(this::initialize);
+        }
     }
 
     @Override

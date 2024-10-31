@@ -5,10 +5,8 @@ import net.runelite.api.ItemID;
 import java.util.HashMap;
 import java.util.Map;
 
-@SuppressWarnings("unused") // The items are used in the config
 public enum RewardItem {
     NONE("None", 0, 0, 0, 0),
-
     APPRENTICE_POTION_PACK("Apprentice Potion Pack", ItemID.APPRENTICE_POTION_PACK, 420, 70, 30),
     ADEPT_POTION_PACK("Adept Potion Pack", ItemID.ADEPT_POTION_PACK, 180, 440, 70),
     EXPERT_POTION_PACK("Expert Potion Pack", ItemID.EXPERT_POTION_PACK, 410, 320, 480),
@@ -40,10 +38,6 @@ public enum RewardItem {
 
     public int itemId() {
         return itemId;
-    }
-
-    public Map<PotionComponent, Integer> componentCost() {
-        return componentCost;
     }
 
     public int componentCost(PotionComponent component) {
