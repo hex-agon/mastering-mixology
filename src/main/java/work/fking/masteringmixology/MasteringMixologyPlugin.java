@@ -224,7 +224,7 @@ public class MasteringMixologyPlugin extends Plugin {
             for (var order : potionOrders) {
                 if (order.potionType() == potionType && !order.fulfilled()) {
                     unHighlightAllStations();
-                    highlightObject(order.potionModifier().alchemyObject(), config.stationHighlightColor(), HighlightedObject.HighlightReason.STATION);
+                    highlightObject(order.potionModifier().alchemyObject(), config.stationHighlightColor());
                     return;
                 }
             }
@@ -283,7 +283,7 @@ public class MasteringMixologyPlugin extends Plugin {
         } else if (varbitId == VARBIT_DIGWEED_NORTH_EAST) {
             if (value == 1) {
                 if (config.highlightDigWeed()) {
-                    highlightObject(AlchemyObject.DIGWEED_NORTH_EAST, config.digweedHighlightColor(), HighlightedObject.HighlightReason.DIGWEED);
+                    highlightObject(AlchemyObject.DIGWEED_NORTH_EAST, config.digweedHighlightColor());
                 }
                 notifier.notify(config.notifyDigWeed(), "A digweed has spawned north east.");
             } else {
@@ -292,7 +292,7 @@ public class MasteringMixologyPlugin extends Plugin {
         } else if (varbitId == VARBIT_DIGWEED_SOUTH_EAST) {
             if (value == 1) {
                 if (config.highlightDigWeed()) {
-                    highlightObject(AlchemyObject.DIGWEED_SOUTH_EAST, config.digweedHighlightColor(), HighlightedObject.HighlightReason.DIGWEED);
+                    highlightObject(AlchemyObject.DIGWEED_SOUTH_EAST, config.digweedHighlightColor());
                 }
                 notifier.notify(config.notifyDigWeed(), "A digweed has spawned south east.");
             } else {
@@ -301,7 +301,7 @@ public class MasteringMixologyPlugin extends Plugin {
         } else if (varbitId == VARBIT_DIGWEED_SOUTH_WEST) {
             if (value == 1) {
                 if (config.highlightDigWeed()) {
-                    highlightObject(AlchemyObject.DIGWEED_SOUTH_WEST, config.digweedHighlightColor(), HighlightedObject.HighlightReason.DIGWEED);
+                    highlightObject(AlchemyObject.DIGWEED_SOUTH_WEST, config.digweedHighlightColor());
                 }
                 notifier.notify(config.notifyDigWeed(), "A digweed has spawned south west.");
             } else {
@@ -310,7 +310,7 @@ public class MasteringMixologyPlugin extends Plugin {
         } else if (varbitId == VARBIT_DIGWEED_NORTH_WEST) {
             if (value == 1) {
                 if (config.highlightDigWeed()) {
-                    highlightObject(AlchemyObject.DIGWEED_NORTH_WEST, config.digweedHighlightColor(), HighlightedObject.HighlightReason.DIGWEED);
+                    highlightObject(AlchemyObject.DIGWEED_NORTH_WEST, config.digweedHighlightColor());
                 }
                 notifier.notify(config.notifyDigWeed(), "A digweed has spawned north west.");
             } else {
@@ -358,14 +358,14 @@ public class MasteringMixologyPlugin extends Plugin {
             return;
         }
         if (spotAnimId == SPOT_ANIM_ALEMBIC && alembicPotionType != null) {
-            highlightObject(AlchemyObject.ALEMBIC, config.stationQuickActionHighlightColor(), HighlightedObject.HighlightReason.QUICK_ACTION);
+            highlightObject(AlchemyObject.ALEMBIC, config.stationQuickActionHighlightColor());
             // start counting ticks for alembic so we know to un-highlight on the next alembic varbit update
             // note this quick action has a 1 tick window, so we use an int that goes 0 -> 1 -> unhighlight
             alembicQuickActionTicks = 1;
         }
 
         if (spotAnimId == SPOT_ANIM_AGITATOR && agitatorPotionType != null) {
-            highlightObject(AlchemyObject.AGITATOR, config.stationQuickActionHighlightColor(), HighlightedObject.HighlightReason.QUICK_ACTION);
+            highlightObject(AlchemyObject.AGITATOR, config.stationQuickActionHighlightColor());
             // start counting ticks for agitator so we know to un-highlight on the next agitator varbit update
             // note this quick action has a 2-tick window, so we use an int that goes 0 -> 1 -> 2 -> unhighlight
             agitatorQuickActionTicks = 1;
@@ -456,7 +456,7 @@ public class MasteringMixologyPlugin extends Plugin {
         tryHighlightNextStation();
     }
 
-    public void highlightObject(AlchemyObject alchemyObject, Color color, HighlightedObject.HighlightReason reason) {
+    public void highlightObject(AlchemyObject alchemyObject, Color color) {
         var worldView = client.getTopLevelWorldView();
 
         if (worldView == null) {
@@ -476,7 +476,7 @@ public class MasteringMixologyPlugin extends Plugin {
             }
 
             if (gameObject.getId() == alchemyObject.objectId()) {
-                highlightedObjects.put(alchemyObject, new HighlightedObject(gameObject, color, reason));
+                highlightedObjects.put(alchemyObject, new HighlightedObject(gameObject, color));
                 return;
             }
         }
@@ -484,13 +484,13 @@ public class MasteringMixologyPlugin extends Plugin {
         var decorativeObject = tile.getDecorativeObject();
 
         if (decorativeObject != null && decorativeObject.getId() == alchemyObject.objectId()) {
-            highlightedObjects.put(alchemyObject, new HighlightedObject(decorativeObject, color, reason));
+            highlightedObjects.put(alchemyObject, new HighlightedObject(decorativeObject, color));
         }
     }
 
     public void resetDefaultHighlight(AlchemyObject alchemyObject) {
         if (config.highlightStations()) {
-            highlightObject(alchemyObject, config.stationHighlightColor(), HighlightedObject.HighlightReason.STATION);
+            highlightObject(alchemyObject, config.stationHighlightColor());
         }
     }
 
@@ -509,9 +509,9 @@ public class MasteringMixologyPlugin extends Plugin {
             return;
         }
 
-        highlightObject(LYE_LEVER, Color.decode("#" + LYE.color()), HighlightedObject.HighlightReason.LEVER);
-        highlightObject(AGA_LEVER, Color.decode("#" + AGA.color()), HighlightedObject.HighlightReason.LEVER);
-        highlightObject(MOX_LEVER, Color.decode("#" + MOX.color()), HighlightedObject.HighlightReason.LEVER);
+        highlightObject(LYE_LEVER, Color.decode("#" + LYE.color()));
+        highlightObject(AGA_LEVER, Color.decode("#" + AGA.color()));
+        highlightObject(MOX_LEVER, Color.decode("#" + MOX.color()));
     }
 
     private void unHighlightLevers() {
@@ -583,7 +583,7 @@ public class MasteringMixologyPlugin extends Plugin {
             }
             if (inventory.contains(order.potionType().itemId())) {
                 LOGGER.debug("Highlighting station for order {}", order);
-                highlightObject(order.potionModifier().alchemyObject(), config.stationHighlightColor(), HighlightedObject.HighlightReason.STATION);
+                highlightObject(order.potionModifier().alchemyObject(), config.stationHighlightColor());
                 break;
             }
         }

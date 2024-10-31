@@ -36,9 +36,7 @@ public class MasteringMixologyOverlay extends Overlay {
             TileObject object = highlightedObject.object();
             Color color = highlightedObject.color();
 
-            // Determine the highlight style to use
-            HighlightedObject.HighlightStyle highlightStyle = getHighlightStyle(highlightedObject.reason());
-            switch (highlightStyle) {
+            switch (config.highlightStyle()) {
                 case OUTLINE:
                     modelOutlineRenderer.drawOutline(object, config.highlightBorderWidth(), color, config.highlightFeather());
                     break;
@@ -48,19 +46,6 @@ public class MasteringMixologyOverlay extends Overlay {
             }
         }
         return null;
-    }
-
-    private HighlightedObject.HighlightStyle getHighlightStyle(HighlightedObject.HighlightReason reason) {
-        switch (reason) {
-            case QUICK_ACTION:
-                return config.stationQuickActionHighlightStyle();
-            case LEVER:
-                return config.leverHighlightStyle();
-            case STATION:
-            case DIGWEED:
-            default:
-                return config.highlightStyle();
-        }
     }
 
     private void drawShape(Graphics2D graphics, Shape shape, Color color) {

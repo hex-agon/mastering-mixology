@@ -8,12 +8,10 @@ public class HighlightedObject {
 
     private final TileObject object;
     private final Color color;
-    private final HighlightReason reason;
 
-    public HighlightedObject(TileObject object, Color color, HighlightReason reason) {
+    public HighlightedObject(TileObject object, Color color) {
         this.object = object;
         this.color = color;
-        this.reason = reason;
     }
 
     public TileObject object() {
@@ -22,21 +20,5 @@ public class HighlightedObject {
 
     public Color color() {
         return color;
-    }
-
-    public HighlightReason reason() {
-        return reason;
-    }
-
-    public enum HighlightReason {
-        STATION,
-        QUICK_ACTION,
-        LEVER,
-        DIGWEED
-    }
-
-    public enum HighlightStyle {
-        OUTLINE,
-        CLICK_BOX
     }
 }

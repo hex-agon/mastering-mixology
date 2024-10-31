@@ -46,6 +46,17 @@ public interface MasteringMixologyConfig extends Config {
         return false;
     }
 
+    @ConfigItem(
+            section = HIGHLIGHTS,
+            keyName = "notifyDigweed",
+            name = "Notify DigWeed",
+            description = "Toggles digweed notifications on or off",
+            position = 4
+    )
+    default Notification notifyDigWeed() {
+        return Notification.ON;
+    }
+
 
     // Highlights Section
     @ConfigSection(
@@ -101,13 +112,13 @@ public interface MasteringMixologyConfig extends Config {
 
     @ConfigItem(
             section = HIGHLIGHTS,
-            keyName = "notifyDigweed",
-            name = "Notify DigWeed",
-            description = "Toggles digweed notifications on or off",
+            keyName = "highlightStyle",
+            name = "Highlight Style",
+            description = "Change the style of the highlights",
             position = 5
     )
-    default Notification notifyDigWeed() {
-        return Notification.ON;
+    default HighlightStyle highlightStyle() {
+        return HighlightStyle.OUTLINE;
     }
 
     @ConfigItem(
@@ -145,43 +156,10 @@ public interface MasteringMixologyConfig extends Config {
 
     @ConfigItem(
             section = HIGHLIGHTS,
-            keyName = "highlightStyle",
-            name = "Highlight Style",
-            description = "Change the style of the highlight",
-            position = 9
-    )
-    default HighlightedObject.HighlightStyle highlightStyle() {
-        return HighlightedObject.HighlightStyle.OUTLINE;
-    }
-
-    @ConfigItem(
-            section = HIGHLIGHTS,
-            keyName = "stationQuickActionHighlightStyle",
-            name = "Quick-action Style",
-            description = "Configures the station quick-action highlight style",
-            position = 10
-    )
-    default HighlightedObject.HighlightStyle stationQuickActionHighlightStyle() {
-        return HighlightedObject.HighlightStyle.CLICK_BOX;
-    }
-
-    @ConfigItem(
-            section = HIGHLIGHTS,
-            keyName = "leverHighlightStyle",
-            name = "Lever Style",
-            description = "Configures the lever highlight style",
-            position = 12
-    )
-    default HighlightedObject.HighlightStyle leverHighlightStyle() {
-        return HighlightedObject.HighlightStyle.OUTLINE;
-    }
-
-    @ConfigItem(
-            section = HIGHLIGHTS,
             keyName = "highlightBorderWidth",
             name = "Border width",
             description = "Configures the border width of the object highlights",
-            position = 13
+            position = 9
     )
     default int highlightBorderWidth() {
         return 2;
@@ -192,7 +170,7 @@ public interface MasteringMixologyConfig extends Config {
             keyName = "highlightFeather",
             name = "Feather",
             description = "Configures the amount of 'feathering' to be applied to the object highlights",
-            position = 14
+            position = 10
     )
     default int highlightFeather() {
         return 1;
