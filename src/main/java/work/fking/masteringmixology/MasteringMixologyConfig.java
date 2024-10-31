@@ -79,7 +79,7 @@ public interface MasteringMixologyConfig extends Config {
             position = 5
     )
     default boolean highlightMixingVessel() {
-        return true;
+        return false;
     }
 
     @ConfigItem(
@@ -103,26 +103,6 @@ public interface MasteringMixologyConfig extends Config {
     }
 
     @ConfigItem(
-            keyName = "stationHighlightColor",
-            name = "Station color",
-            description = "Configures the default station highlight color",
-            position = 9
-    )
-    default Color stationHighlightColor() {
-        return Color.MAGENTA;
-    }
-
-    @ConfigItem(
-            keyName = "stationQuickActionHighlightColor",
-            name = "Quick-action color",
-            description = "Configures the station quick-action highlight color",
-            position = 10
-    )
-    default Color stationQuickActionHighlightColor() {
-        return Color.GREEN;
-    }
-
-    @ConfigItem(
             keyName = "notifyDigweed",
             name = "Notify DigWeed",
             description = "Toggles digweed notifications on or off",
@@ -143,16 +123,6 @@ public interface MasteringMixologyConfig extends Config {
     }
 
     @ConfigItem(
-            keyName = "digweedHighlightColor",
-            name = "DigWeed color",
-            description = "Configures the digweed highlight color",
-            position = 13
-    )
-    default Color digweedHighlightColor() {
-        return Color.GREEN;
-    }
-
-    @ConfigItem(
             section = HIGHLIGHTS,
             keyName = "highlightBorderWidth",
             name = "Border width",
@@ -170,5 +140,70 @@ public interface MasteringMixologyConfig extends Config {
     )
     default int highlightFeather() {
         return 1;
+    }
+
+
+    // Accessibility section
+    @ConfigSection(
+            name = "Accessibility",
+            description = "Accessibility settings",
+            position = 20,
+            closedByDefault = true
+    )
+    String ACCESSIBILITY = "Accessibility";
+
+    @ConfigItem(
+            section = ACCESSIBILITY,
+            keyName = "stationHighlightColor",
+            name = "Station color",
+            description = "Configures the default station highlight color",
+            position = 1
+    )
+    default Color stationHighlightColor() {
+        return Color.MAGENTA;
+    }
+
+    @ConfigItem(
+            section = ACCESSIBILITY,
+            keyName = "stationQuickActionHighlightColor",
+            name = "Quick-action color",
+            description = "Configures the station quick-action highlight color",
+            position = 2
+    )
+    default Color stationQuickActionHighlightColor() {
+        return Color.GREEN;
+    }
+
+    @ConfigItem(
+            section = ACCESSIBILITY,
+            keyName = "digweedHighlightColor",
+            name = "DigWeed color",
+            description = "Configures the digweed highlight color",
+            position = 3
+    )
+    default Color digweedHighlightColor() {
+        return Color.GREEN;
+    }
+
+    @ConfigItem(
+            section = ACCESSIBILITY,
+            keyName = "vesselHighlightColor",
+            name = "Vessel color",
+            description = "Configures the vessel highlight color",
+            position = 4
+    )
+    default Color vesselHighlightColor() {
+        return Color.GREEN;
+    }
+
+    @ConfigItem(
+            section = ACCESSIBILITY,
+            keyName = "vesselInvalidHighlightColor",
+            name = "Invalid vessel color",
+            description = "Configures the invalid vessel highlight color",
+            position = 5
+    )
+    default Color vesselInvalidHighlightColor() {
+        return Color.RED;
     }
 }
