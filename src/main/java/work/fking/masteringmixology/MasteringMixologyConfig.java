@@ -174,7 +174,7 @@ public interface MasteringMixologyConfig extends Config {
 
     @ConfigItem(
             section = STRATEGY,
-            keyName = "ignoreBlacklistWhenMAL",
+            keyName = "ignoreBlacklistForMixalot",
             name = "Ignore Blacklist For Mixalot Orders",
             description = "Do not skip any potions if the order contains a Mixalot potion.",
             position = 2
