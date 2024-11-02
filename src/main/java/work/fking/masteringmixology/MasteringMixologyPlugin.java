@@ -34,6 +34,7 @@ import javax.inject.Inject;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -557,7 +558,7 @@ public class MasteringMixologyPlugin extends Plugin {
 
         // Sort the orders so that blacklisted potions are at the bottom
         if (useBlacklistForOrder(potionOrders)) {
-            potionOrders.sort((o1, o2) -> Boolean.compare(isPotionBlacklisted(o1.potionType()), isPotionBlacklisted(o2.potionType())));
+            potionOrders.sort(Comparator.comparing(order -> isPotionBlacklisted(order.potionType())));
         }
 
         // Trigger a fake varbit update to force run the clientscript proc
@@ -665,12 +666,7 @@ public class MasteringMixologyPlugin extends Plugin {
     }
 
     private static boolean doesOrderContainMixalot(List<PotionOrder> orders) {
-        for (PotionOrder order : orders) {
-            if (order.potionType() == PotionType.MIXALOT) {
-                return true;
-            }
-        }
-        return false;
+        return orders.stream().anyMatch(order -> order.potionType() == PotionType.MIXALOT);
     }
 
     public static class HighlightedObject {
