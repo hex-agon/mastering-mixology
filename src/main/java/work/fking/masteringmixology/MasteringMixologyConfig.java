@@ -151,4 +151,15 @@ public interface MasteringMixologyConfig extends Config {
     default int highlightFeather() {
         return 1;
     }
+
+
+    @ConfigItem(
+            keyName = "disableLeftClickOnNonHighlightedStations",
+            name = "Disable left-click on non-highlighted stations",
+            description = "Changes left click to walk here on the stations that aren't highlighted",
+            position = 10
+    )
+    default boolean disableLeftClickOnNonHighlightedStations() {
+        return false;
+    }
 }
