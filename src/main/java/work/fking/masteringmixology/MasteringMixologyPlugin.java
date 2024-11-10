@@ -186,7 +186,9 @@ public class MasteringMixologyPlugin extends Plugin {
             clientThread.invokeLater(this::updatePotionOrders);
         }
 
-        if (!config.highlightStations()) {
+        if (config.highlightStations()) {
+            clientThread.invokeLater(this::tryHighlightNextStation);
+        } else {
             unHighlightAllStations();
         }
 
@@ -206,7 +208,7 @@ public class MasteringMixologyPlugin extends Plugin {
 
     @Subscribe
     public void onItemContainerChanged(ItemContainerChanged event) {
-        if (!inLab || !config.highlightStations() || event.getContainerId() != InventoryID.INVENTORY.getId()) {
+        if (!inLab || event.getContainerId() != InventoryID.INVENTORY.getId()) {
             return;
         }
         // Do not update the highlight if there's a potion in a station
@@ -553,7 +555,7 @@ public class MasteringMixologyPlugin extends Plugin {
     private void tryHighlightNextStation() {
         var inventory = client.getItemContainer(InventoryID.INVENTORY);
 
-        if (inventory == null) {
+        if (!config.highlightStations() || inventory == null) {
             return;
         }
 
@@ -569,6 +571,9 @@ public class MasteringMixologyPlugin extends Plugin {
                 if (!order.fulfilled() && potionType == order.potionType()) {
                     LOGGER.debug("Highlighting station for order {}", order);
                     highlightObject(order.potionModifier().alchemyObject(), config.stationHighlightColor());
+                    if (!config.allowMultipleStationHighlights()) {
+                        return;
+                    }
                 }
             }
 
