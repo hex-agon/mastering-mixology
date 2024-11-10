@@ -186,7 +186,9 @@ public class MasteringMixologyPlugin extends Plugin {
             clientThread.invokeLater(this::updatePotionOrders);
         }
 
-        if (!config.highlightStations()) {
+        if (config.highlightStations()) {
+            clientThread.invokeLater(this::tryHighlightNextStation);
+        } else {
             unHighlightAllStations();
         }
 
@@ -206,30 +208,15 @@ public class MasteringMixologyPlugin extends Plugin {
 
     @Subscribe
     public void onItemContainerChanged(ItemContainerChanged event) {
-        if (!inLab || !config.highlightStations() || event.getContainerId() != InventoryID.INVENTORY.getId()) {
+        if (!inLab || event.getContainerId() != InventoryID.INVENTORY.getId()) {
             return;
         }
         // Do not update the highlight if there's a potion in a station
         if (alembicPotionType != null || agitatorPotionType != null || retortPotionType != null) {
             return;
         }
-        var inventory = event.getItemContainer();
 
-        // Find the first potion item and highlight its station
-        for (var item : inventory.getItems()) {
-            var potionType = PotionType.fromItemId(item.getId());
-
-            if (potionType == null || potionType.modifiedItemId() == item.getId()) {
-                continue;
-            }
-            for (var order : potionOrders) {
-                if (order.potionType() == potionType && !order.fulfilled()) {
-                    unHighlightAllStations();
-                    highlightObject(order.potionModifier().alchemyObject(), config.stationHighlightColor());
-                    return;
-                }
-            }
-        }
+        tryHighlightNextStation();
     }
 
     @Subscribe
@@ -248,9 +235,7 @@ public class MasteringMixologyPlugin extends Plugin {
         } else if (varbitId == VARBIT_ALEMBIC_POTION) {
             if (value == 0) {
                 // Finished crystalising
-                unHighlightObject(AlchemyObject.ALEMBIC);
                 tryFulfillOrder(alembicPotionType, PotionModifier.CRYSTALISED);
-                tryHighlightNextStation();
                 LOGGER.debug("Finished crystalising {}", alembicPotionType);
                 alembicPotionType = null;
             } else {
@@ -260,9 +245,7 @@ public class MasteringMixologyPlugin extends Plugin {
         } else if (varbitId == VARBIT_AGITATOR_POTION) {
             if (value == 0) {
                 // Finished homogenising
-                unHighlightObject(AlchemyObject.AGITATOR);
                 tryFulfillOrder(agitatorPotionType, PotionModifier.HOMOGENOUS);
-                tryHighlightNextStation();
                 LOGGER.debug("Finished homogenising {}", agitatorPotionType);
                 agitatorPotionType = null;
             } else {
@@ -272,9 +255,7 @@ public class MasteringMixologyPlugin extends Plugin {
         } else if (varbitId == VARBIT_RETORT_POTION) {
             if (value == 0) {
                 // Finished concentrating
-                unHighlightObject(AlchemyObject.RETORT);
                 tryFulfillOrder(retortPotionType, PotionModifier.CONCENTRATED);
-                tryHighlightNextStation();
                 LOGGER.debug("Finished concentrating {}", retortPotionType);
                 retortPotionType = null;
             } else {
@@ -574,19 +555,29 @@ public class MasteringMixologyPlugin extends Plugin {
     private void tryHighlightNextStation() {
         var inventory = client.getItemContainer(InventoryID.INVENTORY);
 
-        if (inventory == null) {
+        if (!config.highlightStations() || inventory == null) {
             return;
         }
 
-        for (var order : potionOrders) {
-            if (order.fulfilled()) {
+        unHighlightAllStations();
+
+        for (var item : inventory.getItems()) {
+            var potionType = PotionType.fromItemId(item.getId());
+            if (potionType == null || potionType.modifiedItemId() == item.getId()) {
                 continue;
             }
-            if (inventory.contains(order.potionType().itemId())) {
-                LOGGER.debug("Highlighting station for order {}", order);
-                highlightObject(order.potionModifier().alchemyObject(), config.stationHighlightColor());
-                break;
+
+            for (var order : potionOrders) {
+                if (!order.fulfilled() && potionType == order.potionType()) {
+                    LOGGER.debug("Highlighting station for order {}", order);
+                    highlightObject(order.potionModifier().alchemyObject(), config.stationHighlightColor());
+                    if (!config.allowMultipleStationHighlights()) {
+                        return;
+                    }
+                }
             }
+
+            return;
         }
     }
 

@@ -93,6 +93,16 @@ public interface MasteringMixologyConfig extends Config {
     }
 
     @ConfigItem(
+            keyName = "allowMultipleStationHighlights",
+            name = "Allow Multiple Station Highlights",
+            description = "If multiple recipes have the same potion type, multiple stations will be highlighted instead of just the top.",
+            position = 3
+    )
+    default boolean allowMultipleStationHighlights() {
+        return false;
+    }
+
+    @ConfigItem(
             keyName = "stationQuickActionHighlightColor",
             name = "Quick-action color",
             description = "Configures the station quick-action highlight color",
