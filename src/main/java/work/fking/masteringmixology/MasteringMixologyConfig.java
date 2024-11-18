@@ -5,6 +5,7 @@ import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
 import net.runelite.client.config.Notification;
+import net.runelite.client.config.Range;
 
 import java.awt.Color;
 
@@ -150,5 +151,49 @@ public interface MasteringMixologyConfig extends Config {
     )
     default int highlightFeather() {
         return 1;
+    }
+
+    @ConfigSection(
+            name = "Reward Tracking",
+            description = "Track your progress towards rewards",
+            position = 13
+    )
+    String REWARD_TRACKING = "RewardTracking";
+
+    @ConfigItem(
+            section = REWARD_TRACKING,
+            keyName = "selectedReward",
+            name = "Selected Reward",
+            description = "Select a reward to track resin for",
+            position = 1
+    )
+    default RewardItem selectedReward() {
+        return RewardItem.NONE;
+    }
+
+    @ConfigItem(
+            section = REWARD_TRACKING,
+            keyName = "rewardQuantity",
+            name = "Reward Quantity",
+            description = "Set the quantity for repeatable rewards",
+            position = 2
+    )
+    @Range(
+            min = 1,
+            max = 100000
+    )
+    default int rewardQuantity() {
+        return 1;
+    }
+
+    @ConfigItem(
+            section = REWARD_TRACKING,
+            keyName = "showResinBars",
+            name = "Show Resin Bars",
+            description = "Toggle to display or hide the resin progress bars",
+            position = 3
+    )
+    default boolean showResinBars() {
+        return true;
     }
 }

@@ -73,7 +73,7 @@ public enum PotionType {
     }
 
     private static String colorizeRecipeComponent(PotionComponent component) {
-        return "<col=" + component.color() + ">" + component.character() + "</col>";
+        return "<col=" + component.colorCode() + ">" + component.character() + "</col>";
     }
 
     public int itemId() {
