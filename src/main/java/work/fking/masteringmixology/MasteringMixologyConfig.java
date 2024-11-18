@@ -151,4 +151,44 @@ public interface MasteringMixologyConfig extends Config {
     default int highlightFeather() {
         return 1;
     }
+
+    @ConfigSection(
+            name = "Tooltip",
+            description = "Tooltip related configuration",
+            position = 20
+    )
+    String TOOLTIP = "tooltipSection";
+
+    @ConfigItem(
+            section = TOOLTIP,
+            keyName = "showTooltip",
+            name = "Enable Tooltips",
+            description = "Show tooltips for items in the bank.",
+            position = 1
+    )
+    default boolean showTooltip() {
+        return false;
+    }
+
+    @ConfigItem(
+            section = TOOLTIP,
+            keyName = "showTooltipEach",
+            name = "Show Per-Item Amount",
+            description = "Include the paste amount per single item in the tooltip.",
+            position = 2
+    )
+    default boolean showTooltipEach() {
+        return true;
+    }
+
+    @ConfigItem(
+            section = TOOLTIP,
+            keyName = "showPricePerPaste",
+            name = "Include Price Per Paste",
+            description = "Show GE price per paste in the tooltip.",
+            position = 3
+    )
+    default boolean showPricePerPaste() {
+        return false;
+    }
 }

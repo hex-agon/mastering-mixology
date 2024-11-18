@@ -105,6 +105,8 @@ public class MasteringMixologyPlugin extends Plugin {
     private MasteringMixologyOverlay overlay;
 
     @Inject
+    private MasteringMixologyTooltips tooltips;
+    @Inject
     private InventoryPotionOverlay potionOverlay;
 
     private final Map<AlchemyObject, HighlightedObject> highlightedObjects = new LinkedHashMap<>();
@@ -137,6 +139,7 @@ public class MasteringMixologyPlugin extends Plugin {
     @Override
     protected void startUp() {
         overlayManager.add(overlay);
+        overlayManager.add(tooltips);
         overlayManager.add(potionOverlay);
 
         if (client.getGameState() == GameState.LOGGED_IN) {
@@ -147,6 +150,7 @@ public class MasteringMixologyPlugin extends Plugin {
     @Override
     protected void shutDown() {
         overlayManager.remove(overlay);
+        overlayManager.remove(tooltips);
         overlayManager.remove(potionOverlay);
         inLab = false;
     }
