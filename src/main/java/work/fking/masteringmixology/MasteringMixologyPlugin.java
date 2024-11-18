@@ -199,6 +199,11 @@ public class MasteringMixologyPlugin extends Plugin {
             clientThread.invokeLater(this::triggerPotionOrderUpdate);
         }
 
+        // Refresh the highlight on the vessel if the config changes
+        if (event.getKey().equals("highlightMixingVessel") || event.getKey().equals("highlightMixingVesselInvalid")) {
+            clientThread.invokeLater(() -> validateVesselPotion(client.getVarbitValue(VARBIT_MIXING_VESSEL_POTION)));
+        }
+
         if (!config.highlightDigWeed()) {
             unHighlightObject(AlchemyObject.DIGWEED_NORTH_EAST);
             unHighlightObject(AlchemyObject.DIGWEED_SOUTH_EAST);
@@ -357,6 +362,46 @@ public class MasteringMixologyPlugin extends Plugin {
         } else if (varbitId == VARBIT_ALEMBIC_QUICKACTION) {
             // alembic quick action was just successfully popped
             resetStationHighlight(AlchemyObject.ALEMBIC);
+        } else if (varbitId == VARBIT_MIXING_VESSEL_POTION) {
+            // potion was changed in the mixing vessel
+            validateVesselPotion(value);
+        }
+    }
+
+    private void validateVesselPotion(int value) {
+        // Reset when they take out the potion
+        if (value == 0) {
+            unHighlightObject(AlchemyObject.MIXING_VESSEL);
+            return;
+        }
+
+        // Remove the highlight if the config is disabled
+        if (!config.highlightMixingVessel() && !config.highlightMixingVesselInvalid()) {
+            unHighlightObject(AlchemyObject.MIXING_VESSEL);
+            return;
+        }
+
+        // Find the potion in the vessel
+        PotionType potionInVessel = PotionType.fromIdx(value - 1);
+        if (potionInVessel == null) {
+            return;
+        }
+
+        // Check if the potion is valid
+        boolean validPotion = potionOrders.stream()
+                .anyMatch(order -> order.potionType() == potionInVessel && !order.fulfilled());
+
+        // Highlight the vessel
+        if (validPotion) {
+            if (config.highlightMixingVessel()) {
+                highlightObject(AlchemyObject.MIXING_VESSEL, config.vesselHighlightColor());
+            }
+        } else {
+            if (config.highlightMixingVesselInvalid()) {
+                highlightObject(AlchemyObject.MIXING_VESSEL, config.vesselInvalidHighlightColor());
+            } else {
+                unHighlightObject(AlchemyObject.MIXING_VESSEL);
+            }
         }
     }
 
