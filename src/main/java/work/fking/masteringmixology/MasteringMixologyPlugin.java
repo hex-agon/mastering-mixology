@@ -329,7 +329,7 @@ public class MasteringMixologyPlugin extends Plugin {
         } else if (varbitId == VARBIT_AGITATOR_PROGRESS) {
             if (agitatorQuickActionTicks == 2) {
                 // quick action was triggered two ticks ago, so it's now too late
-                resetDefaultHighlight(AlchemyObject.AGITATOR);
+                resetStationHighlight(AlchemyObject.AGITATOR);
                 agitatorQuickActionTicks = 0;
             }
             if (agitatorQuickActionTicks == 1) {
@@ -337,26 +337,26 @@ public class MasteringMixologyPlugin extends Plugin {
             }
             if (value < previousAgitatorProgess) {
                 // progress was set back due to a quick action failure
-                resetDefaultHighlight(AlchemyObject.AGITATOR);
+                resetStationHighlight(AlchemyObject.AGITATOR);
             }
             previousAgitatorProgess = value;
         } else if (varbitId == VARBIT_ALEMBIC_PROGRESS) {
             if (alembicQuickActionTicks == 1) {
                 // quick action was triggered last tick, so it's now too late
-                resetDefaultHighlight(AlchemyObject.ALEMBIC);
+                resetStationHighlight(AlchemyObject.ALEMBIC);
                 alembicQuickActionTicks = 0;
             }
             if (value < previousAlembicProgress) {
                 // progress was set back due to a quick action failure
-                resetDefaultHighlight(AlchemyObject.ALEMBIC);
+                resetStationHighlight(AlchemyObject.ALEMBIC);
             }
             previousAlembicProgress = value;
         } else if (varbitId == VARBIT_AGITATOR_QUICKACTION) {
             // agitator quick action was just successfully popped
-            resetDefaultHighlight(AlchemyObject.AGITATOR);
+            resetStationHighlight(AlchemyObject.AGITATOR);
         } else if (varbitId == VARBIT_ALEMBIC_QUICKACTION) {
             // alembic quick action was just successfully popped
-            resetDefaultHighlight(AlchemyObject.ALEMBIC);
+            resetStationHighlight(AlchemyObject.ALEMBIC);
         }
     }
 
@@ -501,7 +501,7 @@ public class MasteringMixologyPlugin extends Plugin {
         }
     }
 
-    public void resetDefaultHighlight(AlchemyObject alchemyObject) {
+    public void resetStationHighlight(AlchemyObject alchemyObject) {
         if (config.highlightStations()) {
             highlightObject(alchemyObject, config.stationHighlightColor());
         }
@@ -588,6 +588,9 @@ public class MasteringMixologyPlugin extends Plugin {
     }
 
     private void tryHighlightNextStation() {
+        if (!config.highlightStations()) {
+            return;
+        }
         var inventory = client.getItemContainer(InventoryID.INVENTORY);
 
         if (inventory == null) {
