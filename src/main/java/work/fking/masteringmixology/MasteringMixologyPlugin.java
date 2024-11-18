@@ -186,8 +186,17 @@ public class MasteringMixologyPlugin extends Plugin {
             clientThread.invokeLater(this::updatePotionOrders);
         }
 
-        if (!config.highlightStations()) {
-            unHighlightAllStations();
+        if (event.getKey().equals("highlightStations")) {
+            if (!config.highlightStations()) {
+                unHighlightAllStations();
+            } else {
+                clientThread.invokeLater(this::tryHighlightNextStation);
+            }
+        }
+
+        if (event.getKey().equals("displayResin")) {
+            // Trigger the potion order update to refresh the resin display
+            clientThread.invokeLater(this::triggerPotionOrderUpdate);
         }
 
         if (!config.highlightDigWeed()) {
@@ -536,6 +545,10 @@ public class MasteringMixologyPlugin extends Plugin {
             LOGGER.debug("Sorted orders: {}", potionOrders);
         }
 
+        triggerPotionOrderUpdate();
+    }
+
+    public void triggerPotionOrderUpdate() {
         // Trigger a fake varbit update to force run the clientscript proc
         var varbitType = client.getVarbit(VARBIT_POTION_ORDER_1);
 
