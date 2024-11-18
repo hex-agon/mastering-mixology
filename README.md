@@ -9,6 +9,13 @@
 
 ### Changelog
 
+#### V1.7.0
+* Fixes stations other than the first in a batch being highlighted even with the config toggled off
+* Fixes the vanilla UI enhancement for players that are boosting their herblore levels
+* Adds colored inventory tags
+* Improves how the `by station` potion order works to prioritize concentrate last to avoid missclicks
+* Adds a `shortest past` potion order option
+
 #### V1.6.0
 * Adds support for potion order reordering in the interface. For now, the only available options are: Vanilla (default) & By Station type
 * Customizable notifications for digweed spawns
