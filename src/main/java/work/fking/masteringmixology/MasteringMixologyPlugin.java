@@ -5,11 +5,13 @@ import net.runelite.api.Client;
 import net.runelite.api.FontID;
 import net.runelite.api.GameState;
 import net.runelite.api.InventoryID;
+import net.runelite.api.MenuEntry;
 import net.runelite.api.TileObject;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GraphicsObjectCreated;
 import net.runelite.api.events.ItemContainerChanged;
+import net.runelite.api.events.MenuEntryAdded;
 import net.runelite.api.events.ScriptPostFired;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.events.WidgetClosed;
@@ -27,6 +29,7 @@ import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.ColorUtil;
+import net.runelite.client.util.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -120,6 +123,12 @@ public class MasteringMixologyPlugin extends Plugin {
 
     private int agitatorQuickActionTicks = 0;
     private int alembicQuickActionTicks = 0;
+
+    private final Map<String, AlchemyObject> TARGET_TO_OBJECT_MAP = Map.of(
+            "retort", AlchemyObject.RETORT,
+            "agitator", AlchemyObject.AGITATOR,
+            "alembic", AlchemyObject.ALEMBIC
+    );
 
     public Map<AlchemyObject, HighlightedObject> highlightedObjects() {
         return highlightedObjects;
@@ -397,6 +406,40 @@ public class MasteringMixologyPlugin extends Plugin {
             updatePotionOrdersComponent(baseWidget);
         } else {
             appendResins(baseWidget);
+        }
+    }
+
+    @Subscribe
+    public void onMenuEntryAdded(MenuEntryAdded menuEntryAdded) {
+        // Don't run if outside lab or stations are not highlighted
+        if (!isInLab() || !config.highlightStations() && !config.disableLeftClickOnNonHighlightedStations()) {
+            return;
+        }
+
+        // No need to de-prioritize the menu entry if none of the stations are highlighted
+        if (!highlightedObjects.containsKey(AlchemyObject.RETORT) &&
+                !highlightedObjects.containsKey(AlchemyObject.ALEMBIC) &&
+                !highlightedObjects.containsKey(AlchemyObject.AGITATOR)) {
+            return;
+        }
+
+        final MenuEntry menuEntry = menuEntryAdded.getMenuEntry();
+        String rawTarget = menuEntry.getTarget();
+        // Return if the target is empty (no object to interact with)
+        if (rawTarget.isEmpty()) {
+            return;
+        }
+
+        // Only de-prioritize the menu entry if it's a potion or check option
+        if (!menuEntry.getOption().contains("-potion") && !menuEntry.getOption().equals("Check")) {
+            return;
+        }
+
+        // De-prioritize the menu entry if the target is a station and the potion is not for that station (not highlighted)
+        final String target = Text.removeTags(rawTarget).toLowerCase();
+        AlchemyObject alchemyObject = TARGET_TO_OBJECT_MAP.get(target);
+        if (alchemyObject != null && !highlightedObjects.containsKey(alchemyObject)) {
+            menuEntry.setDeprioritized(true);
         }
     }
 
