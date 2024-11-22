@@ -91,7 +91,8 @@ public class MasteringMixologyPlugin extends Plugin {
     private static final List<String> UPDATE_POTION_UI_KEYS = List.of(
             "potionOrderSorting",
             "potionBlacklist",
-            "ignoreBlacklistWhenMAL"
+            "ignoreBlacklistWhenMAL",
+            "displayResin"
     );
 
     @Inject
@@ -194,8 +195,12 @@ public class MasteringMixologyPlugin extends Plugin {
             clientThread.invokeLater(this::updatePotionOrders);
         }
 
-        if (!config.highlightStations()) {
-            unHighlightAllStations();
+        if (event.getKey().equals("highlightStations")) {
+            if (!config.highlightStations()) {
+                unHighlightAllStations();
+            } else {
+                clientThread.invokeLater(this::tryHighlightNextStation);
+            }
         }
 
         if (!config.highlightDigWeed()) {
@@ -328,7 +333,7 @@ public class MasteringMixologyPlugin extends Plugin {
         } else if (varbitId == VARBIT_AGITATOR_PROGRESS) {
             if (agitatorQuickActionTicks == 2) {
                 // quick action was triggered two ticks ago, so it's now too late
-                resetDefaultHighlight(AlchemyObject.AGITATOR);
+                resetStationHighlight(AlchemyObject.AGITATOR);
                 agitatorQuickActionTicks = 0;
             }
             if (agitatorQuickActionTicks == 1) {
@@ -336,26 +341,26 @@ public class MasteringMixologyPlugin extends Plugin {
             }
             if (value < previousAgitatorProgess) {
                 // progress was set back due to a quick action failure
-                resetDefaultHighlight(AlchemyObject.AGITATOR);
+                resetStationHighlight(AlchemyObject.AGITATOR);
             }
             previousAgitatorProgess = value;
         } else if (varbitId == VARBIT_ALEMBIC_PROGRESS) {
             if (alembicQuickActionTicks == 1) {
                 // quick action was triggered last tick, so it's now too late
-                resetDefaultHighlight(AlchemyObject.ALEMBIC);
+                resetStationHighlight(AlchemyObject.ALEMBIC);
                 alembicQuickActionTicks = 0;
             }
             if (value < previousAlembicProgress) {
                 // progress was set back due to a quick action failure
-                resetDefaultHighlight(AlchemyObject.ALEMBIC);
+                resetStationHighlight(AlchemyObject.ALEMBIC);
             }
             previousAlembicProgress = value;
         } else if (varbitId == VARBIT_AGITATOR_QUICKACTION) {
             // agitator quick action was just successfully popped
-            resetDefaultHighlight(AlchemyObject.AGITATOR);
+            resetStationHighlight(AlchemyObject.AGITATOR);
         } else if (varbitId == VARBIT_ALEMBIC_QUICKACTION) {
             // alembic quick action was just successfully popped
-            resetDefaultHighlight(AlchemyObject.ALEMBIC);
+            resetStationHighlight(AlchemyObject.ALEMBIC);
         }
     }
 
@@ -409,16 +414,19 @@ public class MasteringMixologyPlugin extends Plugin {
 
         boolean useBlacklist = useBlacklistForOrder(potionOrders);
 
+        int indexOffset = 0;
         for (int i = 0; i < potionOrders.size(); i++) {
             var order = potionOrders.get(i);
 
-            var orderGraphic = children[order.idx() * 2 + 1];
-            var orderText = children[order.idx() * 2 + 2];
+            var orderGraphic = children[order.idx() * 2 + 1 + indexOffset];
+            var orderText = children[order.idx() * 2 + 2 + indexOffset];
 
             // If anyone still has orders they don't have the herblore level to deliver there's an extra RECTANGLE component which
             // causes the idx calculations to select the wrong components
             if (orderGraphic.getType() != WidgetType.GRAPHIC || orderText.getType() != WidgetType.TEXT) {
-                continue;
+                indexOffset++;
+                orderGraphic = children[order.idx() * 2 + 1 + indexOffset];
+                orderText = children[order.idx() * 2 + 2 + indexOffset];
             }
 
             boolean skipPotion = useBlacklist && isPotionBlacklisted(order.potionType());
@@ -512,7 +520,7 @@ public class MasteringMixologyPlugin extends Plugin {
         }
     }
 
-    public void resetDefaultHighlight(AlchemyObject alchemyObject) {
+    public void resetStationHighlight(AlchemyObject alchemyObject) {
         if (config.highlightStations()) {
             highlightObject(alchemyObject, config.stationHighlightColor());
         }
@@ -561,6 +569,10 @@ public class MasteringMixologyPlugin extends Plugin {
             potionOrders.sort(Comparator.comparing(order -> isPotionBlacklisted(order.potionType())));
         }
 
+        triggerPotionOrderUpdate();
+    }
+
+    public void triggerPotionOrderUpdate() {
         // Trigger a fake varbit update to force run the clientscript proc
         var varbitType = client.getVarbit(VARBIT_POTION_ORDER_1);
 
@@ -600,6 +612,9 @@ public class MasteringMixologyPlugin extends Plugin {
     }
 
     private void tryHighlightNextStation() {
+        if (!config.highlightStations()) {
+            return;
+        }
         var inventory = client.getItemContainer(InventoryID.INVENTORY);
 
         if (inventory == null) {
