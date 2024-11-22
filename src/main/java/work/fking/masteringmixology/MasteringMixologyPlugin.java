@@ -34,6 +34,7 @@ import javax.inject.Inject;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -85,6 +86,14 @@ public class MasteringMixologyPlugin extends Plugin {
 
     private static final int COMPONENT_POTION_ORDERS_GROUP_ID = 882;
     private static final int COMPONENT_POTION_ORDERS = COMPONENT_POTION_ORDERS_GROUP_ID << 16 | 2;
+
+    // Config keys that should trigger an update of the potion orders ui
+    private static final List<String> UPDATE_POTION_UI_KEYS = List.of(
+            "potionOrderSorting",
+            "potionBlacklist",
+            "ignoreBlacklistWhenMAL",
+            "displayResin"
+    );
 
     @Inject
     private Client client;
@@ -182,7 +191,7 @@ public class MasteringMixologyPlugin extends Plugin {
             return;
         }
 
-        if (event.getKey().equals("potionOrderSorting")) {
+        if (UPDATE_POTION_UI_KEYS.contains(event.getKey())) {
             clientThread.invokeLater(this::updatePotionOrders);
         }
 
@@ -192,11 +201,6 @@ public class MasteringMixologyPlugin extends Plugin {
             } else {
                 clientThread.invokeLater(this::tryHighlightNextStation);
             }
-        }
-
-        if (event.getKey().equals("displayResin")) {
-            // Trigger the potion order update to refresh the resin display
-            clientThread.invokeLater(this::triggerPotionOrderUpdate);
         }
 
         if (!config.highlightDigWeed()) {
@@ -408,6 +412,8 @@ public class MasteringMixologyPlugin extends Plugin {
             return;
         }
 
+        boolean useBlacklist = useBlacklistForOrder(potionOrders);
+
         int indexOffset = 0;
         for (int i = 0; i < potionOrders.size(); i++) {
             var order = potionOrders.get(i);
@@ -422,14 +428,23 @@ public class MasteringMixologyPlugin extends Plugin {
                 orderGraphic = children[order.idx() * 2 + 1 + indexOffset];
                 orderText = children[order.idx() * 2 + 2 + indexOffset];
             }
-            var builder = new StringBuilder(orderText.getText());
 
+            boolean skipPotion = useBlacklist && isPotionBlacklisted(order.potionType());
+            String newOrderText = orderText.getText();
+
+            newOrderText += " (";
             if (order.fulfilled()) {
-                builder.append(" (<col=00ff00>done!</col>)");
+                newOrderText += skipPotion ? "done!" : colorText("done!", "00ff00");
             } else {
-                builder.append(" (").append(order.potionType().recipe()).append(")");
+                PotionType potionType = order.potionType();
+                newOrderText += skipPotion ? potionType.abbreviation() : potionType.recipe();
             }
-            orderText.setText(builder.toString());
+            newOrderText += ")";
+
+            if (skipPotion) {
+                newOrderText = colorText(newOrderText, "999999");
+            }
+            orderText.setText(newOrderText);
 
             if (i != order.idx()) {
                 // update component position
@@ -441,6 +456,10 @@ public class MasteringMixologyPlugin extends Plugin {
                 orderText.revalidate();
             }
         }
+    }
+
+    private String colorText(String text, String colorCode) {
+        return "<col=" + colorCode + ">" + text + "</col>";
     }
 
     private void appendResins(Widget baseWidget) {
@@ -545,6 +564,11 @@ public class MasteringMixologyPlugin extends Plugin {
             LOGGER.debug("Sorted orders: {}", potionOrders);
         }
 
+        // Sort the orders so that blacklisted potions are at the bottom
+        if (useBlacklistForOrder(potionOrders)) {
+            potionOrders.sort(Comparator.comparing(order -> isPotionBlacklisted(order.potionType())));
+        }
+
         triggerPotionOrderUpdate();
     }
 
@@ -646,6 +670,18 @@ public class MasteringMixologyPlugin extends Plugin {
         } else {
             return null;
         }
+    }
+
+    private boolean isPotionBlacklisted(PotionType potionType) {
+        return config.potionBlacklist().contains(potionType);
+    }
+
+    private boolean useBlacklistForOrder(List<PotionOrder> orders) {
+        return !(config.ignoreBlacklistForMixalot() && doesOrderContainMixalot(orders));
+    }
+
+    private static boolean doesOrderContainMixalot(List<PotionOrder> orders) {
+        return orders.stream().anyMatch(order -> order.potionType() == PotionType.MIXALOT);
     }
 
     public static class HighlightedObject {

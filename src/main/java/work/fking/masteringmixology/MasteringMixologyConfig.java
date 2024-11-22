@@ -7,6 +7,8 @@ import net.runelite.client.config.ConfigSection;
 import net.runelite.client.config.Notification;
 
 import java.awt.Color;
+import java.util.Collections;
+import java.util.Set;
 
 import static work.fking.masteringmixology.MasteringMixologyConfig.CONFIG_GROUP;
 
@@ -21,6 +23,13 @@ public interface MasteringMixologyConfig extends Config {
             position = 10
     )
     String HIGHLIGHTS = "Highlights";
+
+    @ConfigSection(
+            name = "Strategy",
+            description = "Strategy related configuration",
+            position = 20
+    )
+    String STRATEGY = "Strategy";
 
     @ConfigItem(
             keyName = "inventoryPotionTags",
@@ -150,5 +159,27 @@ public interface MasteringMixologyConfig extends Config {
     )
     default int highlightFeather() {
         return 1;
+    }
+
+    @ConfigItem(
+            section = STRATEGY,
+            keyName = "potionBlacklist",
+            name = "Blacklist",
+            description = "Select the potions you want to skip, hold ctrl to select multiple",
+            position = 1
+    )
+    default Set<PotionType> potionBlacklist() {
+        return Collections.emptySet();
+    }
+
+    @ConfigItem(
+            section = STRATEGY,
+            keyName = "ignoreBlacklistForMixalot",
+            name = "Ignore Blacklist For Mixalot Orders",
+            description = "Do not skip any potions if the order contains a Mixalot potion.",
+            position = 2
+    )
+    default boolean ignoreBlacklistForMixalot() {
+        return true;
     }
 }

@@ -5,6 +5,7 @@ import net.runelite.api.ItemID;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static work.fking.masteringmixology.PotionComponent.AGA;
 import static work.fking.masteringmixology.PotionComponent.LYE;
@@ -98,5 +99,17 @@ public enum PotionType {
 
     public String abbreviation() {
         return abbreviation;
+    }
+
+    // Used to display the potion type in the config UI
+    @Override
+    public String toString() {
+        return abbreviation() + " - " + toTitleCase(super.toString());
+    }
+
+    private static String toTitleCase(String s) {
+        return Arrays.stream(s.toLowerCase().split("_"))
+                .map(word -> Character.toUpperCase(word.charAt(0)) + word.substring(1))
+                .collect(Collectors.joining(" "));
     }
 }
