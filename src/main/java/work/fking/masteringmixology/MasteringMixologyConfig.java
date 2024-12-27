@@ -73,6 +73,16 @@ public interface MasteringMixologyConfig extends Config {
     }
 
     @ConfigItem(
+            keyName = "unfinishedTracking",
+            name = "Unfinished Potion Tracking",
+            description = "Toggles tracking of unfinished potions in your inventory to highlight corresponding potion orders.",
+            position = 2
+    )
+    default boolean unfinishedTracking() {
+        return false;
+    }
+
+    @ConfigItem(
             keyName = "displayResin",
             name = "Display resin amount",
             description = "Display total resin amounts",
@@ -151,4 +161,5 @@ public interface MasteringMixologyConfig extends Config {
     default int highlightFeather() {
         return 1;
     }
+
 }

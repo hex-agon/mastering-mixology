@@ -199,6 +199,14 @@ public class MasteringMixologyPlugin extends Plugin {
             clientThread.invokeLater(this::triggerPotionOrderUpdate);
         }
 
+        if (event.getKey().equals("unfinishedTracking")) {
+            // Trigger the item container change to (de-)initialize unfinished potion tracking
+            clientThread.invokeLater(() -> {
+                triggerItemContainerChanged();
+                triggerPotionOrderUpdate();
+            });
+        }
+
         if (!config.highlightDigWeed()) {
             unHighlightObject(AlchemyObject.DIGWEED_NORTH_EAST);
             unHighlightObject(AlchemyObject.DIGWEED_SOUTH_EAST);
@@ -215,27 +223,41 @@ public class MasteringMixologyPlugin extends Plugin {
 
     @Subscribe
     public void onItemContainerChanged(ItemContainerChanged event) {
+
         if (!inLab || !config.highlightStations() || event.getContainerId() != InventoryID.INVENTORY.getId()) {
             return;
         }
+
         // Do not update the highlight if there's a potion in a station
-        if (alembicPotionType != null || agitatorPotionType != null || retortPotionType != null) {
-            return;
-        }
+        boolean highlightActive = (alembicPotionType != null && agitatorPotionType != null && retortPotionType != null);
+
         var inventory = event.getItemContainer();
 
-        // Find the first potion item and highlight its station
         for (var item : inventory.getItems()) {
             var potionType = PotionType.fromItemId(item.getId());
 
             if (potionType == null || potionType.modifiedItemId() == item.getId()) {
                 continue;
             }
+
             for (var order : potionOrders) {
-                if (order.potionType() == potionType && !order.fulfilled()) {
-                    unHighlightAllStations();
-                    highlightObject(order.potionModifier().alchemyObject(), config.stationHighlightColor());
-                    return;
+                if (order.potionType() == potionType && !order.fulfilled() && !order.isUnfinishedAvailable() ) {
+                    // Mark the first matching order as having an unfinished item available
+                    order.setUnfinishedAvailable(true);
+                    triggerPotionOrderUpdate();
+                    break;
+                }
+            }
+
+            if (!highlightActive) {
+                // Find the first potion item and highlight its station
+                for (var order : potionOrders) {
+                    if (order.potionType() == potionType && !order.fulfilled()) {
+                        highlightActive = true;
+                        unHighlightAllStations();
+                        highlightObject(order.potionModifier().alchemyObject(), config.stationHighlightColor());
+                        break;
+                    }
                 }
             }
         }
@@ -426,6 +448,8 @@ public class MasteringMixologyPlugin extends Plugin {
 
             if (order.fulfilled()) {
                 builder.append(" (<col=00ff00>done!</col>)");
+            } else if(order.isUnfinishedAvailable() && config.unfinishedTracking()) {
+                builder.append(" (<col=ffff00>ready</col>)");
             } else {
                 builder.append(" (").append(order.potionType().recipe()).append(")");
             }
@@ -464,7 +488,9 @@ public class MasteringMixologyPlugin extends Plugin {
 
         LOGGER.debug("initialize plugin");
         inLab = true;
+
         updatePotionOrders();
+        triggerItemContainerChanged();
         highlightLevers();
         tryHighlightNextStation();
     }
@@ -548,6 +574,17 @@ public class MasteringMixologyPlugin extends Plugin {
         triggerPotionOrderUpdate();
     }
 
+    public void triggerItemContainerChanged() {
+        // Trigger a fake ItemContainer update to force run the inventory check
+        if (client.getItemContainer(InventoryID.INVENTORY) != null) {
+            ItemContainerChanged simulatedEvent = new ItemContainerChanged(
+                    InventoryID.INVENTORY.getId(),
+                    client.getItemContainer(InventoryID.INVENTORY)
+            );
+
+            onItemContainerChanged(simulatedEvent);
+        }
+    }
     public void triggerPotionOrderUpdate() {
         // Trigger a fake varbit update to force run the clientscript proc
         var varbitType = client.getVarbit(VARBIT_POTION_ORDER_1);

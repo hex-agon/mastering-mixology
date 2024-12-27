@@ -6,6 +6,7 @@ public class PotionOrder {
     private final PotionType potionType;
     private final PotionModifier potionModifier;
 
+    private boolean unfinishedAvailable;
     private boolean fulfilled;
 
     public PotionOrder(int idx, PotionType potionType, PotionModifier potionModifier) {
@@ -29,9 +30,14 @@ public class PotionOrder {
     public void setFulfilled(boolean fulfilled) {
         this.fulfilled = fulfilled;
     }
-
+    public void setUnfinishedAvailable(boolean unfinishedAvailable) {
+        this.unfinishedAvailable = unfinishedAvailable;
+    }
     public boolean fulfilled() {
         return fulfilled;
+    }
+    public boolean isUnfinishedAvailable() {
+        return unfinishedAvailable;
     }
 
     @Override
