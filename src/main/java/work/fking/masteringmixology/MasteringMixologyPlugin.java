@@ -499,6 +499,7 @@ public class MasteringMixologyPlugin extends Plugin {
         updatePotionOrders();
         highlightLevers();
         tryHighlightNextStation();
+        triggerItemContainerChanged();
     }
 
     public void highlightObject(AlchemyObject alchemyObject, Color color) {
@@ -586,6 +587,18 @@ public class MasteringMixologyPlugin extends Plugin {
 
         if (varbitType != null) {
             client.queueChangedVarp(varbitType.getIndex());
+        }
+    }
+
+    public void triggerItemContainerChanged() {
+        // Trigger a fake ItemContainer update to force run the inventory check
+        if (client.getItemContainer(InventoryID.INVENTORY) != null) {
+            ItemContainerChanged simulatedEvent = new ItemContainerChanged(
+                    InventoryID.INVENTORY.getId(),
+                    client.getItemContainer(InventoryID.INVENTORY)
+            );
+
+            onItemContainerChanged(simulatedEvent);
         }
     }
 
