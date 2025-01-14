@@ -426,6 +426,8 @@ public class MasteringMixologyPlugin extends Plugin {
 
             if (order.fulfilled()) {
                 builder.append(" (<col=00ff00>done!</col>)");
+            } else if(order.prepared()){
+                builder.append(" (<col=ffff00>").append(order.potionType().abbreviation()).append("</col>)");
             } else {
                 builder.append(" (").append(order.potionType().recipe()).append(")");
             }
