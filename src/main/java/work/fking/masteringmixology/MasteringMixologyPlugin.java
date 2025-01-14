@@ -215,14 +215,27 @@ public class MasteringMixologyPlugin extends Plugin {
 
     @Subscribe
     public void onItemContainerChanged(ItemContainerChanged event) {
-        if (!inLab || !config.highlightStations() || event.getContainerId() != InventoryID.INVENTORY.getId()) {
+        // Only handle changes while in lab, and only handle inventory changes
+        if (!inLab || event.getContainerId() != InventoryID.INVENTORY.getId()) {
+            return;
+        }
+
+        var inventory = event.getItemContainer();
+        updateStationHighlights(inventory);
+        updatePreparedOrders(inventory);
+    }
+
+    private void updateStationHighlights(ItemContainer inventory){
+
+        if(!config.highlightStations()){
             return;
         }
         // Do not update the highlight if there's a potion in a station
         if (alembicPotionType != null || agitatorPotionType != null || retortPotionType != null) {
             return;
         }
-        var inventory = event.getItemContainer();
+
+
 
         // Find the first potion item and highlight its station
         for (var item : inventory.getItems()) {
@@ -237,6 +250,31 @@ public class MasteringMixologyPlugin extends Plugin {
                     highlightObject(order.potionModifier().alchemyObject(), config.stationHighlightColor());
                     return;
                 }
+            }
+        }
+    }
+
+    private void updatePreparedOrders(ItemContainer inventory){
+        // Track all unmodified/unfinished potions in the inventory
+        List<PotionType> preparedPotions = new LinkedList<>();
+        for (var item : inventory.getItems()) {
+            var potionType = PotionType.fromItemId(item.getId());
+            if (potionType == null || potionType.modifiedItemId() == item.getId()) {
+                continue;
+            }
+            preparedPotions.add(potionType);
+        }
+
+        // Mark orders as prepared if we have that potion ready
+        for (var order : potionOrders) {
+            if (order.fulfilled()){
+                continue;
+            }
+            var requestedPotionType = order.potionType();
+            var preparedIdx = preparedPotions.indexOf(requestedPotionType);
+            if (preparedIdx != -1){
+                order.setPrepared(true);
+                preparedPotions.remove(preparedIdx);
             }
         }
     }
