@@ -1,6 +1,7 @@
 package work.fking.masteringmixology;
 
-import com.google.inject.Provides;import net.runelite.api.Client;
+import com.google.inject.Provides;
+import net.runelite.api.Client;
 import net.runelite.api.FontID;
 import net.runelite.api.GameState;
 import net.runelite.api.InventoryID;
