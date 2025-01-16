@@ -293,6 +293,7 @@ public class MasteringMixologyPlugin extends Plugin {
                 unHighlightAllStations();
             } else {
                 clientThread.invokeAtTickEnd(this::updatePotionOrders);
+                clientThread.invokeAtTickEnd(this::triggerItemContainerChanged);
             }
         } else if (varbitId == VARBIT_ALEMBIC_POTION) {
             if (value == 0) {
