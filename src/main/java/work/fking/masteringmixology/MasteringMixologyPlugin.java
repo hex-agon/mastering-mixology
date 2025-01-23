@@ -127,6 +127,8 @@ public class MasteringMixologyPlugin extends Plugin {
     private int agitatorQuickActionTicks = 0;
     private int alembicQuickActionTicks = 0;
 
+    private final Goal goal = new Goal(RewardItem.NONE);
+
     public Map<AlchemyObject, HighlightedObject> highlightedObjects() {
         return highlightedObjects;
     }
@@ -225,7 +227,7 @@ public class MasteringMixologyPlugin extends Plugin {
         }
 
         if (event.getKey().equals("selectedReward") || event.getKey().equals("rewardQuantity") || event.getKey().equals("showResinBars")) {
-            goalInfoBoxOverlay.markDataAsDirty();
+            recalculateGoalData();
         }
 
         if (config.highlightLevers()) {
@@ -381,7 +383,7 @@ public class MasteringMixologyPlugin extends Plugin {
             // alembic quick action was just successfully popped
             resetStationHighlight(AlchemyObject.ALEMBIC);
         } else if (varpId == VARP_MOX_RESIN || varpId == VARP_AGA_RESIN || varpId == VARP_LYE_RESIN) {
-            goalInfoBoxOverlay.markDataAsDirty();
+            recalculateGoalData();
         }
     }
 
@@ -671,6 +673,14 @@ public class MasteringMixologyPlugin extends Plugin {
         } else {
             return null;
         }
+    }
+
+    public Goal getGoal() {
+        return goal;
+    }
+
+    private void recalculateGoalData() {
+        goal.recalculate(config, client);
     }
 
     public static class HighlightedObject {

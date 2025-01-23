@@ -1,6 +1,5 @@
 package work.fking.masteringmixology;
 
-import net.runelite.api.Client;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.FontManager;
@@ -36,7 +35,6 @@ class GoalInfoBoxOverlay extends OverlayPanel {
     private static final int COMPONENT_SPRITE_SIZE = 16;
     private static final Color PROGRESS_BAR_BACKGROUND_COLOR = new Color(61, 56, 49);
 
-    private final Client client;
     private final MasteringMixologyPlugin plugin;
     private final MasteringMixologyConfig config;
     private final ItemManager itemManager;
@@ -44,22 +42,13 @@ class GoalInfoBoxOverlay extends OverlayPanel {
 
     private final PanelComponent topPanel = new PanelComponent();
 
-    private final EnumMap<PotionComponent, ComponentData> componentDataMap = new EnumMap<>(PotionComponent.class);
-    private double overallProgress = 0.0;
-    private int itemsAffordable = 0;
-    private RewardItem rewardItem;
-    private int rewardQuantity = 1;
-
     private final Map<Integer, BufferedImage> rewardIconCache = new HashMap<>();
     private final EnumMap<PotionComponent, BufferedImage> componentSpriteCache = new EnumMap<>(PotionComponent.class);
 
-    private boolean dataDirty = true;
-
     @Inject
-    GoalInfoBoxOverlay(Client client, MasteringMixologyPlugin plugin, MasteringMixologyConfig config,
+    GoalInfoBoxOverlay(MasteringMixologyPlugin plugin, MasteringMixologyConfig config,
                        ItemManager itemManager, SpriteManager spriteManager) {
         super(plugin);
-        this.client = client;
         this.plugin = plugin;
         this.config = config;
         this.itemManager = itemManager;
@@ -77,11 +66,8 @@ class GoalInfoBoxOverlay extends OverlayPanel {
 
     @Override
     public Dimension render(Graphics2D graphics) {
-        // Recalculate the data before checking if the overlay should be displayed
-        if (dataDirty) {
-            recalculateData();
-        }
-
+        Goal goal = plugin.getGoal();
+        RewardItem rewardItem = goal.getRewardItem();
         if (rewardItem == RewardItem.NONE || !plugin.isInLabRegion()) {
             return null;
         }
@@ -91,8 +77,8 @@ class GoalInfoBoxOverlay extends OverlayPanel {
 
         // Build the top display with the affordable amount / goal amount
         String goalAmountText = "";
-        if (rewardItem.isRepeatable() && rewardQuantity > 1) {
-            goalAmountText = QuantityFormatter.quantityToStackSize(itemsAffordable) + "/" + QuantityFormatter.quantityToStackSize(rewardQuantity);
+        if (rewardItem.isRepeatable() && goal.getRewardQuantity() > 1) {
+            goalAmountText = QuantityFormatter.quantityToStackSize(goal.getItemsAffordable()) + "/" + QuantityFormatter.quantityToStackSize(goal.getRewardQuantity());
         }
 
         final LineComponent topLine = LineComponent.builder()
@@ -106,9 +92,9 @@ class GoalInfoBoxOverlay extends OverlayPanel {
         final LineComponent bottomLine = LineComponent.builder()
                 .left("Progress:")
                 .leftFont(FontManager.getRunescapeFont())
-                .right(DECIMAL_FORMAT.format(overallProgress * 100) + "%")
+                .right(DECIMAL_FORMAT.format(goal.getOverallProgress() * 100) + "%")
                 .rightFont(FontManager.getRunescapeFont())
-                .rightColor(overallProgress >= 1 ? Color.GREEN : Color.WHITE)
+                .rightColor(goal.getOverallProgress() >= 1 ? Color.GREEN : Color.WHITE)
                 .build();
 
         final SplitComponent textSplit = SplitComponent.builder()
@@ -117,7 +103,7 @@ class GoalInfoBoxOverlay extends OverlayPanel {
                 .orientation(ComponentOrientation.VERTICAL)
                 .build();
 
-        final ImageComponent rewardImageComponent = new ImageComponent(getRewardImage());
+        final ImageComponent rewardImageComponent = new ImageComponent(getRewardImage(rewardItem));
         final SplitComponent topInfoSplit = SplitComponent.builder()
                 .first(rewardImageComponent)
                 .second(textSplit)
@@ -131,15 +117,15 @@ class GoalInfoBoxOverlay extends OverlayPanel {
         // Add a progress bar for each component
         if (config.showResinBars()) {
             for (PotionComponent component : PotionComponent.values()) {
-                createProgressBar(component);
+                createProgressBar(goal, component);
             }
         }
 
         return super.render(graphics);
     }
 
-    private void createProgressBar(PotionComponent component) {
-        ComponentData data = componentDataMap.get(component);
+    private void createProgressBar(Goal goal, PotionComponent component) {
+        Goal.ComponentData data = goal.getComponentData(component);
 
         final ImageComponent imageComponent = new ImageComponent(getComponentSprite(component));
         final ProgressBarComponent progressBarComponent = new ProgressBarComponent();
@@ -159,7 +145,7 @@ class GoalInfoBoxOverlay extends OverlayPanel {
         panelComponent.getChildren().add(progressBarSplit);
     }
 
-    private BufferedImage getRewardImage() {
+    private BufferedImage getRewardImage(RewardItem rewardItem) {
         return rewardIconCache.computeIfAbsent(rewardItem.itemId(), itemManager::getImage);
     }
 
@@ -173,56 +159,5 @@ class GoalInfoBoxOverlay extends OverlayPanel {
             }
             return null;
         });
-    }
-
-    public void markDataAsDirty() {
-        this.dataDirty = true;
-    }
-
-    private void recalculateData() {
-        rewardItem = config.selectedReward();
-        rewardQuantity = rewardItem.isRepeatable() ? config.rewardQuantity() : 1;
-
-        // Create the component data for each component
-        for (PotionComponent component : PotionComponent.values()) {
-            int currentAmount = client.getVarpValue(component.resinVarpId());
-            int baseGoalAmount = rewardItem.componentCost(component);
-            componentDataMap.put(component, new ComponentData(currentAmount, baseGoalAmount, rewardQuantity));
-        }
-
-        // Calculate the amount of items affordable based on the component with the lowest affordable amount
-        int minAffordable = componentDataMap.values().stream()
-                .mapToInt(data -> data.affordableAmount)
-                .min()
-                .orElse(0);
-        itemsAffordable = Math.min(minAffordable, rewardQuantity);
-
-        // Overall progress is the average of all component progress
-        overallProgress = componentDataMap.values().stream()
-                .mapToDouble(data -> data.percentageToGoal)
-                .average()
-                .orElse(0.0);
-
-        dataDirty = false;
-    }
-
-    private static class ComponentData {
-        final int currentAmount;
-        final int goalAmount;
-        final double percentageToGoal;
-        final int affordableAmount;
-
-        ComponentData(int currentAmount, int baseGoalAmount, int rewardQuantity) {
-            this.currentAmount = currentAmount;
-            this.goalAmount = baseGoalAmount * rewardQuantity;
-
-            if (goalAmount == 0) {
-                this.percentageToGoal = 1.0;
-                this.affordableAmount = rewardQuantity;
-            } else {
-                this.percentageToGoal = Math.min((double) currentAmount / goalAmount, 1.0);
-                this.affordableAmount = currentAmount / baseGoalAmount;
-            }
-        }
     }
 }
