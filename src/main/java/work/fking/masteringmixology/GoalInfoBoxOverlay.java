@@ -23,8 +23,6 @@ import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.text.DecimalFormat;
 import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.Map;
 
 class GoalInfoBoxOverlay extends OverlayPanel {
     private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0.0");
