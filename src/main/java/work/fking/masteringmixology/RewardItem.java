@@ -2,9 +2,6 @@ package work.fking.masteringmixology;
 
 import net.runelite.api.ItemID;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public enum RewardItem {
     NONE("None", 0, false, 0, 0, 0),
     APPRENTICE_POTION_PACK("Apprentice Potion Pack", ItemID.APPRENTICE_POTION_PACK, true, 420, 70, 30),
