@@ -23,15 +23,15 @@ public enum RewardItem {
     private final String itemName;
     private final int itemId;
     private final boolean repeatable;
-    private final Map<PotionComponent, Integer> componentCost = new HashMap<>();
+    private final Integer[] componentCost = new Integer[PotionComponent.values().length];
 
     RewardItem(String itemName, int itemId, boolean repeatable, int moxResinCost, int agaResinCost, int lyeResinCost) {
         this.itemName = itemName;
         this.itemId = itemId;
         this.repeatable = repeatable;
-        this.componentCost.put(PotionComponent.MOX, moxResinCost);
-        this.componentCost.put(PotionComponent.AGA, agaResinCost);
-        this.componentCost.put(PotionComponent.LYE, lyeResinCost);
+        this.componentCost[PotionComponent.MOX.ordinal()] = moxResinCost;
+        this.componentCost[PotionComponent.AGA.ordinal()] = agaResinCost;
+        this.componentCost[PotionComponent.LYE.ordinal()] = lyeResinCost;
     }
 
     public String itemName() {
@@ -47,6 +47,6 @@ public enum RewardItem {
     }
 
     public int componentCost(PotionComponent component) {
-        return componentCost.get(component);
+        return componentCost[component.ordinal()];
     }
 }
