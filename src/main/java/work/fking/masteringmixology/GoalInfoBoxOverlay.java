@@ -81,7 +81,7 @@ class GoalInfoBoxOverlay extends OverlayPanel {
             goalAmountText = QuantityFormatter.quantityToStackSize(goal.getItemsAffordable()) + "/" + QuantityFormatter.quantityToStackSize(goal.getRewardQuantity());
         }
 
-        final LineComponent topLine = LineComponent.builder()
+        var topLine = LineComponent.builder()
                 .left(rewardItem.itemName())
                 .leftFont(FontManager.getRunescapeFont())
                 .right(goalAmountText)
@@ -89,7 +89,7 @@ class GoalInfoBoxOverlay extends OverlayPanel {
                 .build();
 
         // Build the bottom line with the overall progress percentage
-        final LineComponent bottomLine = LineComponent.builder()
+        var bottomLine = LineComponent.builder()
                 .left("Progress:")
                 .leftFont(FontManager.getRunescapeFont())
                 .right(DECIMAL_FORMAT.format(goal.getOverallProgress() * 100) + "%")
@@ -97,14 +97,14 @@ class GoalInfoBoxOverlay extends OverlayPanel {
                 .rightColor(goal.getOverallProgress() >= 1 ? Color.GREEN : Color.WHITE)
                 .build();
 
-        final SplitComponent textSplit = SplitComponent.builder()
+        var textSplit = SplitComponent.builder()
                 .first(topLine)
                 .second(bottomLine)
                 .orientation(ComponentOrientation.VERTICAL)
                 .build();
 
-        final ImageComponent rewardImageComponent = new ImageComponent(getRewardImage(rewardItem));
-        final SplitComponent topInfoSplit = SplitComponent.builder()
+        ImageComponent rewardImageComponent = new ImageComponent(getRewardImage(rewardItem));
+        var topInfoSplit = SplitComponent.builder()
                 .first(rewardImageComponent)
                 .second(textSplit)
                 .orientation(ComponentOrientation.HORIZONTAL)
@@ -127,15 +127,15 @@ class GoalInfoBoxOverlay extends OverlayPanel {
     private void createProgressBar(Goal goal, PotionComponent component) {
         Goal.ComponentData data = goal.getComponentData(component);
 
-        final ImageComponent imageComponent = new ImageComponent(getComponentSprite(component));
-        final ProgressBarComponent progressBarComponent = new ProgressBarComponent();
+        ImageComponent imageComponent = new ImageComponent(getComponentSprite(component));
+        ProgressBarComponent progressBarComponent = new ProgressBarComponent();
         progressBarComponent.setForegroundColor(component.color());
         progressBarComponent.setBackgroundColor(PROGRESS_BAR_BACKGROUND_COLOR);
         progressBarComponent.setValue(data.percentageToGoal * 100);
         progressBarComponent.setLeftLabel(QuantityFormatter.quantityToStackSize(data.currentAmount));
         progressBarComponent.setRightLabel(QuantityFormatter.quantityToStackSize(data.goalAmount));
 
-        final SplitComponent progressBarSplit = SplitComponent.builder()
+        var progressBarSplit = SplitComponent.builder()
                 .first(imageComponent)
                 .second(progressBarComponent)
                 .orientation(ComponentOrientation.HORIZONTAL)
