@@ -42,7 +42,6 @@ class GoalInfoBoxOverlay extends OverlayPanel {
 
     private final PanelComponent topPanel = new PanelComponent();
 
-    private final Map<Integer, BufferedImage> rewardIconCache = new HashMap<>();
     private final EnumMap<PotionComponent, BufferedImage> componentSpriteCache = new EnumMap<>(PotionComponent.class);
 
     @Inject
@@ -103,7 +102,7 @@ class GoalInfoBoxOverlay extends OverlayPanel {
                 .orientation(ComponentOrientation.VERTICAL)
                 .build();
 
-        ImageComponent rewardImageComponent = new ImageComponent(getRewardImage(rewardItem));
+        ImageComponent rewardImageComponent = new ImageComponent(itemManager.getImage(rewardItem.itemId()));
         var topInfoSplit = SplitComponent.builder()
                 .first(rewardImageComponent)
                 .second(textSplit)
@@ -143,10 +142,6 @@ class GoalInfoBoxOverlay extends OverlayPanel {
                 .build();
 
         panelComponent.getChildren().add(progressBarSplit);
-    }
-
-    private BufferedImage getRewardImage(RewardItem rewardItem) {
-        return rewardIconCache.computeIfAbsent(rewardItem.itemId(), itemManager::getImage);
     }
 
     private BufferedImage getComponentSprite(PotionComponent component) {
