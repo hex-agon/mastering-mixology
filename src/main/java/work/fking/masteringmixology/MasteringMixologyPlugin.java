@@ -37,6 +37,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static work.fking.masteringmixology.AlchemyObject.AGA_LEVER;
 import static work.fking.masteringmixology.AlchemyObject.LYE_LEVER;
@@ -222,23 +223,7 @@ public class MasteringMixologyPlugin extends Plugin {
         if (alembicPotionType != null || agitatorPotionType != null || retortPotionType != null) {
             return;
         }
-        var inventory = event.getItemContainer();
-
-        // Find the first potion item and highlight its station
-        for (var item : inventory.getItems()) {
-            var potionType = PotionType.fromItemId(item.getId());
-
-            if (potionType == null || potionType.modifiedItemId() == item.getId()) {
-                continue;
-            }
-            for (var order : potionOrders) {
-                if (order.potionType() == potionType && !order.fulfilled()) {
-                    unHighlightAllStations();
-                    highlightObject(order.potionModifier().alchemyObject(), config.stationHighlightColor());
-                    return;
-                }
-            }
-        }
+        tryHighlightNextStation();
     }
 
     @Subscribe
@@ -503,7 +488,7 @@ public class MasteringMixologyPlugin extends Plugin {
 
     public void resetStationHighlight(AlchemyObject alchemyObject) {
         if (config.highlightStations()) {
-            highlightObject(alchemyObject, config.stationHighlightColor());
+            tryHighlightNextStation();
         }
     }
 
@@ -562,16 +547,16 @@ public class MasteringMixologyPlugin extends Plugin {
         var color = ColorUtil.fromHex(component.color()).getRGB();
 
         widget.setText(amount + "")
-              .setTextShadowed(true)
-              .setTextColor(color)
-              .setOriginalWidth(20)
-              .setOriginalHeight(15)
-              .setFontId(FontID.QUILL_8)
-              .setOriginalY(0)
-              .setOriginalX(x)
-              .setYPositionMode(WidgetPositionMode.ABSOLUTE_BOTTOM)
-              .setXTextAlignment(WidgetTextAlignment.CENTER)
-              .setYTextAlignment(WidgetTextAlignment.CENTER);
+                .setTextShadowed(true)
+                .setTextColor(color)
+                .setOriginalWidth(20)
+                .setOriginalHeight(15)
+                .setFontId(FontID.QUILL_8)
+                .setOriginalY(0)
+                .setOriginalX(x)
+                .setYPositionMode(WidgetPositionMode.ABSOLUTE_BOTTOM)
+                .setXTextAlignment(WidgetTextAlignment.CENTER)
+                .setYTextAlignment(WidgetTextAlignment.CENTER);
 
         widget.revalidate();
         LOGGER.debug("adding resin text {} at {} with color {}", amount, x, color);
@@ -591,20 +576,42 @@ public class MasteringMixologyPlugin extends Plugin {
         if (!config.highlightStations()) {
             return;
         }
+        unHighlightAllStations();
         var inventory = client.getItemContainer(InventoryID.INVENTORY);
 
         if (inventory == null) {
             return;
         }
 
-        for (var order : potionOrders) {
-            if (order.fulfilled()) {
-                continue;
-            }
-            if (inventory.contains(order.potionType().itemId())) {
-                LOGGER.debug("Highlighting station for order {}", order);
-                highlightObject(order.potionModifier().alchemyObject(), config.stationHighlightColor());
-                break;
+        PotionModifier firstPotionModifier = null;
+        PotionModifier secondPotionModifier = null;
+
+        List<PotionOrder> unfulfilledOrders = potionOrders
+                .stream()
+                .filter(o -> !o.fulfilled() && inventory.contains(o.potionType().itemId()))
+                .sorted((o1, o2) -> inventory.find(o1.potionType().itemId()) - inventory.find(o2.potionType().itemId()))
+                .collect(Collectors.toList());
+
+        if(!unfulfilledOrders.isEmpty()) {
+            firstPotionModifier = unfulfilledOrders.get(0).potionModifier();
+        }
+
+        if(unfulfilledOrders.size() > 1) {
+            secondPotionModifier = unfulfilledOrders.get(1).potionModifier();
+        }
+
+        if (firstPotionModifier != null) {
+            if (secondPotionModifier != null && firstPotionModifier.alchemyObject().equals(secondPotionModifier.alchemyObject())) {
+                // Mix colors if the next 2 stations are the same
+                var mixedColor = mixColors(config.stationHighlightColor(), config.nextStationHighlightColor());
+                highlightObject(firstPotionModifier.alchemyObject(), mixedColor);
+            } else {
+                // Highlight the first and second separately
+                unHighlightAllStations();
+                highlightObject(firstPotionModifier.alchemyObject(), config.stationHighlightColor());
+                if (secondPotionModifier != null) {
+                    highlightObject(secondPotionModifier.alchemyObject(), config.nextStationHighlightColor());
+                }
             }
         }
     }
@@ -678,4 +685,13 @@ public class MasteringMixologyPlugin extends Plugin {
             return feather;
         }
     }
+
+    // Helper function to mix two colors
+    private Color mixColors(Color color1, Color color2) {
+        int red = (color1.getRed() + color2.getRed()) / 2;
+        int green = (color1.getGreen() + color2.getGreen()) / 2;
+        int blue = (color1.getBlue() + color2.getBlue()) / 2;
+        return new Color(red, green, blue);
+    }
+
 }
