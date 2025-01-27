@@ -547,16 +547,16 @@ public class MasteringMixologyPlugin extends Plugin {
         var color = ColorUtil.fromHex(component.color()).getRGB();
 
         widget.setText(amount + "")
-                .setTextShadowed(true)
-                .setTextColor(color)
-                .setOriginalWidth(20)
-                .setOriginalHeight(15)
-                .setFontId(FontID.QUILL_8)
-                .setOriginalY(0)
-                .setOriginalX(x)
-                .setYPositionMode(WidgetPositionMode.ABSOLUTE_BOTTOM)
-                .setXTextAlignment(WidgetTextAlignment.CENTER)
-                .setYTextAlignment(WidgetTextAlignment.CENTER);
+            .setTextShadowed(true)
+            .setTextColor(color)
+            .setOriginalWidth(20)
+            .setOriginalHeight(15)
+            .setFontId(FontID.QUILL_8)
+            .setOriginalY(0)
+            .setOriginalX(x)
+            .setYPositionMode(WidgetPositionMode.ABSOLUTE_BOTTOM)
+            .setXTextAlignment(WidgetTextAlignment.CENTER)
+            .setYTextAlignment(WidgetTextAlignment.CENTER);
 
         widget.revalidate();
         LOGGER.debug("adding resin text {} at {} with color {}", amount, x, color);
