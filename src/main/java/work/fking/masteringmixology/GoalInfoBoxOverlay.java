@@ -22,9 +22,6 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.text.DecimalFormat;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.Map;
 
 class GoalInfoBoxOverlay extends OverlayPanel {
     private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0.0");
@@ -42,8 +39,12 @@ class GoalInfoBoxOverlay extends OverlayPanel {
 
     private final PanelComponent topPanel = new PanelComponent();
 
-    private final Map<Integer, BufferedImage> rewardIconCache = new HashMap<>();
-    private final EnumMap<PotionComponent, BufferedImage> componentSpriteCache = new EnumMap<>(PotionComponent.class);
+    // Caching
+    private BufferedImage cachedRewardIcon;
+    private RewardItem cachedRewardItem;
+    private final BufferedImage moxSprite;
+    private final BufferedImage agaSprite;
+    private final BufferedImage lyeSprite;
 
     @Inject
     GoalInfoBoxOverlay(MasteringMixologyPlugin plugin, MasteringMixologyConfig config,
@@ -62,6 +63,11 @@ class GoalInfoBoxOverlay extends OverlayPanel {
 
         topPanel.setBorder(TOP_PANEL_BORDER);
         topPanel.setBackgroundColor(null);
+
+        // Pre-cache the component sprites.
+        moxSprite = createComponentSprite(PotionComponent.MOX);
+        agaSprite = createComponentSprite(PotionComponent.AGA);
+        lyeSprite = createComponentSprite(PotionComponent.LYE);
     }
 
     @Override
@@ -78,7 +84,8 @@ class GoalInfoBoxOverlay extends OverlayPanel {
         // Build the top display with the affordable amount / goal amount
         String goalAmountText = "";
         if (rewardItem.isRepeatable() && goal.getRewardQuantity() > 1) {
-            goalAmountText = QuantityFormatter.quantityToStackSize(goal.getItemsAffordable()) + "/" + QuantityFormatter.quantityToStackSize(goal.getRewardQuantity());
+            goalAmountText = QuantityFormatter.quantityToStackSize(goal.getItemsAffordable())
+                    + "/" + QuantityFormatter.quantityToStackSize(goal.getRewardQuantity());
         }
 
         var topLine = LineComponent.builder()
@@ -146,18 +153,33 @@ class GoalInfoBoxOverlay extends OverlayPanel {
     }
 
     private BufferedImage getRewardImage(RewardItem rewardItem) {
-        return rewardIconCache.computeIfAbsent(rewardItem.itemId(), itemManager::getImage);
+        if (cachedRewardItem != rewardItem) {
+            cachedRewardItem = rewardItem;
+            cachedRewardIcon = itemManager.getImage(rewardItem.itemId());
+        }
+        return cachedRewardIcon;
     }
 
     private BufferedImage getComponentSprite(PotionComponent component) {
-        return componentSpriteCache.computeIfAbsent(component, comp -> {
-            BufferedImage sprite = spriteManager.getSprite(comp.spriteId(), 0);
-            if (sprite != null) {
-                // Resize and center the sprite
-                BufferedImage resizedImage = ImageUtil.resizeImage(sprite, COMPONENT_SPRITE_SIZE, COMPONENT_SPRITE_SIZE, true);
-                return ImageUtil.resizeCanvas(resizedImage, COMPONENT_SPRITE_SIZE, COMPONENT_SPRITE_SIZE);
-            }
-            return null;
-        });
+        switch (component) {
+            case MOX:
+                return moxSprite;
+            case AGA:
+                return agaSprite;
+            case LYE:
+                return lyeSprite;
+            default:
+                return null;
+        }
+    }
+
+    private BufferedImage createComponentSprite(PotionComponent component) {
+        BufferedImage sprite = spriteManager.getSprite(component.spriteId(), 0);
+        if (sprite != null) {
+            // Resize and center the sprite
+            BufferedImage resizedImage = ImageUtil.resizeImage(sprite, COMPONENT_SPRITE_SIZE, COMPONENT_SPRITE_SIZE, true);
+            return ImageUtil.resizeCanvas(resizedImage, COMPONENT_SPRITE_SIZE, COMPONENT_SPRITE_SIZE);
+        }
+        return null;
     }
 }
