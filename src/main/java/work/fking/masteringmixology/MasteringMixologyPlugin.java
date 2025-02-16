@@ -5,6 +5,7 @@ import net.runelite.api.Client;
 import net.runelite.api.FontID;
 import net.runelite.api.GameState;
 import net.runelite.api.InventoryID;
+import net.runelite.api.Player;
 import net.runelite.api.TileObject;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.events.GameStateChanged;
@@ -26,7 +27,6 @@ import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
-import net.runelite.client.util.ColorUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,9 +60,9 @@ public class MasteringMixologyPlugin extends Plugin {
     private static final int VARBIT_POTION_ORDER_3 = 11319;
     private static final int VARBIT_POTION_MODIFIER_3 = 11320;
 
-    private static final int VARP_LYE_RESIN = 4414;
-    private static final int VARP_AGA_RESIN = 4415;
-    private static final int VARP_MOX_RESIN = 4416;
+    static final int VARP_LYE_RESIN = 4414;
+    static final int VARP_AGA_RESIN = 4415;
+    static final int VARP_MOX_RESIN = 4416;
 
     private static final int VARBIT_ALEMBIC_PROGRESS = 11328;
     private static final int VARBIT_AGITATOR_PROGRESS = 11329;
@@ -86,6 +86,9 @@ public class MasteringMixologyPlugin extends Plugin {
     private static final int COMPONENT_POTION_ORDERS_GROUP_ID = 882;
     private static final int COMPONENT_POTION_ORDERS = COMPONENT_POTION_ORDERS_GROUP_ID << 16 | 2;
 
+    private static final int LABS_REGION_ID = 5521;
+    private static final int LABS_REGION_PLANE = 0;
+
     @Inject
     private Client client;
 
@@ -107,6 +110,9 @@ public class MasteringMixologyPlugin extends Plugin {
     @Inject
     private InventoryPotionOverlay potionOverlay;
 
+    @Inject
+    private GoalInfoBoxOverlay goalInfoBoxOverlay;
+
     private final Map<AlchemyObject, HighlightedObject> highlightedObjects = new LinkedHashMap<>();
     private List<PotionOrder> potionOrders = Collections.emptyList();
     private boolean inLab = false;
@@ -121,12 +127,24 @@ public class MasteringMixologyPlugin extends Plugin {
     private int agitatorQuickActionTicks = 0;
     private int alembicQuickActionTicks = 0;
 
+    private final Goal goal = new Goal(RewardItem.NONE);
+
     public Map<AlchemyObject, HighlightedObject> highlightedObjects() {
         return highlightedObjects;
     }
 
     public boolean isInLab() {
         return inLab;
+    }
+
+    /**
+     * @return true if the player is in the labs region (the area where the minigame takes place)
+     * the isInlab method only checks if they are inside the actual lab room where the UI is active
+     */
+    public boolean isInLabRegion() {
+        Player player = client.getLocalPlayer();
+        return player != null && player.getWorldLocation().getRegionID() == LABS_REGION_ID
+                && player.getWorldLocation().getPlane() == LABS_REGION_PLANE;
     }
 
     @Provides
@@ -138,6 +156,7 @@ public class MasteringMixologyPlugin extends Plugin {
     protected void startUp() {
         overlayManager.add(overlay);
         overlayManager.add(potionOverlay);
+        overlayManager.add(goalInfoBoxOverlay);
 
         if (client.getGameState() == GameState.LOGGED_IN) {
             clientThread.invokeLater(this::initialize);
@@ -148,6 +167,7 @@ public class MasteringMixologyPlugin extends Plugin {
     protected void shutDown() {
         overlayManager.remove(overlay);
         overlayManager.remove(potionOverlay);
+        overlayManager.remove(goalInfoBoxOverlay);
         inLab = false;
     }
 
@@ -206,6 +226,10 @@ public class MasteringMixologyPlugin extends Plugin {
             unHighlightObject(AlchemyObject.DIGWEED_NORTH_WEST);
         }
 
+        if (event.getKey().equals("selectedReward") || event.getKey().equals("rewardQuantity") || event.getKey().equals("showResinBars")) {
+            recalculateGoalData();
+        }
+
         if (config.highlightLevers()) {
             highlightLevers();
         } else {
@@ -244,6 +268,7 @@ public class MasteringMixologyPlugin extends Plugin {
     @Subscribe
     public void onVarbitChanged(VarbitChanged event) {
         var varbitId = event.getVarbitId();
+        var varpId = event.getVarpId();
         var value = event.getValue();
 
         // Whenever a potion is delivered, all the potion order related varbits are reset to 0 first then
@@ -357,6 +382,8 @@ public class MasteringMixologyPlugin extends Plugin {
         } else if (varbitId == VARBIT_ALEMBIC_QUICKACTION) {
             // alembic quick action was just successfully popped
             resetStationHighlight(AlchemyObject.ALEMBIC);
+        } else if (varpId == VARP_MOX_RESIN || varpId == VARP_AGA_RESIN || varpId == VARP_LYE_RESIN) {
+            recalculateGoalData();
         }
     }
 
@@ -522,9 +549,9 @@ public class MasteringMixologyPlugin extends Plugin {
             return;
         }
 
-        highlightObject(LYE_LEVER, Color.decode("#" + LYE.color()));
-        highlightObject(AGA_LEVER, Color.decode("#" + AGA.color()));
-        highlightObject(MOX_LEVER, Color.decode("#" + MOX.color()));
+        highlightObject(LYE_LEVER, LYE.color());
+        highlightObject(AGA_LEVER, AGA.color());
+        highlightObject(MOX_LEVER, MOX.color());
     }
 
     private void unHighlightLevers() {
@@ -559,7 +586,7 @@ public class MasteringMixologyPlugin extends Plugin {
 
     private void addResinText(Widget widget, int x, int varp, PotionComponent component) {
         var amount = client.getVarpValue(varp);
-        var color = ColorUtil.fromHex(component.color()).getRGB();
+        var color = component.color().getRGB();
 
         widget.setText(amount + "")
               .setTextShadowed(true)
@@ -646,6 +673,14 @@ public class MasteringMixologyPlugin extends Plugin {
         } else {
             return null;
         }
+    }
+
+    public Goal getGoal() {
+        return goal;
+    }
+
+    private void recalculateGoalData() {
+        goal.recalculate(config, client);
     }
 
     public static class HighlightedObject {
