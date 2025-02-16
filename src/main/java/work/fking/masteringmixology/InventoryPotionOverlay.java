@@ -33,8 +33,8 @@ public class InventoryPotionOverlay extends WidgetItemOverlay {
         }
 
         var bounds = widgetItem.getCanvasBounds();
-        var x = bounds.x;
-        var y = bounds.y + 13;
+        var x = bounds.x + 5;
+        var y = bounds.y + 30;
 
         drawRecipe(graphics2D, potion, x + 1, y + 1, Color.BLACK); // Drop shadow
 
