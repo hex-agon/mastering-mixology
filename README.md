@@ -9,6 +9,10 @@
 
 ### Changelog
 
+#### V1.8.0
+* New goal tracker feature, use it to track your progress towards the different minigame rewards
+* Lowered the potion inventory overlay to make it easier to distinguish finished potions in the inventory
+
 #### V1.7.0
 * Fixes stations other than the first in a batch being highlighted even with the config toggled off
 * Fixes the vanilla UI enhancement for players that are boosting their herblore levels
