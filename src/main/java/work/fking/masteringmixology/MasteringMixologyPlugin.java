@@ -7,6 +7,7 @@ import net.runelite.api.GameState;
 import net.runelite.api.InventoryID;
 import net.runelite.api.Player;
 import net.runelite.api.TileObject;
+import net.runelite.api.ItemContainer;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GraphicsObjectCreated;
@@ -37,6 +38,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.LinkedList;
 
 import static work.fking.masteringmixology.AlchemyObject.AGA_LEVER;
 import static work.fking.masteringmixology.AlchemyObject.LYE_LEVER;
@@ -239,14 +241,27 @@ public class MasteringMixologyPlugin extends Plugin {
 
     @Subscribe
     public void onItemContainerChanged(ItemContainerChanged event) {
-        if (!inLab || !config.highlightStations() || event.getContainerId() != InventoryID.INVENTORY.getId()) {
+        // Only handle changes while in lab, and only handle inventory changes
+        if (!inLab || event.getContainerId() != InventoryID.INVENTORY.getId()) {
+            return;
+        }
+
+        var inventory = event.getItemContainer();
+        updateStationHighlights(inventory);
+        updatePreparedOrders(inventory);
+    }
+
+    private void updateStationHighlights(ItemContainer inventory){
+
+        if(!config.highlightStations()){
             return;
         }
         // Do not update the highlight if there's a potion in a station
         if (alembicPotionType != null || agitatorPotionType != null || retortPotionType != null) {
             return;
         }
-        var inventory = event.getItemContainer();
+
+
 
         // Find the first potion item and highlight its station
         for (var item : inventory.getItems()) {
@@ -265,6 +280,31 @@ public class MasteringMixologyPlugin extends Plugin {
         }
     }
 
+    private void updatePreparedOrders(ItemContainer inventory){
+        // Track all unmodified/unfinished potions in the inventory
+        List<PotionType> preparedPotions = new LinkedList<>();
+        for (var item : inventory.getItems()) {
+            var potionType = PotionType.fromItemId(item.getId());
+            if (potionType == null || potionType.modifiedItemId() == item.getId()) {
+                continue;
+            }
+            preparedPotions.add(potionType);
+        }
+
+        // Mark orders as prepared if we have that potion ready
+        for (var order : potionOrders) {
+            if (order.fulfilled()){
+                continue;
+            }
+            var requestedPotionType = order.potionType();
+            var preparedIdx = preparedPotions.indexOf(requestedPotionType);
+            if (preparedIdx != -1){
+                order.setPrepared(true);
+                preparedPotions.remove(preparedIdx);
+            }
+        }
+    }
+
     @Subscribe
     public void onVarbitChanged(VarbitChanged event) {
         var varbitId = event.getVarbitId();
@@ -278,6 +318,7 @@ public class MasteringMixologyPlugin extends Plugin {
                 unHighlightAllStations();
             } else {
                 clientThread.invokeAtTickEnd(this::updatePotionOrders);
+                clientThread.invokeAtTickEnd(this::triggerItemContainerChanged);
             }
         } else if (varbitId == VARBIT_ALEMBIC_POTION) {
             if (value == 0) {
@@ -453,6 +494,8 @@ public class MasteringMixologyPlugin extends Plugin {
 
             if (order.fulfilled()) {
                 builder.append(" (<col=00ff00>done!</col>)");
+            } else if(order.prepared()){
+                builder.append(" (<col=ffff00>").append(order.potionType().abbreviation()).append("</col>)");
             } else {
                 builder.append(" (").append(order.potionType().recipe()).append(")");
             }
@@ -494,6 +537,7 @@ public class MasteringMixologyPlugin extends Plugin {
         updatePotionOrders();
         highlightLevers();
         tryHighlightNextStation();
+        triggerItemContainerChanged();
     }
 
     public void highlightObject(AlchemyObject alchemyObject, Color color) {
@@ -581,6 +625,18 @@ public class MasteringMixologyPlugin extends Plugin {
 
         if (varbitType != null) {
             client.queueChangedVarp(varbitType.getIndex());
+        }
+    }
+
+    public void triggerItemContainerChanged() {
+        // Trigger a fake ItemContainer update to force run the inventory check
+        if (client.getItemContainer(InventoryID.INVENTORY) != null) {
+            ItemContainerChanged simulatedEvent = new ItemContainerChanged(
+                    InventoryID.INVENTORY.getId(),
+                    client.getItemContainer(InventoryID.INVENTORY)
+            );
+
+            onItemContainerChanged(simulatedEvent);
         }
     }
 
