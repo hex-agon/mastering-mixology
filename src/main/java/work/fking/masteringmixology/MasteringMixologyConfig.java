@@ -94,10 +94,20 @@ public interface MasteringMixologyConfig extends Config {
     }
 
     @ConfigItem(
+            keyName = "nextStationHighlightColor",
+            name = "Next Station color",
+            description = "Configures the default next station highlight color",
+            position = 4
+    )
+    default Color nextStationHighlightColor() {
+        return Color.BLUE;
+    }
+
+    @ConfigItem(
             keyName = "stationQuickActionHighlightColor",
             name = "Quick-action color",
             description = "Configures the station quick-action highlight color",
-            position = 4
+            position = 5
     )
     default Color stationQuickActionHighlightColor() {
         return Color.GREEN;
@@ -107,7 +117,7 @@ public interface MasteringMixologyConfig extends Config {
             keyName = "notifyDigweed",
             name = "Notify DigWeed",
             description = "Toggles digweed notifications on or off",
-            position = 5
+            position = 6
     )
     default Notification notifyDigWeed() {
         return Notification.ON;
@@ -117,7 +127,7 @@ public interface MasteringMixologyConfig extends Config {
             keyName = "highlightDigweed",
             name = "Highlight DigWeed",
             description = "Toggles digweed highlighting on or off",
-            position = 6
+            position = 7
     )
     default boolean highlightDigWeed() {
         return true;
@@ -127,7 +137,7 @@ public interface MasteringMixologyConfig extends Config {
             keyName = "digweedHighlightColor",
             name = "DigWeed color",
             description = "Configures the digweed highlight color",
-            position = 7
+            position = 8
     )
     default Color digweedHighlightColor() {
         return Color.GREEN;
