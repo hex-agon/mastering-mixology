@@ -9,6 +9,9 @@
 
 ### Changelog
 
+#### V1.8.1
+* Fix an issue where the plugin would break the mixology overlay when boosting for better potions 
+
 #### V1.8.0
 * New goal tracker feature, use it to track your progress towards the different minigame rewards
 * Lowered the potion inventory overlay to make it easier to distinguish finished potions in the inventory
