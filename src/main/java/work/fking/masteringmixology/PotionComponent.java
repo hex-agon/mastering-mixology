@@ -1,11 +1,12 @@
 package work.fking.masteringmixology;
 
 import java.awt.Color;
+import net.runelite.api.gameval.SpriteID;
 
 public enum PotionComponent {
-    MOX('M', "03a9f4", 5666, MasteringMixologyPlugin.VARP_MOX_RESIN),
-    AGA('A', "00e676", 5667, MasteringMixologyPlugin.VARP_AGA_RESIN),
-    LYE('L', "e91e63", 5668, MasteringMixologyPlugin.VARP_LYE_RESIN);
+    MOX('M', "03a9f4", SpriteID.IconAlchemyChemicals01_20x20._0, MasteringMixologyPlugin.VARP_MOX_RESIN),
+    AGA('A', "00e676", SpriteID.IconAlchemyChemicals01_20x20._1, MasteringMixologyPlugin.VARP_AGA_RESIN),
+    LYE('L', "e91e63", SpriteID.IconAlchemyChemicals01_20x20._2, MasteringMixologyPlugin.VARP_LYE_RESIN);
 
     public static final PotionComponent[] ENTRIES = values();
 
