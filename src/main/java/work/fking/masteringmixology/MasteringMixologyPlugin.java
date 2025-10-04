@@ -111,6 +111,9 @@ public class MasteringMixologyPlugin extends Plugin {
     private MasteringMixologyOverlay overlay;
 
     @Inject
+    private ReagentCalculatorOverlay reagentCalculatorOverlay;
+
+    @Inject
     private InventoryPotionOverlay potionOverlay;
 
     @Inject
@@ -160,6 +163,7 @@ public class MasteringMixologyPlugin extends Plugin {
         overlayManager.add(overlay);
         overlayManager.add(potionOverlay);
         overlayManager.add(goalInfoBoxOverlay);
+        overlayManager.add(reagentCalculatorOverlay);
 
         if (client.getGameState() == GameState.LOGGED_IN) {
             clientThread.invokeLater(this::initialize);
@@ -171,6 +175,7 @@ public class MasteringMixologyPlugin extends Plugin {
         overlayManager.remove(overlay);
         overlayManager.remove(potionOverlay);
         overlayManager.remove(goalInfoBoxOverlay);
+        overlayManager.remove(reagentCalculatorOverlay);
         inLab = false;
     }
 
