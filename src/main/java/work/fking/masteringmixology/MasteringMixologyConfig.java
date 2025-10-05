@@ -199,7 +199,7 @@ public interface MasteringMixologyConfig extends Config {
 
     @ConfigSection(
         name = "Reagent Calculator",
-        description = "Show herbs needed to fill reagent hopper (mouseover orders to view)",
+        description = "Show herbs needed to fill reagent hopper",
         position = 17
     )
     String REAGENT_CALCULATOR = "ReagentCalculator";
