@@ -2,18 +2,16 @@ package work.fking.masteringmixology;
 
 import java.awt.Dimension;
 import java.awt.Graphics2D;
-import java.awt.Rectangle;
 import javax.inject.Inject;
 import net.runelite.api.Client;
-import net.runelite.api.Point;
-import net.runelite.api.gameval.InterfaceID;
+import net.runelite.api.MenuEntry;
 import net.runelite.api.gameval.VarbitID;
-import net.runelite.api.widgets.Widget;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.tooltip.Tooltip;
 import net.runelite.client.ui.overlay.tooltip.TooltipManager;
+import net.runelite.client.util.Text;
 
 public class ReagentCalculatorOverlay extends Overlay {
     private final Client client;
@@ -41,13 +39,22 @@ public class ReagentCalculatorOverlay extends Overlay {
 
     @Override
     public Dimension render(Graphics2D graphics2D) {
-        final Widget widget = client.getWidget(InterfaceID.MmOverlay.CONTENT);
-        if (widget == null) {
+        if (!config.showReagentCalculator()) {
             return null;
         }
-        final Rectangle bounds = widget.getBounds();
-        final Point mousePos = client.getMouseCanvasPosition();
-        if (bounds.contains(mousePos.getX(), mousePos.getY()))
+
+        MenuEntry[] menuEntries = client.getMenuEntries();
+        int last = menuEntries.length - 1;
+        if (last < 0) {
+            return null;
+        }
+
+        MenuEntry menuEntry = menuEntries[last];
+        String target = menuEntry.getTarget();
+        target = Text.removeTags(target);
+        String option = menuEntry.getOption();
+
+        if (option.equals("Deposit") && target.equals("Hopper"))
         {
             String tooltip = String.format(
                 "Herbs to fill hopper:</br>" +

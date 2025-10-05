@@ -206,10 +206,21 @@ public interface MasteringMixologyConfig extends Config {
 
     @ConfigItem(
         section = REAGENT_CALCULATOR,
+        name = "Show reagent calculator",
+        description = "Show tooltip on mouseover hopper",
+        keyName = "showReagentCalculator",
+        position = 1
+    )
+    default boolean showReagentCalculator() {
+        return true;
+    }
+
+    @ConfigItem(
+        section = REAGENT_CALCULATOR,
         keyName = "moxHerb",
         name = "Mox Herb",
         description = "Herb to use for calculating mox reagent",
-        position = 1
+        position = 2
     )
     default HerbMox moxHerb() {
         return HerbMox.TARROMIN;
@@ -220,7 +231,7 @@ public interface MasteringMixologyConfig extends Config {
         keyName = "agaHerb",
         name = "Aga Herb",
         description = "Herb to use for calculating aga reagent",
-        position = 2
+        position = 3
     )
     default HerbAga agaHerb() {
         return HerbAga.LANTADYME;
@@ -231,7 +242,7 @@ public interface MasteringMixologyConfig extends Config {
         keyName = "lyeHerb",
         name = "Lye Herb",
         description = "Herb to use for calculating lye reagent",
-        position = 3
+        position = 4
     )
     default HerbLye lyeHerb() {
         return HerbLye.TOADFLAX;
