@@ -4,7 +4,6 @@ import com.google.inject.Provides;
 import net.runelite.api.Client;
 import net.runelite.api.FontID;
 import net.runelite.api.GameState;
-import net.runelite.api.InventoryID;
 import net.runelite.api.Player;
 import net.runelite.api.TileObject;
 import net.runelite.api.coords.LocalPoint;
@@ -15,6 +14,11 @@ import net.runelite.api.events.ScriptPostFired;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.events.WidgetClosed;
 import net.runelite.api.events.WidgetLoaded;
+import net.runelite.api.gameval.InterfaceID;
+import net.runelite.api.gameval.InventoryID;
+import net.runelite.api.gameval.SpotanimID;
+import net.runelite.api.gameval.VarPlayerID;
+import net.runelite.api.gameval.VarbitID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetPositionMode;
 import net.runelite.api.widgets.WidgetTextAlignment;
@@ -56,38 +60,38 @@ public class MasteringMixologyPlugin extends Plugin {
     private static final int PROC_MASTERING_MIXOLOGY_BUILD_POTION_ORDERS = 7063;
     private static final int PROC_MASTERING_MIXOLOGY_BUILD_REAGENTS = 7064;
 
-    private static final int VARBIT_POTION_ORDER_1 = 11315;
-    private static final int VARBIT_POTION_MODIFIER_1 = 11316;
-    private static final int VARBIT_POTION_ORDER_2 = 11317;
-    private static final int VARBIT_POTION_MODIFIER_2 = 11318;
-    private static final int VARBIT_POTION_ORDER_3 = 11319;
-    private static final int VARBIT_POTION_MODIFIER_3 = 11320;
+    private static final int VARBIT_POTION_ORDER_1 = VarbitID.MM_LAB_ORDER_1_TYPE;
+    private static final int VARBIT_POTION_MODIFIER_1 = VarbitID.MM_LAB_ORDER_1_MODIFIER;
+    private static final int VARBIT_POTION_ORDER_2 = VarbitID.MM_LAB_ORDER_2_TYPE;
+    private static final int VARBIT_POTION_MODIFIER_2 = VarbitID.MM_LAB_ORDER_2_MODIFIER;
+    private static final int VARBIT_POTION_ORDER_3 = VarbitID.MM_LAB_ORDER_3_TYPE;
+    private static final int VARBIT_POTION_MODIFIER_3 = VarbitID.MM_LAB_ORDER_3_MODIFIER;
 
-    static final int VARP_LYE_RESIN = 4414;
-    static final int VARP_AGA_RESIN = 4415;
-    static final int VARP_MOX_RESIN = 4416;
+    static final int VARP_LYE_RESIN = VarPlayerID.MIXOLOGY_LYE_POINTS;
+    static final int VARP_AGA_RESIN = VarPlayerID.MIXOLOGY_AGA_POINTS;
+    static final int VARP_MOX_RESIN = VarPlayerID.MIXOLOGY_MOX_POINTS;
 
-    private static final int VARBIT_ALEMBIC_PROGRESS = 11328;
-    private static final int VARBIT_AGITATOR_PROGRESS = 11329;
+    private static final int VARBIT_ALEMBIC_PROGRESS = VarbitID.MM_ALEMBIC_PROGRESS;
+    private static final int VARBIT_AGITATOR_PROGRESS = VarbitID.MM_AGITATOR_PROGRESS;
 
-    private static final int VARBIT_AGITATOR_QUICKACTION = 11337;
-    private static final int VARBIT_ALEMBIC_QUICKACTION = 11338;
+    private static final int VARBIT_AGITATOR_QUICKACTION = VarbitID.MM_LAB_HIT_SKILLSHOT_AGITATOR;
+    private static final int VARBIT_ALEMBIC_QUICKACTION = VarbitID.MM_LAB_HIT_SKILLSHOT_ALEMBIC;
 
-    private static final int VARBIT_MIXING_VESSEL_POTION = 11339;
-    private static final int VARBIT_AGITATOR_POTION = 11340;
-    private static final int VARBIT_RETORT_POTION = 11341;
-    private static final int VARBIT_ALEMBIC_POTION = 11342;
+    private static final int VARBIT_MIXING_VESSEL_POTION = VarbitID.MM_LAB_VESSEL_READY;
+    private static final int VARBIT_AGITATOR_POTION = VarbitID.MM_LAB_AGITATOR_POTION;
+    private static final int VARBIT_RETORT_POTION = VarbitID.MM_LAB_RETORT_POTION;
+    private static final int VARBIT_ALEMBIC_POTION = VarbitID.MM_LAB_ALEMBIC_POTION;
 
-    private static final int VARBIT_DIGWEED_NORTH_EAST = 11330;
-    private static final int VARBIT_DIGWEED_SOUTH_EAST = 11331;
-    private static final int VARBIT_DIGWEED_SOUTH_WEST = 11332;
-    private static final int VARBIT_DIGWEED_NORTH_WEST = 11333;
+    private static final int VARBIT_DIGWEED_NORTH_EAST = VarbitID.MM_HERB_READY_1;
+    private static final int VARBIT_DIGWEED_SOUTH_EAST = VarbitID.MM_HERB_READY_2;
+    private static final int VARBIT_DIGWEED_SOUTH_WEST = VarbitID.MM_HERB_READY_3;
+    private static final int VARBIT_DIGWEED_NORTH_WEST = VarbitID.MM_HERB_READY_4;
 
-    private static final int SPOT_ANIM_AGITATOR = 2954;
-    private static final int SPOT_ANIM_ALEMBIC = 2955;
+    private static final int SPOT_ANIM_AGITATOR = SpotanimID.VFX_MACHINERY_ALCHEMY01_AGITATOR01;
+    private static final int SPOT_ANIM_ALEMBIC = SpotanimID.VFX_MACHINERY_ALCHEMY01_ALEMBIC01;
 
-    private static final int COMPONENT_POTION_ORDERS_GROUP_ID = 882;
-    private static final int COMPONENT_POTION_ORDERS = COMPONENT_POTION_ORDERS_GROUP_ID << 16 | 2;
+    private static final int COMPONENT_POTION_ORDERS_GROUP_ID = InterfaceID.MM_OVERLAY;
+    private static final int COMPONENT_POTION_ORDERS = InterfaceID.MmOverlay.CONTENT;
 
     private static final int LABS_REGION_ID = 5521;
     private static final int LABS_REGION_PLANE = 0;
@@ -242,7 +246,7 @@ public class MasteringMixologyPlugin extends Plugin {
 
     @Subscribe
     public void onItemContainerChanged(ItemContainerChanged event) {
-        if (!inLab || !config.highlightStations() || event.getContainerId() != InventoryID.INVENTORY.getId()) {
+        if (!inLab || !config.highlightStations() || event.getContainerId() != InventoryID.INV) {
             return;
         }
         // Do not update the highlight if there's a potion in a station
@@ -638,7 +642,7 @@ public class MasteringMixologyPlugin extends Plugin {
         if (!config.highlightStations()) {
             return;
         }
-        var inventory = client.getItemContainer(InventoryID.INVENTORY);
+        var inventory = client.getItemContainer(InventoryID.INV);
 
         if (inventory == null) {
             return;

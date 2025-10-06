@@ -1,24 +1,23 @@
 package work.fking.masteringmixology;
 
-import net.runelite.api.ItemID;
-
+import net.runelite.api.gameval.ItemID;
 import static work.fking.masteringmixology.PotionComponent.AGA;
 import static work.fking.masteringmixology.PotionComponent.LYE;
 import static work.fking.masteringmixology.PotionComponent.MOX;
 
 public enum RewardItem {
     NONE("None", 0, false, 0, 0, 0),
-    APPRENTICE_POTION_PACK("Apprentice Potion Pack", ItemID.APPRENTICE_POTION_PACK, true, 420, 70, 30),
-    ADEPT_POTION_PACK("Adept Potion Pack", ItemID.ADEPT_POTION_PACK, true, 180, 440, 70),
-    EXPERT_POTION_PACK("Expert Potion Pack", ItemID.EXPERT_POTION_PACK, true, 410, 320, 480),
-    PRESCRIPTION_GOGGLES("Prescription Goggles", ItemID.PRESCRIPTION_GOGGLES, false, 8600, 7000, 9350),
-    ALCHEMIST_LABCOAT("Alchemist Labcoat", ItemID.ALCHEMIST_LABCOAT, false, 2250, 2800, 3700),
-    ALCHEMIST_PANTS("Alchemist Pants", ItemID.ALCHEMIST_PANTS, false, 2250, 2800, 3700),
-    ALCHEMIST_GLOVES("Alchemist Gloves", ItemID.ALCHEMIST_GLOVES, false, 2250, 2800, 3700),
-    REAGENT_POUCH("Reagent Pouch", ItemID.REAGENT_POUCH, false, 13800, 11200, 15100),
-    POTION_STORAGE("Potion Storage", ItemID.POTION_STORAGE, false, 7750, 6300, 8950),
-    CHUGGING_BARREL("Chugging Barrel", ItemID.CHUGGING_BARREL, false, 17250, 14000, 18600),
-    ALCHEMISTS_AMULET("Alchemist's Amulet", ItemID.ALCHEMISTS_AMULET, false, 6900, 5650, 7400),
+    APPRENTICE_POTION_PACK("Apprentice Potion Pack", ItemID.MM_POTION_PACK_LOW, true, 420, 70, 30),
+    ADEPT_POTION_PACK("Adept Potion Pack", ItemID.MM_POTION_PACK_MED, true, 180, 440, 70),
+    EXPERT_POTION_PACK("Expert Potion Pack", ItemID.MM_POTION_PACK_HIGH, true, 410, 320, 480),
+    PRESCRIPTION_GOGGLES("Prescription Goggles", ItemID.MM_ALCHEMIST_HAT, false, 8600, 7000, 9350),
+    ALCHEMIST_LABCOAT("Alchemist Labcoat", ItemID.MM_ALCHEMIST_BODY, false, 2250, 2800, 3700),
+    ALCHEMIST_PANTS("Alchemist Pants", ItemID.MM_ALCHEMIST_LEGS, false, 2250, 2800, 3700),
+    ALCHEMIST_GLOVES("Alchemist Gloves", ItemID.MM_ALCHEMIST_GLOVES, false, 2250, 2800, 3700),
+    REAGENT_POUCH("Reagent Pouch", ItemID.MM_SECONDARY_POUCH, false, 13800, 11200, 15100),
+    POTION_STORAGE("Potion Storage", ItemID.MM_POTION_STORAGE_UNLOCK_DUMMY, false, 7750, 6300, 8950),
+    CHUGGING_BARREL("Chugging Barrel", ItemID.MM_PREPOT_DEVICE, false, 17250, 14000, 18600),
+    ALCHEMISTS_AMULET("Alchemist's Amulet", ItemID.AMULET_OF_CHEMISTRY_IMBUED_UNCHARGED, false, 6900, 5650, 7400),
     ALDARIUM("Aldarium", ItemID.ALDARIUM, true, 80, 60, 90);
 
     private final String itemName;
