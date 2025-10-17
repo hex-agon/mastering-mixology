@@ -467,7 +467,7 @@ public class MasteringMixologyPlugin extends Plugin {
             var builder = new StringBuilder(orderText.getText());
 
             if (config.potionShowExperience()) {
-                builder.append(" ").append(order.potionType().experience()).append(" XP");
+                builder.append(" (<col=bababa>").append(order.potionType().experience()).append(" XP)</col>");
             }
 
             if (order.fulfilled()) {
