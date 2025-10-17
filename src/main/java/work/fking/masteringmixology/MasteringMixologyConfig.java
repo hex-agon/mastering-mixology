@@ -1,15 +1,15 @@
 package work.fking.masteringmixology;
 
+import static work.fking.masteringmixology.MasteringMixologyConfig.CONFIG_GROUP;
+
+import java.awt.Color;
+
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
 import net.runelite.client.config.Notification;
 import net.runelite.client.config.Range;
-
-import java.awt.Color;
-
-import static work.fking.masteringmixology.MasteringMixologyConfig.CONFIG_GROUP;
 
 @ConfigGroup(CONFIG_GROUP)
 public interface MasteringMixologyConfig extends Config {
@@ -41,6 +41,16 @@ public interface MasteringMixologyConfig extends Config {
     )
     default PotionOrderSorting potionOrderSorting() {
         return PotionOrderSorting.VANILLA;
+    }
+
+    @ConfigItem(
+            keyName = "potionShowExperience",
+            name = "Show Experience",
+            description = "Determines whether potion experience is shown in the interface",
+            position = 1
+    )
+    default boolean potionShowExperience() {
+        return true;
     }
 
     @ConfigItem(

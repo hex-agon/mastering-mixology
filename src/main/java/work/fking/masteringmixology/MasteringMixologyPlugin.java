@@ -1,6 +1,29 @@
 package work.fking.masteringmixology;
 
+import static work.fking.masteringmixology.AlchemyObject.AGA_LEVER;
+import static work.fking.masteringmixology.AlchemyObject.LYE_LEVER;
+import static work.fking.masteringmixology.AlchemyObject.MOX_LEVER;
+import static work.fking.masteringmixology.PotionComponent.AGA;
+import static work.fking.masteringmixology.PotionComponent.LYE;
+import static work.fking.masteringmixology.PotionComponent.MOX;
+
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+import javax.inject.Inject;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.inject.Provides;
+
 import net.runelite.api.Client;
 import net.runelite.api.FontID;
 import net.runelite.api.GameState;
@@ -31,26 +54,6 @@ import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import java.awt.Color;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-
-import static work.fking.masteringmixology.AlchemyObject.AGA_LEVER;
-import static work.fking.masteringmixology.AlchemyObject.LYE_LEVER;
-import static work.fking.masteringmixology.AlchemyObject.MOX_LEVER;
-import static work.fking.masteringmixology.PotionComponent.AGA;
-import static work.fking.masteringmixology.PotionComponent.LYE;
-import static work.fking.masteringmixology.PotionComponent.MOX;
 
 @PluginDescriptor(name = "Mastering Mixology")
 public class MasteringMixologyPlugin extends Plugin {
@@ -462,6 +465,10 @@ public class MasteringMixologyPlugin extends Plugin {
                 continue;
             }
             var builder = new StringBuilder(orderText.getText());
+
+            if (config.potionShowExperience()) {
+                builder.append(" ").append(order.potionType().experience()).append(" XP");
+            }
 
             if (order.fulfilled()) {
                 builder.append(" (<col=00ff00>done!</col>)");
