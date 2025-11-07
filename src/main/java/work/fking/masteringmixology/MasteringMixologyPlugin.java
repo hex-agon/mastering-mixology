@@ -98,7 +98,6 @@ public class MasteringMixologyPlugin extends Plugin {
     private static final int LABS_REGION_PLANE = 0;
 
     private static final int FOUND_GEM = 2655;
-    private boolean foundGemSoundBlocked = false;
 
     @Inject
     private Client client;
@@ -301,12 +300,6 @@ public class MasteringMixologyPlugin extends Plugin {
             } else {
                 alembicPotionType = PotionType.fromIdx(value - 1);
                 LOGGER.debug("Alembic potion type: {}", alembicPotionType);
-                // the found gem sound's event activates before we play our manual sound effect
-                // so, if we are processing alembic, we will turn off the sound effect right away
-                // we will re-enable this sound effect once we've played our own
-                // it's weird that the default found_gem sound activates before ours but plays after ours
-                foundGemSoundBlocked = true;
-                LOGGER.debug("Blocking client found_gem sound effect");
             }
         } else if (varbitId == VARBIT_AGITATOR_POTION) {
             if (value == 0) {
@@ -406,8 +399,8 @@ public class MasteringMixologyPlugin extends Plugin {
 
     @Subscribe
     public void onSoundEffectPlayed(SoundEffectPlayed event) {
-        if (foundGemSoundBlocked && event.getSoundId() == FOUND_GEM) {
-            LOGGER.debug("found_gem sound effect detected, blocking");
+        if (alembicPotionType != null && event.getSoundId() == FOUND_GEM && config.soundEffectAlembic()) {
+            LOGGER.debug("client found_gem sound effect detected during Alembic, blocking");
             event.consume();
         }
     }
@@ -426,10 +419,6 @@ public class MasteringMixologyPlugin extends Plugin {
                 LOGGER.debug("Playing manual found_gem sound effect");
                 client.playSoundEffect(FOUND_GEM);
             }
-            // the wrongly timed sound activates before this code is reached
-            // we've already blocked the sound by this point, so we will re-enable it now
-            foundGemSoundBlocked = false;
-            LOGGER.debug("Re-enabled client found_gem sound effect");
 
             // start counting ticks for alembic so we know to un-highlight on the next alembic varbit update
             // note this quick action has a 1 tick window, so we use an int that goes 0 -> 1 -> unhighlight
