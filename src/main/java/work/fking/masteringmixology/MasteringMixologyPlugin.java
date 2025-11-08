@@ -399,7 +399,7 @@ public class MasteringMixologyPlugin extends Plugin {
 
     @Subscribe
     public void onSoundEffectPlayed(SoundEffectPlayed event) {
-        if (alembicPotionType != null && event.getSoundId() == FOUND_GEM && config.soundEffectAlembic()) {
+        if (inLab && alembicPotionType != null && event.getSoundId() == FOUND_GEM && config.soundEffectAlembic()) {
             LOGGER.debug("client found_gem sound effect detected during Alembic, blocking");
             event.consume();
         }
