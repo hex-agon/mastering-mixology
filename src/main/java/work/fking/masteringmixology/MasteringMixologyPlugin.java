@@ -11,6 +11,7 @@ import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GraphicsObjectCreated;
 import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.api.events.ScriptPostFired;
+import net.runelite.api.events.SoundEffectPlayed;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.events.WidgetClosed;
 import net.runelite.api.events.WidgetLoaded;
@@ -95,6 +96,8 @@ public class MasteringMixologyPlugin extends Plugin {
 
     private static final int LABS_REGION_ID = 5521;
     private static final int LABS_REGION_PLANE = 0;
+
+    private static final int FOUND_GEM = 2655;
 
     @Inject
     private Client client;
@@ -395,6 +398,14 @@ public class MasteringMixologyPlugin extends Plugin {
     }
 
     @Subscribe
+    public void onSoundEffectPlayed(SoundEffectPlayed event) {
+        if (inLab && alembicPotionType != null && event.getSoundId() == FOUND_GEM && config.soundEffectAlembic()) {
+            LOGGER.debug("client found_gem sound effect detected during Alembic, blocking");
+            event.consume();
+        }
+    }
+
+    @Subscribe
     public void onGraphicsObjectCreated(GraphicsObjectCreated event) {
         var spotAnimId = event.getGraphicsObject().getId();
 
@@ -403,6 +414,12 @@ public class MasteringMixologyPlugin extends Plugin {
         }
         if (spotAnimId == SPOT_ANIM_ALEMBIC && alembicPotionType != null) {
             highlightObject(AlchemyObject.ALEMBIC, config.stationQuickActionHighlightColor());
+
+            if (config.soundEffectAlembic()) {
+                LOGGER.debug("Playing manual found_gem sound effect");
+                client.playSoundEffect(FOUND_GEM);
+            }
+
             // start counting ticks for alembic so we know to un-highlight on the next alembic varbit update
             // note this quick action has a 1 tick window, so we use an int that goes 0 -> 1 -> unhighlight
             alembicQuickActionTicks = 1;

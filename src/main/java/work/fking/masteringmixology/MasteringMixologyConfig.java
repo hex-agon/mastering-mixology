@@ -134,6 +134,16 @@ public interface MasteringMixologyConfig extends Config {
     }
 
     @ConfigItem(
+            keyName = "soundEffectAlembic",
+            name = "Fix Alembic quick-action sound effect",
+            description = "Fixes the Alembic quick-action sound effect to play at the correct time",
+            position = 8
+    )
+    default boolean soundEffectAlembic() {
+        return true;
+    }
+
+    @ConfigItem(
             section = HIGHLIGHTS,
             keyName = "highlightBorderWidth",
             name = "Border width",
