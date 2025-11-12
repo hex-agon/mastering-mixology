@@ -9,6 +9,10 @@
 
 ### Changelog
 
+#### V1.9.0
+* Added an option to fix the quick-action sound delay on the alembic. This option is enabled by default.
+* Internal housekeeping to make the plugin more bulletproof against game updates.
+
 #### V1.8.1
 * Fix an issue where the plugin would break the mixology overlay when boosting for better potions 
 
