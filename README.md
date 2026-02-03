@@ -9,6 +9,9 @@
 
 ### Changelog
 
+#### V1.9.1
+* Fixed the `Fix Alembic quick-action sound effect` feature to work with the latest RuneLite version
+
 #### V1.9.0
 * Added an option to fix the quick-action sound delay on the alembic. This option is enabled by default.
 * Internal housekeeping to make the plugin more bulletproof against game updates.
