@@ -206,4 +206,55 @@ public interface MasteringMixologyConfig extends Config {
     default boolean showResinBars() {
         return true;
     }
+
+    @ConfigSection(
+        name = "Reagent Calculator",
+        description = "Show herbs needed to fill reagent hopper",
+        position = 17
+    )
+    String REAGENT_CALCULATOR = "ReagentCalculator";
+
+    @ConfigItem(
+        section = REAGENT_CALCULATOR,
+        name = "Show reagent calculator",
+        description = "Show tooltip on mouseover hopper",
+        keyName = "showReagentCalculator",
+        position = 1
+    )
+    default boolean showReagentCalculator() {
+        return true;
+    }
+
+    @ConfigItem(
+        section = REAGENT_CALCULATOR,
+        keyName = "moxHerb",
+        name = "Mox Herb",
+        description = "Herb to use for calculating mox reagent",
+        position = 2
+    )
+    default HerbMox moxHerb() {
+        return HerbMox.TARROMIN;
+    }
+
+    @ConfigItem(
+        section = REAGENT_CALCULATOR,
+        keyName = "agaHerb",
+        name = "Aga Herb",
+        description = "Herb to use for calculating aga reagent",
+        position = 3
+    )
+    default HerbAga agaHerb() {
+        return HerbAga.LANTADYME;
+    }
+
+    @ConfigItem(
+        section = REAGENT_CALCULATOR,
+        keyName = "lyeHerb",
+        name = "Lye Herb",
+        description = "Herb to use for calculating lye reagent",
+        position = 4
+    )
+    default HerbLye lyeHerb() {
+        return HerbLye.TOADFLAX;
+    }
 }
