@@ -58,10 +58,11 @@ public class Goal {
                 .orElse(0);
         itemsAffordable = Math.min(minAffordable, rewardQuantity);
 
-        // Overall progress is the average of all component progress
+        // Overall progress is the minimum of all component progress
+        // as you can't buy rewards without completion of all components
         overallProgress = componentDataMap.values().stream()
                 .mapToDouble(data -> data.percentageToGoal)
-                .average()
+                .min()
                 .orElse(0.0);
     }
 
