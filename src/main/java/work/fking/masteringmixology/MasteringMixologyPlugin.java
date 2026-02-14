@@ -288,6 +288,7 @@ public class MasteringMixologyPlugin extends Plugin {
                 unHighlightAllStations();
             } else {
                 clientThread.invokeAtTickEnd(this::updatePotionOrders);
+                clientThread.invokeAtTickEnd(this::triggerItemContainerChanged);
             }
         } else if (varbitId == VARBIT_ALEMBIC_POTION) {
             if (value == 0) {
@@ -614,6 +615,18 @@ public class MasteringMixologyPlugin extends Plugin {
         }
 
         triggerPotionOrderUpdate();
+    }
+
+    public void triggerItemContainerChanged() {
+        // Trigger a fake ItemContainer update to force run the inventory check
+        if (client.getItemContainer(InventoryID.INVENTORY) != null) {
+            ItemContainerChanged simulatedEvent = new ItemContainerChanged(
+                    InventoryID.INVENTORY.getId(),
+                    client.getItemContainer(InventoryID.INVENTORY)
+            );
+
+            onItemContainerChanged(simulatedEvent);
+        }
     }
 
     public void triggerPotionOrderUpdate() {
