@@ -137,6 +137,8 @@ public class MasteringMixologyPlugin extends Plugin {
     private int agitatorQuickActionTicks = 0;
     private int alembicQuickActionTicks = 0;
 
+    private boolean previouslyAboveRewardThreshold = false;
+
     private final Goal goal = new Goal(RewardItem.NONE);
 
     public Map<AlchemyObject, HighlightedObject> highlightedObjects() {
@@ -167,6 +169,7 @@ public class MasteringMixologyPlugin extends Plugin {
         overlayManager.add(overlay);
         overlayManager.add(potionOverlay);
         overlayManager.add(goalInfoBoxOverlay);
+        previouslyAboveRewardThreshold = false;
 
         if (client.getGameState() == GameState.LOGGED_IN) {
             clientThread.invokeLater(this::initialize);
@@ -236,8 +239,9 @@ public class MasteringMixologyPlugin extends Plugin {
             unHighlightObject(AlchemyObject.DIGWEED_NORTH_WEST);
         }
 
-        if (event.getKey().equals("selectedReward") || event.getKey().equals("rewardQuantity") || event.getKey().equals("showResinBars")) {
+        if (event.getKey().equals("showResinBars") || event.getKey().startsWith("track") || event.getKey().endsWith("Quantity")) {
             recalculateGoalData();
+            previouslyAboveRewardThreshold = false;
         }
 
         if (config.highlightLevers()) {
@@ -394,7 +398,25 @@ public class MasteringMixologyPlugin extends Plugin {
             resetStationHighlight(AlchemyObject.ALEMBIC);
         } else if (varpId == VARP_MOX_RESIN || varpId == VARP_AGA_RESIN || varpId == VARP_LYE_RESIN) {
             recalculateGoalData();
+            checkRewardThresholdNotification();
         }
+    }
+
+    private void checkRewardThresholdNotification() {
+        if (!goal.isMultiMode()) {
+            previouslyAboveRewardThreshold = false;
+            return;
+        }
+        // Goal already summed the costs (including per-pack quantities) and
+        // computed per-component progress. overallProgress is the mean of
+        // each component's clamped percentage, so it reaches 1.0 only when
+        // every component meets its summed goal.
+        boolean nowAbove = goal.getOverallProgress() >= 1.0;
+        if (nowAbove && !previouslyAboveRewardThreshold) {
+            notifier.notify(config.thresholdNotification(),
+                    "You have enough resin to purchase your selected Mastering Mixology rewards.");
+        }
+        previouslyAboveRewardThreshold = nowAbove;
     }
 
     @Subscribe

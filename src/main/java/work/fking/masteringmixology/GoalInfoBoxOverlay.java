@@ -74,7 +74,7 @@ class GoalInfoBoxOverlay extends OverlayPanel {
         var goal = plugin.getGoal();
         var rewardItem = goal.getRewardItem();
 
-        if (rewardItem == RewardItem.NONE || !plugin.isInLabRegion()) {
+        if (rewardItem == RewardItem.NONE && !goal.isMultiMode() || !plugin.isInLabRegion()) {
             return null;
         }
         topPanel.getChildren().clear();
@@ -82,13 +82,13 @@ class GoalInfoBoxOverlay extends OverlayPanel {
 
         // Build the top display with the affordable amount / goal amount
         String goalAmountText = "";
-        if (rewardItem.isRepeatable() && goal.getRewardQuantity() > 1) {
+        if (!goal.isMultiMode() && rewardItem.isRepeatable() && goal.getRewardQuantity() > 1) {
             goalAmountText = QuantityFormatter.quantityToStackSize(goal.getItemsAffordable())
                     + "/" + QuantityFormatter.quantityToStackSize(goal.getRewardQuantity());
         }
 
         var topLine = LineComponent.builder()
-                                   .left(rewardItem.itemName())
+                                   .left(goal.getDisplayName())
                                    .leftFont(FontManager.getRunescapeFont())
                                    .right(goalAmountText)
                                    .rightFont(FontManager.getRunescapeBoldFont())

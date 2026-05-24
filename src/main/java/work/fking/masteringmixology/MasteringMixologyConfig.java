@@ -165,35 +165,20 @@ public interface MasteringMixologyConfig extends Config {
 
     @ConfigSection(
             name = "Reward Tracking",
-            description = "Track your progress towards rewards",
+            description = "Tick the rewards you're working toward. The overlay shows progress toward the combined cost; the notification fires when you meet it.",
             position = 13
     )
     String REWARD_TRACKING = "RewardTracking";
 
     @ConfigItem(
             section = REWARD_TRACKING,
-            keyName = "selectedReward",
-            name = "Selected Reward",
-            description = "Select a reward to track resin for",
+            keyName = "thresholdNotification",
+            name = "Threshold notification",
+            description = "Fires once when your resin totals meet the combined cost of every selected reward",
             position = 1
     )
-    default RewardItem selectedReward() {
-        return RewardItem.NONE;
-    }
-
-    @ConfigItem(
-            section = REWARD_TRACKING,
-            keyName = "rewardQuantity",
-            name = "Reward Quantity",
-            description = "Set the quantity for repeatable rewards",
-            position = 2
-    )
-    @Range(
-            min = 1,
-            max = 100000
-    )
-    default int rewardQuantity() {
-        return 1;
+    default Notification thresholdNotification() {
+        return Notification.OFF;
     }
 
     @ConfigItem(
@@ -201,9 +186,189 @@ public interface MasteringMixologyConfig extends Config {
             keyName = "showResinBars",
             name = "Show Resin Bars",
             description = "Toggle to display or hide the resin progress bars",
-            position = 3
+            position = 2
     )
     default boolean showResinBars() {
         return true;
+    }
+
+    @ConfigItem(
+            section = REWARD_TRACKING,
+            keyName = "trackPrescriptionGoggles",
+            name = "Prescription Goggles",
+            description = "Include Prescription Goggles in the tracked totals",
+            position = 3
+    )
+    default boolean trackPrescriptionGoggles() {
+        return false;
+    }
+
+    @ConfigItem(
+            section = REWARD_TRACKING,
+            keyName = "trackAlchemistLabcoat",
+            name = "Alchemist Labcoat",
+            description = "Include Alchemist Labcoat in the tracked totals",
+            position = 4
+    )
+    default boolean trackAlchemistLabcoat() {
+        return false;
+    }
+
+    @ConfigItem(
+            section = REWARD_TRACKING,
+            keyName = "trackAlchemistPants",
+            name = "Alchemist Pants",
+            description = "Include Alchemist Pants in the tracked totals",
+            position = 5
+    )
+    default boolean trackAlchemistPants() {
+        return false;
+    }
+
+    @ConfigItem(
+            section = REWARD_TRACKING,
+            keyName = "trackAlchemistGloves",
+            name = "Alchemist Gloves",
+            description = "Include Alchemist Gloves in the tracked totals",
+            position = 6
+    )
+    default boolean trackAlchemistGloves() {
+        return false;
+    }
+
+    @ConfigItem(
+            section = REWARD_TRACKING,
+            keyName = "trackReagentPouch",
+            name = "Reagent Pouch",
+            description = "Include Reagent Pouch in the tracked totals",
+            position = 7
+    )
+    default boolean trackReagentPouch() {
+        return false;
+    }
+
+    @ConfigItem(
+            section = REWARD_TRACKING,
+            keyName = "trackPotionStorage",
+            name = "Potion Storage",
+            description = "Include Potion Storage in the tracked totals",
+            position = 8
+    )
+    default boolean trackPotionStorage() {
+        return false;
+    }
+
+    @ConfigItem(
+            section = REWARD_TRACKING,
+            keyName = "trackChuggingBarrel",
+            name = "Chugging Barrel",
+            description = "Include Chugging Barrel in the tracked totals",
+            position = 9
+    )
+    default boolean trackChuggingBarrel() {
+        return false;
+    }
+
+    @ConfigItem(
+            section = REWARD_TRACKING,
+            keyName = "trackAlchemistsAmulet",
+            name = "Alchemist's Amulet",
+            description = "Include Alchemist's Amulet in the tracked totals",
+            position = 10
+    )
+    default boolean trackAlchemistsAmulet() {
+        return false;
+    }
+
+    @ConfigItem(
+            section = REWARD_TRACKING,
+            keyName = "trackApprenticePack",
+            name = "Apprentice Potion Pack",
+            description = "Include Apprentice Potion Pack(s) in the tracked totals",
+            position = 11
+    )
+    default boolean trackApprenticePack() {
+        return false;
+    }
+
+    @ConfigItem(
+            section = REWARD_TRACKING,
+            keyName = "apprenticePackQuantity",
+            name = "  Apprentice Pack qty",
+            description = "How many Apprentice Potion Packs to include when ticked",
+            position = 12
+    )
+    @Range(min = 1, max = 100000)
+    default int apprenticePackQuantity() {
+        return 1;
+    }
+
+    @ConfigItem(
+            section = REWARD_TRACKING,
+            keyName = "trackAdeptPack",
+            name = "Adept Potion Pack",
+            description = "Include Adept Potion Pack(s) in the tracked totals",
+            position = 13
+    )
+    default boolean trackAdeptPack() {
+        return false;
+    }
+
+    @ConfigItem(
+            section = REWARD_TRACKING,
+            keyName = "adeptPackQuantity",
+            name = "  Adept Pack qty",
+            description = "How many Adept Potion Packs to include when ticked",
+            position = 14
+    )
+    @Range(min = 1, max = 100000)
+    default int adeptPackQuantity() {
+        return 1;
+    }
+
+    @ConfigItem(
+            section = REWARD_TRACKING,
+            keyName = "trackExpertPack",
+            name = "Expert Potion Pack",
+            description = "Include Expert Potion Pack(s) in the tracked totals",
+            position = 15
+    )
+    default boolean trackExpertPack() {
+        return false;
+    }
+
+    @ConfigItem(
+            section = REWARD_TRACKING,
+            keyName = "expertPackQuantity",
+            name = "  Expert Pack qty",
+            description = "How many Expert Potion Packs to include when ticked",
+            position = 16
+    )
+    @Range(min = 1, max = 100000)
+    default int expertPackQuantity() {
+        return 1;
+    }
+
+    @ConfigItem(
+            section = REWARD_TRACKING,
+            keyName = "trackAldarium",
+            name = "Aldarium",
+            description = "Include Aldarium in the tracked totals",
+            position = 17
+    )
+    default boolean trackAldarium() {
+        return false;
+    }
+
+    @ConfigItem(
+            section = REWARD_TRACKING,
+            keyName = "aldariumQuantity",
+            name = "  Aldarium qty",
+            description = "How many Aldarium to include when ticked",
+            position = 18
+    )
+    @Range(min = 1, max = 100000)
+    default int aldariumQuantity() {
+        return 1;
     }
 }
