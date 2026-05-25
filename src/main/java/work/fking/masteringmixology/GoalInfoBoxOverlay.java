@@ -9,7 +9,6 @@ import net.runelite.client.ui.overlay.components.ComponentOrientation;
 import net.runelite.client.ui.overlay.components.ImageComponent;
 import net.runelite.client.ui.overlay.components.LineComponent;
 import net.runelite.client.ui.overlay.components.PanelComponent;
-import net.runelite.client.ui.overlay.components.ProgressBarComponent;
 import net.runelite.client.ui.overlay.components.SplitComponent;
 import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.QuantityFormatter;
@@ -94,7 +93,6 @@ class GoalInfoBoxOverlay extends OverlayPanel {
                                    .rightFont(FontManager.getRunescapeBoldFont())
                                    .build();
 
-        // Build the bottom line with the overall progress percentage
         var bottomLine = LineComponent.builder()
                                       .left("Progress:")
                                       .leftFont(FontManager.getRunescapeFont())
@@ -138,13 +136,17 @@ class GoalInfoBoxOverlay extends OverlayPanel {
             return;
         }
         var imageComponent = new ImageComponent(componentSprite);
-        var progressBarComponent = new ProgressBarComponent();
+        var progressBarComponent = new OutlinedProgressBarComponent();
 
         progressBarComponent.setForegroundColor(component.color());
         progressBarComponent.setBackgroundColor(PROGRESS_BAR_BACKGROUND_COLOR);
         progressBarComponent.setValue(data.percentageToGoal * 100);
         progressBarComponent.setLeftLabel(QuantityFormatter.quantityToStackSize(data.currentAmount));
         progressBarComponent.setRightLabel(QuantityFormatter.quantityToStackSize(data.goalAmount));
+        int remaining = Math.max(data.goalAmount - data.currentAmount, 0);
+        if (remaining > 0) {
+            progressBarComponent.setCenterLabel("(" + QuantityFormatter.quantityToStackSize(remaining) + ")");
+        }
 
         var progressBarSplit = SplitComponent.builder()
                                              .first(imageComponent)
