@@ -46,10 +46,13 @@ findings (1 000 trials per policy, all-8-non-pack-reward target of
 | Best static (`two_plus_bn`) | 7 633 | −13.4 % |
 | Greedy ("brew all 3 every turn") | 8 813 | — |
 
-* The simulator (R, ~1 000 trials per policy, 20+ candidate policies, a
-  threshold sweep for the meta-policy), the supporting policy library, and
-  the full write-up will be published separately. The headline numbers in
-  this README are copied verbatim from that work.
+* The simulator, the supporting policy library (R, ~1 000 trials per
+  policy, 20+ candidate policies, a threshold sweep for the meta-policy),
+  and the full write-up live in a companion repo:
+  [PDBoegel/mastering-mixology-sim](https://github.com/PDBoegel/mastering-mixology-sim).
+  See in particular
+  [`STRATEGY.md`](https://github.com/PDBoegel/mastering-mixology-sim/blob/main/STRATEGY.md)
+  for the methodology, threshold sweep, and verification.
 * The static-policy floor was independently verified by a beam search
   exploring up to 200 000 candidate paths per turn on 5 random sequences —
   the beam never beat the policy, which is strong evidence that the meta's
