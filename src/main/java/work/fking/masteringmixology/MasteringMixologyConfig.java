@@ -371,4 +371,44 @@ public interface MasteringMixologyConfig extends Config {
     default int aldariumQuantity() {
         return 1;
     }
+
+    @ConfigSection(
+            name = "Recommended-Potion Highlight",
+            description = "Colour each order green (brew it) or red (skip it) based on the adaptive meta-strategy",
+            position = 15
+    )
+    String RECOMMENDED_HIGHLIGHT = "RecommendedHighlight";
+
+    @ConfigItem(
+            section = RECOMMENDED_HIGHLIGHT,
+            keyName = "highlightRecommendedPotions",
+            name = "Highlight recommended potions",
+            description = "Colours each order's name green if the adaptive meta-strategy recommends brewing it, red otherwise. Requires at least one tracked reward in Reward Tracking.",
+            position = 1
+    )
+    default boolean highlightRecommendedPotions() {
+        return false;
+    }
+
+    @ConfigItem(
+            section = RECOMMENDED_HIGHLIGHT,
+            keyName = "recommendedPotionColor",
+            name = "Recommended colour",
+            description = "Text colour for orders the meta-strategy says you should brew",
+            position = 2
+    )
+    default Color recommendedPotionColor() {
+        return new Color(0, 200, 0);
+    }
+
+    @ConfigItem(
+            section = RECOMMENDED_HIGHLIGHT,
+            keyName = "notRecommendedPotionColor",
+            name = "Skip colour",
+            description = "Text colour for orders the meta-strategy says you should skip (reroll)",
+            position = 3
+    )
+    default Color notRecommendedPotionColor() {
+        return new Color(220, 50, 50);
+    }
 }

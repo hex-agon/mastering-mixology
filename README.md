@@ -6,8 +6,80 @@
 * Station highlighting
 * Station quick-action highlighting
 * Digweed highlighting & notifications
+* Multi-reward tracking with overlay progress bars and a configurable
+  notification when your resin pool can afford every selected reward
+* **Adaptive meta-strategy highlight** — colours each order green (brew) or
+  red (skip) according to a state-machine policy proven near-optimal by
+  Monte-Carlo simulation (see below)
+
+### The adaptive meta-strategy in one paragraph
+
+Each turn the plugin classifies the *shape* of your remaining resin deficit
+into one of three regimes and applies the sub-policy that is empirically
+best for that shape:
+
+* **single-bottleneck** (one colour clearly behind): brew slots that give
+  the most-behind colour. If ≥ 2 of the 3 orders give that colour, brew
+  all 3 to bank the +40 % bonus.
+* **dual-bottleneck** (the top-2 deficit colours are within 20 % of each
+  other): only commit to all-3 when ≥ 2 of the orders give *both* of the
+  top-2 colours (strict conjunction); otherwise fall back to single-
+  bottleneck behaviour.
+* **balanced** (all three deficits within 10 % of each other): only brew
+  multi-resin potions (no MMM / AAA / LLL); otherwise reroll the best
+  single slot.
+
+Transitions use 5 % hysteresis to avoid thrashing
+(enter dual at 20 %, leave at 25 %; enter balanced at 10 %, leave at 15 %).
+The state is maintained across orders and resets on plugin start-up.
+
+### Why this policy — research notes
+
+The recommendation was derived from a Monte-Carlo simulator that evaluates
+order-submission policies across many fixed order sequences. Headline
+findings (1 000 trials per policy, all-8-non-pack-reward target of
+61 050 mox / 52 550 aga / 70 500 lye):
+
+| Strategy | Mean potions brewed | vs greedy |
+|---|---:|---:|
+| Adaptive meta (recommended) | 7 502 | −14.9 % |
+| Best static (`two_plus_bn`) | 7 633 | −13.4 % |
+| Greedy ("brew all 3 every turn") | 8 813 | — |
+
+* The simulator and the supporting policy library, including every
+  intermediate variant we tried, live in
+  [`mixology-sim/`](https://github.com/PDBoegel/mastering-mixology/tree/reward-tracking-multi-select/mixology-sim).
+  The full write-up is in
+  [`mixology-sim/STRATEGY.md`](https://github.com/PDBoegel/mastering-mixology/blob/reward-tracking-multi-select/mixology-sim/STRATEGY.md).
+* The static-policy floor was independently verified by a beam search
+  exploring up to 200 000 candidate paths per turn on 5 random sequences —
+  the beam never beat the policy, which is strong evidence that the meta's
+  ~7 502-potion result is near the true minimum on this target.
+* The recommended thresholds (20 % / 25 % / 10 % / 15 %) sit in the middle
+  of a broad optimum: any sane choice in
+  `t_dual_in ∈ [15 %, 50 %], t_balanced_in ∈ [10 %, 20 %], hysteresis ∈
+  [2 %, 10 %]` gives essentially the same result. Outside that region (e.g.
+  thresholds of 5 % / 2 %) the meta's sub-policy switching is too eager and
+  loses ~70 potions.
+
+The highlight uses the *summed cost* of every reward you've ticked in the
+Reward Tracking section as the target; turn it off (or untick everything)
+to disable. The decision is recomputed on every order rebuild, so toggling
+a reward updates the colours immediately.
 
 ### Changelog
+
+#### V1.10.0
+* New **Recommended-Potion Highlight** feature — colours each order green
+  (brew it) or red (skip it) according to the adaptive meta-strategy. Off
+  by default; enable from the plugin config. Requires at least one reward
+  selected in *Reward Tracking* to compute against.
+* New **Reward Threshold Notification** section consolidating per-reward
+  toggles plus quantity controls for the four repeatable items; fires a
+  single notification when your resin pool first meets the combined cost
+  of every ticked reward.
+* The overlay's progress bars now sum every ticked reward's cost (rather
+  than showing only the legacy single-reward selection).
 
 #### V1.9.1
 * Fixed the `Fix Alembic quick-action sound effect` feature to work with the latest RuneLite version

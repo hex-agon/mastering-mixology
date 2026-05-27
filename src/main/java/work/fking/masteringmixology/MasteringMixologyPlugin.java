@@ -43,6 +43,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -141,6 +142,8 @@ public class MasteringMixologyPlugin extends Plugin {
 
     private final Goal goal = new Goal(RewardItem.NONE);
 
+    private final MetaPolicy metaPolicy = new MetaPolicy();
+
     public Map<AlchemyObject, HighlightedObject> highlightedObjects() {
         return highlightedObjects;
     }
@@ -170,6 +173,7 @@ public class MasteringMixologyPlugin extends Plugin {
         overlayManager.add(potionOverlay);
         overlayManager.add(goalInfoBoxOverlay);
         previouslyAboveRewardThreshold = false;
+        metaPolicy.reset();
 
         if (client.getGameState() == GameState.LOGGED_IN) {
             clientThread.invokeLater(this::initialize);
@@ -242,6 +246,16 @@ public class MasteringMixologyPlugin extends Plugin {
         if (event.getKey().equals("showResinBars") || event.getKey().startsWith("track") || event.getKey().endsWith("Quantity")) {
             recalculateGoalData();
             previouslyAboveRewardThreshold = false;
+        }
+
+        // Re-decorate orders when any highlight-related setting changes so
+        // the player sees the effect immediately without waiting for the
+        // next order rebuild.
+        if (event.getKey().equals("highlightRecommendedPotions")
+                || event.getKey().equals("recommendedPotionColor")
+                || event.getKey().equals("notRecommendedPotionColor")) {
+            metaPolicy.reset();
+            clientThread.invokeLater(this::triggerPotionOrderUpdate);
         }
 
         if (config.highlightLevers()) {
@@ -480,6 +494,13 @@ public class MasteringMixologyPlugin extends Plugin {
         if (children.isEmpty()) {
             return;
         }
+
+        // Compute the meta-policy recommendation once per rebuild (the orders
+        // and the resin state are both stable until the next refresh). null
+        // means "highlighting disabled" -- e.g. toggle off or no rewards
+        // tracked yet.
+        Set<Integer> recommendedSlots = computeRecommendedSlots();
+
         /*
          * Filtered children layout:
          * TEXT - Potion Orders
@@ -509,6 +530,13 @@ public class MasteringMixologyPlugin extends Plugin {
             }
             orderText.setText(builder.toString());
 
+            if (recommendedSlots != null && !order.fulfilled()) {
+                Color tint = recommendedSlots.contains(order.idx())
+                        ? config.recommendedPotionColor()
+                        : config.notRecommendedPotionColor();
+                orderText.setTextColor(tint.getRGB());
+            }
+
             if (i != order.idx()) {
                 LOGGER.debug("Updating order {} position from {} to {}", order, order.idx(), i);
                 // update component position
@@ -520,6 +548,48 @@ public class MasteringMixologyPlugin extends Plugin {
                 orderText.revalidate();
             }
         }
+    }
+
+    /**
+     * Returns the order indices the adaptive meta-policy recommends brewing
+     * this turn, or null if highlighting is disabled (config off, no
+     * rewards selected, or order data missing).
+     */
+    private Set<Integer> computeRecommendedSlots() {
+        if (!config.highlightRecommendedPotions()) {
+            return null;
+        }
+        if (potionOrders.size() != 3) {
+            return null;
+        }
+        // Target = sum of selected reward costs (the Goal already handles
+        // this for the overlay / threshold notification).
+        if (!goal.isMultiMode()) {
+            return null;
+        }
+        var mox = goal.getComponentData(MOX);
+        var aga = goal.getComponentData(AGA);
+        var lye = goal.getComponentData(LYE);
+        if (mox == null || aga == null || lye == null) {
+            return null;
+        }
+        int[] resin = {
+                client.getVarpValue(VARP_MOX_RESIN),
+                client.getVarpValue(VARP_AGA_RESIN),
+                client.getVarpValue(VARP_LYE_RESIN)
+        };
+        int[] target = { mox.goalAmount, aga.goalAmount, lye.goalAmount };
+        if (target[0] == 0 && target[1] == 0 && target[2] == 0) {
+            return null;
+        }
+        // Build the 3-slot PotionType array in original conveyor order.
+        // potionOrders may be sorted by config.potionOrderSorting() so we
+        // re-index by order.idx().
+        PotionType[] ordersBySlot = new PotionType[3];
+        for (PotionOrder po : potionOrders) {
+            ordersBySlot[po.idx()] = po.potionType();
+        }
+        return metaPolicy.decide(ordersBySlot, resin, target);
     }
 
     private List<Widget> selectChildren(Widget parent, Predicate<Widget> filter) {
