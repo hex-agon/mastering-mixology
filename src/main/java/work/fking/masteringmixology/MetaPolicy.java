@@ -205,20 +205,33 @@ public class MetaPolicy {
 
     /**
      * Deficit-reduction score for a slot: sum over colours of
-     * resin_in_color * max(deficit_color, 0). Each unique component in the
-     * potion's recipe yields 10 resin in that colour.
+     * resin_in_color * max(deficit_color, 0). Resin yield per potion:
+     *   XXX (single component repeated 3x)     -> 20 of X
+     *   XXY (one component doubled, one single)-> 20 of doubled + 10 of single
+     *   XYZ (three distinct components = MAL)  -> 20 of each
      */
     private static int slotScore(PotionType pt, int[] deficit) {
         if (pt == null) {
             return Integer.MIN_VALUE;
         }
-        EnumSet<PotionComponent> uniq = EnumSet.noneOf(PotionComponent.class);
+        int[] count = new int[3];
         for (PotionComponent c : pt.components()) {
-            uniq.add(c);
+            count[c.ordinal()]++;
+        }
+        int distinct = 0;
+        for (int c = 0; c < 3; c++) {
+            if (count[c] > 0) {
+                distinct++;
+            }
         }
         int score = 0;
-        for (PotionComponent c : uniq) {
-            score += 10 * Math.max(deficit[c.ordinal()], 0);
+        for (int c = 0; c < 3; c++) {
+            if (count[c] == 0) {
+                continue;
+            }
+            // XXY single colour gets 10; otherwise 20 (XXX, XXY's doubled, all of MAL).
+            int yield = (count[c] == 1 && distinct == 2) ? 10 : 20;
+            score += yield * Math.max(deficit[c], 0);
         }
         return score;
     }

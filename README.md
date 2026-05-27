@@ -42,9 +42,16 @@ findings (1 000 trials per policy, all-8-non-pack-reward target of
 
 | Strategy | Mean potions brewed | vs greedy |
 |---|---:|---:|
-| Adaptive meta (recommended) | 7 502 | −14.9 % |
-| Best static (`two_plus_bn`) | 7 633 | −13.4 % |
-| Greedy ("brew all 3 every turn") | 8 813 | — |
+| Adaptive meta (recommended) | 4 612 | −12.8 % |
+| Best static (`two_plus_bn`) | 4 606 | −12.9 % |
+| Greedy ("brew all 3 every turn") | 5 287 | — |
+
+Caveat: at the standard target shape the meta and the static policy are
+**statistically tied** (top-10 variants all within ~20 potions of each
+other, p10-p90 spread ~70). The meta wins by a small margin on target
+shapes with sharper bottleneck asymmetry and avoids late-game overshoot;
+at this particular target, the simpler static rule captures nearly all the
+gain on its own.
 
 * The simulator, the supporting policy library (R, ~1 000 trials per
   policy, 20+ candidate policies, a threshold sweep for the meta-policy),
@@ -59,10 +66,10 @@ findings (1 000 trials per policy, all-8-non-pack-reward target of
   ~7 502-potion result is near the true minimum on this target.
 * The recommended thresholds (20 % / 25 % / 10 % / 15 %) sit in the middle
   of a broad optimum: any sane choice in
-  `t_dual_in ∈ [15 %, 50 %], t_balanced_in ∈ [10 %, 20 %], hysteresis ∈
-  [2 %, 10 %]` gives essentially the same result. Outside that region (e.g.
-  thresholds of 5 % / 2 %) the meta's sub-policy switching is too eager and
-  loses ~70 potions.
+  `t_dual_in ∈ [20 %, 50 %], t_balanced_in ∈ [10 %, 20 %], hysteresis ∈
+  [2 %, 10 %]` gives essentially the same result. Outside that region
+  (e.g. thresholds of 5 % / 2 %) the meta's sub-policy switching is too
+  eager and loses ~20 potions.
 
 The highlight uses the *summed cost* of every reward you've ticked in the
 Reward Tracking section as the target; turn it off (or untick everything)
