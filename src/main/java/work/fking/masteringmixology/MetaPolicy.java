@@ -25,8 +25,8 @@ public class MetaPolicy {
     /** Recommended thresholds from the sweep at 61k/53k/71k. See STRATEGY.md §7. */
     public static final double T_DUAL_IN       = 0.20;
     public static final double T_DUAL_OUT      = 0.25;
-    public static final double T_BALANCED_IN   = 0.10;
-    public static final double T_BALANCED_OUT  = 0.15;
+    public static final double T_BALANCED_IN   = 0.20;
+    public static final double T_BALANCED_OUT  = 0.25;
 
     private State state = State.SINGLE_BN;
 
