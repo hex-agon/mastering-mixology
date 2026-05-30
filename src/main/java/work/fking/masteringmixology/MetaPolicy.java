@@ -137,11 +137,15 @@ public class MetaPolicy {
     }
 
     /**
-     * balanced: if all 3 orders are multi-resin (not MMM/AAA/LLL), brew all
-     * 3; else brew the single best-deficit slot.
+     * balanced: if any order is MAL (gives all three colours) OR all 3 orders
+     * are multi-resin (not MMM/AAA/LLL), brew all 3; else brew the single
+     * best-deficit slot. The MAL trigger captures the case where a single
+     * three-colour potion is enough to justify a 3-batch even when the other
+     * slots are singletons -- the +0.4 batch bonus on MAL alone gives 28 of
+     * every colour, outweighing the overshoot from the singleton partners.
      */
     private Set<Integer> balanced(PotionType[] orders, int[] deficit) {
-        if (allMultiResin(orders)) {
+        if (anyMal(orders) || allMultiResin(orders)) {
             return all3();
         }
         return singleton(bestDeficitSlot(orders, deficit));
@@ -201,6 +205,26 @@ public class MetaPolicy {
             }
         }
         return true;
+    }
+
+    private static boolean isMal(PotionType pt) {
+        if (pt == null) {
+            return false;
+        }
+        EnumSet<PotionComponent> uniq = EnumSet.noneOf(PotionComponent.class);
+        for (PotionComponent c : pt.components()) {
+            uniq.add(c);
+        }
+        return uniq.size() == 3;
+    }
+
+    private static boolean anyMal(PotionType[] orders) {
+        for (PotionType pt : orders) {
+            if (isMal(pt)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
