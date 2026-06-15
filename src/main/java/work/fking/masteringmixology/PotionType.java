@@ -38,7 +38,6 @@ public enum PotionType {
     private final int itemId;
     private final int modifiedItemId;
     private final String recipe;
-    private final String recipeBlocks;
     private final String abbreviation;
     private final int experience;
     private final PotionComponent[] components;
@@ -47,8 +46,7 @@ public enum PotionType {
     PotionType(int itemId, int modifiedItemId, int experience, PotionComponent... components) {
         this.itemId = itemId;
         this.modifiedItemId = modifiedItemId;
-        this.recipe = colorizeRecipe(components, false);
-        this.recipeBlocks = colorizeRecipe(components, true);
+        this.recipe = colorizeRecipe(components);
         this.experience = experience;
         this.components = components;
         this.abbreviation = "" + components[0].character() + components[1].character() + components[2].character();
@@ -65,18 +63,25 @@ public enum PotionType {
         return TYPES[potionTypeId];
     }
 
-    private static String colorizeRecipe(PotionComponent[] components, boolean blocks) {
+    private static String colorizeRecipe(PotionComponent[] components) {
         if (components.length != 3) {
             throw new IllegalArgumentException("Invalid potion components: " + Arrays.toString(components));
         }
-        return colorizeRecipeComponent(components[0], blocks)
-                + colorizeRecipeComponent(components[1], blocks)
-                + colorizeRecipeComponent(components[2], blocks);
+        return colorizeRecipeComponent(components[0])
+                + colorizeRecipeComponent(components[1])
+                + colorizeRecipeComponent(components[2]);
     }
 
-    private static String colorizeRecipeComponent(PotionComponent component, boolean blocks) {
-        char glyph = blocks ? '█' : component.character();
-        return "<col=" + component.colorCode() + ">" + glyph + "</col>";
+    private static String colorizeRecipeComponent(PotionComponent component) {
+        return "<col=" + component.colorCode() + ">" + component.character() + "</col>";
+    }
+
+    public String recipeBlocks(int[] iconIdx) {
+        StringBuilder sb = new StringBuilder(18);
+        for (PotionComponent c : components) {
+            sb.append("<img=").append(iconIdx[c.ordinal()]).append('>');
+        }
+        return sb.toString();
     }
 
     public int itemId() {
@@ -89,10 +94,6 @@ public enum PotionType {
 
     public String recipe() {
         return recipe;
-    }
-
-    public String recipeBlocks() {
-        return recipeBlocks;
     }
 
     public int experience() {

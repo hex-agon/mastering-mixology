@@ -144,6 +144,8 @@ public class MasteringMixologyPlugin extends Plugin {
 
     private final MetaPolicy metaPolicy = new MetaPolicy();
 
+    private int[] resinIconIdx = null;
+
     public Map<AlchemyObject, HighlightedObject> highlightedObjects() {
         return highlightedObjects;
     }
@@ -174,10 +176,45 @@ public class MasteringMixologyPlugin extends Plugin {
         overlayManager.add(goalInfoBoxOverlay);
         previouslyAboveRewardThreshold = false;
         metaPolicy.reset();
+        clientThread.invokeLater(this::registerResinIcons);
 
         if (client.getGameState() == GameState.LOGGED_IN) {
             clientThread.invokeLater(this::initialize);
         }
+    }
+
+    private void registerResinIcons() {
+        if (resinIconIdx != null) {
+            return;
+        }
+        net.runelite.api.IndexedSprite[] mod = client.getModIcons();
+        if (mod == null) {
+            return;
+        }
+        final int size = 9;
+        int base = mod.length;
+        net.runelite.api.IndexedSprite[] extended = Arrays.copyOf(mod, base + 3);
+        int[] indices = new int[3];
+        for (PotionComponent c : PotionComponent.ENTRIES) {
+            net.runelite.api.IndexedSprite s = client.createIndexedSprite();
+            byte[] pixels = new byte[size * size];
+            for (int i = 0; i < pixels.length; i++) {
+                int x = i % size;
+                int y = i / size;
+                boolean edge = x == 0 || x == size - 1 || y == 0 || y == size - 1;
+                pixels[i] = (byte) (edge ? 1 : 2);
+            }
+            s.setPixels(pixels);
+            s.setPalette(new int[]{0, 0x000000, c.color().getRGB() & 0xFFFFFF});
+            s.setWidth(size);
+            s.setHeight(size);
+            s.setOriginalWidth(size);
+            s.setOriginalHeight(size);
+            extended[base + c.ordinal()] = s;
+            indices[c.ordinal()] = base + c.ordinal();
+        }
+        client.setModIcons(extended);
+        resinIconIdx = indices;
     }
 
     @Override
@@ -526,8 +563,8 @@ public class MasteringMixologyPlugin extends Plugin {
             if (order.fulfilled()) {
                 builder.append(" (<col=00ff00>done!</col>)");
             } else {
-                String recipe = config.dyslexicMixology()
-                        ? order.potionType().recipeBlocks()
+                String recipe = (config.dyslexicMixology() && resinIconIdx != null)
+                        ? order.potionType().recipeBlocks(resinIconIdx)
                         : order.potionType().recipe();
                 builder.append(" (").append(recipe).append(")");
             }
