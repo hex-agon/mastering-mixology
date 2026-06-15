@@ -36,6 +36,11 @@ public class InventoryPotionOverlay extends WidgetItemOverlay {
         var x = bounds.x + 5;
         var y = bounds.y + 30;
 
+        if (config.dyslexicMixology()) {
+            drawBlocks(graphics2D, potion, x, y);
+            return;
+        }
+
         drawRecipe(graphics2D, potion, x + 1, y + 1, Color.BLACK); // Drop shadow
 
         if (config.inventoryPotionTagType() == InventoryPotionTagType.COLORED) {
@@ -59,6 +64,18 @@ public class InventoryPotionOverlay extends WidgetItemOverlay {
             graphics2D.setColor(component.color());
             graphics2D.drawString(String.valueOf(component.character()), x, y);
             x += graphics2D.getFontMetrics().charWidth(component.character());
+        }
+    }
+
+    private void drawBlocks(Graphics2D graphics2D, PotionType potion, int x, int y) {
+        final int side = 7;
+        int top = y - side + 1;
+        for (var component : potion.components()) {
+            graphics2D.setColor(component.color());
+            graphics2D.fillRect(x, top, side, side);
+            graphics2D.setColor(Color.BLACK);
+            graphics2D.drawRect(x, top, side, side);
+            x += side + 1;
         }
     }
 }

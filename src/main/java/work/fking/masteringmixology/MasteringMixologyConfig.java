@@ -34,6 +34,16 @@ public interface MasteringMixologyConfig extends Config {
     }
 
     @ConfigItem(
+            keyName = "dyslexicMixology",
+            name = "Dyslexic Mixology",
+            description = "Replace M/A/L letters with solid colour blocks in the order list and inventory tags",
+            position = 1
+    )
+    default boolean dyslexicMixology() {
+        return false;
+    }
+
+    @ConfigItem(
             keyName = "potionOrderSorting",
             name = "Order sorting",
             description = "Determines how potion orders are sorted in the interface",

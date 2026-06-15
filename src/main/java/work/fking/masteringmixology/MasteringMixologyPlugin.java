@@ -526,7 +526,10 @@ public class MasteringMixologyPlugin extends Plugin {
             if (order.fulfilled()) {
                 builder.append(" (<col=00ff00>done!</col>)");
             } else {
-                builder.append(" (").append(order.potionType().recipe()).append(")");
+                String recipe = config.dyslexicMixology()
+                        ? order.potionType().recipeBlocks()
+                        : order.potionType().recipe();
+                builder.append(" (").append(recipe).append(")");
             }
             orderText.setText(builder.toString());
 
