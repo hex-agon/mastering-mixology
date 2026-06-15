@@ -126,7 +126,7 @@ public class Goal {
             list.add(new Selection(RewardItem.POTION_STORAGE, 1));
         }
         if (config.trackChuggingBarrel()) {
-            list.add(new Selection(RewardItem.CHUGGING_BARREL, 1));
+            list.add(new Selection(RewardItem.CHUGGING_BARREL, config.chuggingBarrelQuantity()));
         }
         if (config.trackAlchemistsAmulet()) {
             list.add(new Selection(RewardItem.ALCHEMISTS_AMULET, 1));

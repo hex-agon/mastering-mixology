@@ -36,7 +36,7 @@ public class InventoryPotionOverlay extends WidgetItemOverlay {
         var x = bounds.x + 5;
         var y = bounds.y + 30;
 
-        if (config.dyslexicMixology()) {
+        if (config.accessibilityMode()) {
             drawBlocks(graphics2D, potion, x, y);
             return;
         }
@@ -71,7 +71,7 @@ public class InventoryPotionOverlay extends WidgetItemOverlay {
         final int side = 7;
         int top = y - side + 1;
         for (var component : potion.components()) {
-            graphics2D.setColor(component.color());
+            graphics2D.setColor(plugin.effectiveComponentColor(component));
             graphics2D.fillRect(x, top, side, side);
             graphics2D.setColor(Color.BLACK);
             graphics2D.drawRect(x, top, side, side);

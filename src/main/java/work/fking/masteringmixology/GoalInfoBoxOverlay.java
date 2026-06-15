@@ -138,7 +138,7 @@ class GoalInfoBoxOverlay extends OverlayPanel {
         var imageComponent = new ImageComponent(componentSprite);
         var progressBarComponent = new OutlinedProgressBarComponent();
 
-        progressBarComponent.setForegroundColor(component.color());
+        progressBarComponent.setForegroundColor(plugin.effectiveComponentColor(component));
         progressBarComponent.setBackgroundColor(PROGRESS_BAR_BACKGROUND_COLOR);
         progressBarComponent.setValue(data.percentageToGoal * 100);
         progressBarComponent.setLeftLabel(QuantityFormatter.quantityToStackSize(data.currentAmount));

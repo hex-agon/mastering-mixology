@@ -34,16 +34,6 @@ public interface MasteringMixologyConfig extends Config {
     }
 
     @ConfigItem(
-            keyName = "dyslexicMixology",
-            name = "Dyslexic Mixology",
-            description = "Replace M/A/L letters with solid colour blocks in the order list and inventory tags",
-            position = 1
-    )
-    default boolean dyslexicMixology() {
-        return false;
-    }
-
-    @ConfigItem(
             keyName = "potionOrderSorting",
             name = "Order sorting",
             description = "Determines how potion orders are sorted in the interface",
@@ -270,21 +260,10 @@ public interface MasteringMixologyConfig extends Config {
 
     @ConfigItem(
             section = REWARD_TRACKING,
-            keyName = "trackChuggingBarrel",
-            name = "Chugging Barrel",
-            description = "Include Chugging Barrel in the tracked totals",
-            position = 9
-    )
-    default boolean trackChuggingBarrel() {
-        return false;
-    }
-
-    @ConfigItem(
-            section = REWARD_TRACKING,
             keyName = "trackAlchemistsAmulet",
             name = "Alchemist's Amulet",
             description = "Include Alchemist's Amulet in the tracked totals",
-            position = 10
+            position = 9
     )
     default boolean trackAlchemistsAmulet() {
         return false;
@@ -292,10 +271,33 @@ public interface MasteringMixologyConfig extends Config {
 
     @ConfigItem(
             section = REWARD_TRACKING,
+            keyName = "trackChuggingBarrel",
+            name = "Chugging Barrel",
+            description = "Include Chugging Barrel(s) in the tracked totals",
+            position = 10
+    )
+    default boolean trackChuggingBarrel() {
+        return false;
+    }
+
+    @ConfigItem(
+            section = REWARD_TRACKING,
+            keyName = "chuggingBarrelQuantity",
+            name = "  Chugging Barrel qty",
+            description = "How many Chugging Barrels to include when ticked",
+            position = 11
+    )
+    @Range(min = 1, max = 100000)
+    default int chuggingBarrelQuantity() {
+        return 1;
+    }
+
+    @ConfigItem(
+            section = REWARD_TRACKING,
             keyName = "trackApprenticePack",
             name = "Apprentice Potion Pack",
             description = "Include Apprentice Potion Pack(s) in the tracked totals",
-            position = 11
+            position = 12
     )
     default boolean trackApprenticePack() {
         return false;
@@ -306,7 +308,7 @@ public interface MasteringMixologyConfig extends Config {
             keyName = "apprenticePackQuantity",
             name = "  Apprentice Pack qty",
             description = "How many Apprentice Potion Packs to include when ticked",
-            position = 12
+            position = 13
     )
     @Range(min = 1, max = 100000)
     default int apprenticePackQuantity() {
@@ -318,7 +320,7 @@ public interface MasteringMixologyConfig extends Config {
             keyName = "trackAdeptPack",
             name = "Adept Potion Pack",
             description = "Include Adept Potion Pack(s) in the tracked totals",
-            position = 13
+            position = 14
     )
     default boolean trackAdeptPack() {
         return false;
@@ -329,7 +331,7 @@ public interface MasteringMixologyConfig extends Config {
             keyName = "adeptPackQuantity",
             name = "  Adept Pack qty",
             description = "How many Adept Potion Packs to include when ticked",
-            position = 14
+            position = 15
     )
     @Range(min = 1, max = 100000)
     default int adeptPackQuantity() {
@@ -341,7 +343,7 @@ public interface MasteringMixologyConfig extends Config {
             keyName = "trackExpertPack",
             name = "Expert Potion Pack",
             description = "Include Expert Potion Pack(s) in the tracked totals",
-            position = 15
+            position = 16
     )
     default boolean trackExpertPack() {
         return false;
@@ -352,7 +354,7 @@ public interface MasteringMixologyConfig extends Config {
             keyName = "expertPackQuantity",
             name = "  Expert Pack qty",
             description = "How many Expert Potion Packs to include when ticked",
-            position = 16
+            position = 17
     )
     @Range(min = 1, max = 100000)
     default int expertPackQuantity() {
@@ -364,7 +366,7 @@ public interface MasteringMixologyConfig extends Config {
             keyName = "trackAldarium",
             name = "Aldarium",
             description = "Include Aldarium in the tracked totals",
-            position = 17
+            position = 18
     )
     default boolean trackAldarium() {
         return false;
@@ -375,7 +377,7 @@ public interface MasteringMixologyConfig extends Config {
             keyName = "aldariumQuantity",
             name = "  Aldarium qty",
             description = "How many Aldarium to include when ticked",
-            position = 18
+            position = 19
     )
     @Range(min = 1, max = 100000)
     default int aldariumQuantity() {
@@ -420,5 +422,78 @@ public interface MasteringMixologyConfig extends Config {
     )
     default Color notRecommendedPotionColor() {
         return new Color(220, 50, 50);
+    }
+
+    @ConfigSection(
+            name = "Accessibility",
+            description = "Dyslexia / colour-blind friendly alternatives: replace M/A/L letters with coloured blocks and swap the recommend/skip text + resin colours for higher-contrast options",
+            position = 20
+    )
+    String ACCESSIBILITY = "Accessibility";
+
+    @ConfigItem(
+            section = ACCESSIBILITY,
+            keyName = "dyslexicMixology",
+            name = "Dyslexic/Colorblind Mode",
+            description = "Replace M/A/L letters with coloured blocks in the order list and inventory tags; apply the accessibility colours below to recommend/skip text, resin blocks, levers, and progress bars",
+            position = 1
+    )
+    default boolean accessibilityMode() {
+        return false;
+    }
+
+    @ConfigItem(
+            section = ACCESSIBILITY,
+            keyName = "accessibilityRecommendColor",
+            name = "Recommend colour",
+            description = "Text colour for orders the meta-strategy says you should brew (applied when accessibility mode is on)",
+            position = 2
+    )
+    default Color accessibilityRecommendColor() {
+        return new Color(0xFFC107);
+    }
+
+    @ConfigItem(
+            section = ACCESSIBILITY,
+            keyName = "accessibilitySkipColor",
+            name = "Skip colour",
+            description = "Text colour for orders the meta-strategy says you should skip (applied when accessibility mode is on)",
+            position = 3
+    )
+    default Color accessibilitySkipColor() {
+        return new Color(0x4A4A4A);
+    }
+
+    @ConfigItem(
+            section = ACCESSIBILITY,
+            keyName = "accessibilityMoxColor",
+            name = "MOX colour",
+            description = "Colour for MOX resin (blocks, lever, progress bar) when accessibility mode is on",
+            position = 4
+    )
+    default Color accessibilityMoxColor() {
+        return new Color(0x9D4EDD);
+    }
+
+    @ConfigItem(
+            section = ACCESSIBILITY,
+            keyName = "accessibilityAgaColor",
+            name = "AGA colour",
+            description = "Colour for AGA resin (blocks, lever, progress bar) when accessibility mode is on",
+            position = 5
+    )
+    default Color accessibilityAgaColor() {
+        return new Color(0x00FFB3);
+    }
+
+    @ConfigItem(
+            section = ACCESSIBILITY,
+            keyName = "accessibilityLyeColor",
+            name = "LYE colour",
+            description = "Colour for LYE resin (blocks, lever, progress bar) when accessibility mode is on",
+            position = 6
+    )
+    default Color accessibilityLyeColor() {
+        return new Color(0xFF6D00);
     }
 }

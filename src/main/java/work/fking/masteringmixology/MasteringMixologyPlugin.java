@@ -145,6 +145,7 @@ public class MasteringMixologyPlugin extends Plugin {
     private final MetaPolicy metaPolicy = new MetaPolicy();
 
     private int[] resinIconIdx = null;
+    private net.runelite.api.IndexedSprite[] resinIconSprites = null;
 
     public Map<AlchemyObject, HighlightedObject> highlightedObjects() {
         return highlightedObjects;
@@ -185,6 +186,7 @@ public class MasteringMixologyPlugin extends Plugin {
 
     private void registerResinIcons() {
         if (resinIconIdx != null) {
+            applyResinIconPalettes();
             return;
         }
         net.runelite.api.IndexedSprite[] mod = client.getModIcons();
@@ -195,6 +197,7 @@ public class MasteringMixologyPlugin extends Plugin {
         int base = mod.length;
         net.runelite.api.IndexedSprite[] extended = Arrays.copyOf(mod, base + 3);
         int[] indices = new int[3];
+        net.runelite.api.IndexedSprite[] sprites = new net.runelite.api.IndexedSprite[3];
         for (PotionComponent c : PotionComponent.ENTRIES) {
             net.runelite.api.IndexedSprite s = client.createIndexedSprite();
             byte[] pixels = new byte[size * size];
@@ -205,16 +208,42 @@ public class MasteringMixologyPlugin extends Plugin {
                 pixels[i] = (byte) (edge ? 1 : 2);
             }
             s.setPixels(pixels);
-            s.setPalette(new int[]{0, 0x000000, c.color().getRGB() & 0xFFFFFF});
+            s.setPalette(new int[]{0, 0x000000, effectiveComponentColor(c).getRGB() & 0xFFFFFF});
             s.setWidth(size);
             s.setHeight(size);
             s.setOriginalWidth(size);
             s.setOriginalHeight(size);
             extended[base + c.ordinal()] = s;
             indices[c.ordinal()] = base + c.ordinal();
+            sprites[c.ordinal()] = s;
         }
         client.setModIcons(extended);
         resinIconIdx = indices;
+        resinIconSprites = sprites;
+    }
+
+    private void applyResinIconPalettes() {
+        if (resinIconSprites == null) {
+            return;
+        }
+        for (PotionComponent c : PotionComponent.ENTRIES) {
+            net.runelite.api.IndexedSprite s = resinIconSprites[c.ordinal()];
+            if (s != null) {
+                s.setPalette(new int[]{0, 0x000000, effectiveComponentColor(c).getRGB() & 0xFFFFFF});
+            }
+        }
+    }
+
+    Color effectiveComponentColor(PotionComponent c) {
+        if (!config.accessibilityMode()) {
+            return c.color();
+        }
+        switch (c) {
+            case MOX: return config.accessibilityMoxColor();
+            case AGA: return config.accessibilityAgaColor();
+            case LYE: return config.accessibilityLyeColor();
+            default:  return c.color();
+        }
     }
 
     @Override
@@ -290,9 +319,22 @@ public class MasteringMixologyPlugin extends Plugin {
         // next order rebuild.
         if (event.getKey().equals("highlightRecommendedPotions")
                 || event.getKey().equals("recommendedPotionColor")
-                || event.getKey().equals("notRecommendedPotionColor")) {
+                || event.getKey().equals("notRecommendedPotionColor")
+                || event.getKey().equals("dyslexicMixology")
+                || event.getKey().equals("accessibilityRecommendColor")
+                || event.getKey().equals("accessibilitySkipColor")) {
             metaPolicy.reset();
             clientThread.invokeLater(this::triggerPotionOrderUpdate);
+        }
+
+        if (event.getKey().equals("dyslexicMixology")
+                || event.getKey().equals("accessibilityMoxColor")
+                || event.getKey().equals("accessibilityAgaColor")
+                || event.getKey().equals("accessibilityLyeColor")) {
+            clientThread.invokeLater(this::applyResinIconPalettes);
+            if (config.highlightLevers()) {
+                clientThread.invokeLater(this::highlightLevers);
+            }
         }
 
         if (config.highlightLevers()) {
@@ -563,7 +605,7 @@ public class MasteringMixologyPlugin extends Plugin {
             if (order.fulfilled()) {
                 builder.append(" (<col=00ff00>done!</col>)");
             } else {
-                String recipe = (config.dyslexicMixology() && resinIconIdx != null)
+                String recipe = (config.accessibilityMode() && resinIconIdx != null)
                         ? order.potionType().recipeBlocks(resinIconIdx)
                         : order.potionType().recipe();
                 builder.append(" (").append(recipe).append(")");
@@ -571,9 +613,13 @@ public class MasteringMixologyPlugin extends Plugin {
             orderText.setText(builder.toString());
 
             if (recommendedSlots != null && !order.fulfilled()) {
-                Color tint = recommendedSlots.contains(order.idx())
-                        ? config.recommendedPotionColor()
-                        : config.notRecommendedPotionColor();
+                boolean recommended = recommendedSlots.contains(order.idx());
+                Color tint;
+                if (config.accessibilityMode()) {
+                    tint = recommended ? config.accessibilityRecommendColor() : config.accessibilitySkipColor();
+                } else {
+                    tint = recommended ? config.recommendedPotionColor() : config.notRecommendedPotionColor();
+                }
                 orderText.setTextColor(tint.getRGB());
             }
 
@@ -722,9 +768,9 @@ public class MasteringMixologyPlugin extends Plugin {
             return;
         }
 
-        highlightObject(LYE_LEVER, LYE.color());
-        highlightObject(AGA_LEVER, AGA.color());
-        highlightObject(MOX_LEVER, MOX.color());
+        highlightObject(LYE_LEVER, effectiveComponentColor(LYE));
+        highlightObject(AGA_LEVER, effectiveComponentColor(AGA));
+        highlightObject(MOX_LEVER, effectiveComponentColor(MOX));
     }
 
     private void unHighlightLevers() {
