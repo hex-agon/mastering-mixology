@@ -22,7 +22,7 @@ public class InventoryPotionOverlay extends WidgetItemOverlay {
 
     @Override
     public void renderItemOverlay(Graphics2D graphics2D, int itemId, WidgetItem widgetItem) {
-        if (!plugin.isInLab() || config.inventoryPotionTagType() == InventoryPotionTagType.NONE) {
+        if (!plugin.isInLab()) {
             return;
         }
 
@@ -33,17 +33,58 @@ public class InventoryPotionOverlay extends WidgetItemOverlay {
         }
 
         var bounds = widgetItem.getCanvasBounds();
-        var x = bounds.x + 5;
-        var y = bounds.y + 30;
 
-        drawRecipe(graphics2D, potion, x + 1, y + 1, Color.BLACK); // Drop shadow
+        // Recipe tag (bottom-left) — unchanged.
+        if (config.inventoryPotionTagType() != InventoryPotionTagType.NONE) {
+            var x = bounds.x + 5;
+            var y = bounds.y + 30;
 
-        if (config.inventoryPotionTagType() == InventoryPotionTagType.COLORED) {
-            drawRecipe(graphics2D, potion, x, y, null);
-            return;
+            drawRecipe(graphics2D, potion, x + 1, y + 1, Color.BLACK); // Drop shadow
+
+            if (config.inventoryPotionTagType() == InventoryPotionTagType.COLORED) {
+                drawRecipe(graphics2D, potion, x, y, null);
+            } else {
+                drawRecipe(graphics2D, potion, x, y, Color.WHITE);
+            }
         }
 
-        drawRecipe(graphics2D, potion, x, y, Color.WHITE);
+        // Station tag (top-left) — only on finished potions we've tagged with a station.
+        if (config.showStationTags()) {
+            var widget = widgetItem.getWidget();
+            if (widget != null) {
+                var modifier = plugin.stationTag(widget.getIndex());
+                if (modifier != null) {
+                    drawStationTag(graphics2D, modifier, bounds.x + 1, bounds.y + 10);
+                }
+            }
+        }
+    }
+
+    private void drawStationTag(Graphics2D graphics2D, PotionModifier modifier, int x, int y) {
+        String text = stationLabel(modifier);
+        graphics2D.setFont(FontManager.getRunescapeSmallFont());
+        graphics2D.setColor(Color.BLACK);
+        graphics2D.drawString(text, x + 1, y + 1); // Drop shadow
+        graphics2D.setColor(stationColor(modifier));
+        graphics2D.drawString(text, x, y);
+    }
+
+    private static String stationLabel(PotionModifier modifier) {
+        switch (modifier) {
+            case HOMOGENOUS:   return "Agi";
+            case CONCENTRATED: return "Ret";
+            case CRYSTALISED:  return "Ale";
+            default:           return "";
+        }
+    }
+
+    private static Color stationColor(PotionModifier modifier) {
+        switch (modifier) {
+            case HOMOGENOUS:   return new Color(120, 230, 120); // green
+            case CONCENTRATED: return new Color(255, 170, 90);  // orange
+            case CRYSTALISED:  return new Color(120, 200, 255); // cyan
+            default:           return Color.WHITE;
+        }
     }
 
     private void drawRecipe(Graphics2D graphics2D, PotionType potion, int x, int y, @Nullable Color color) {

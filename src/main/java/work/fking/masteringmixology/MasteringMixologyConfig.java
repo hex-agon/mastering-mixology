@@ -34,6 +34,16 @@ public interface MasteringMixologyConfig extends Config {
     }
 
     @ConfigItem(
+            keyName = "showStationTags",
+            name = "Station tags",
+            description = "Tag each finished potion (top-left) with the station it was processed at (Agitator/Retort/Alembic)",
+            position = 1
+    )
+    default boolean showStationTags() {
+        return false;
+    }
+
+    @ConfigItem(
             keyName = "potionOrderSorting",
             name = "Order sorting",
             description = "Determines how potion orders are sorted in the interface",

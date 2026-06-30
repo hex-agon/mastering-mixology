@@ -4,6 +4,8 @@ import com.google.inject.Provides;
 import net.runelite.api.Client;
 import net.runelite.api.FontID;
 import net.runelite.api.GameState;
+import net.runelite.api.Item;
+import net.runelite.api.ItemContainer;
 import net.runelite.api.Player;
 import net.runelite.api.TileObject;
 import net.runelite.api.coords.LocalPoint;
@@ -37,9 +39,13 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.awt.Color;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -131,6 +137,19 @@ public class MasteringMixologyPlugin extends Plugin {
     private PotionType agitatorPotionType;
     private PotionType retortPotionType;
 
+    // Tagging finished potions with the station they were processed at.  The finished
+    // item id is type-only, so the station is captured when a station-potion varbit
+    // returns to 0 (processing done) and matched to the finished potion that lands in
+    // the inventory the same tick.
+    // slot index -> modifier (station) for finished potions currently held.
+    private final Map<Integer, PotionModifier> taggedSlots = new HashMap<>();
+    // finishes awaiting an inventory match: each {finishedItemId, modifierOrdinal, tick}.
+    private final Deque<int[]> pendingTags = new ArrayDeque<>();
+
+    public PotionModifier stationTag(int slot) {
+        return taggedSlots.get(slot);
+    }
+
     private int previousAgitatorProgess;
     private int previousAlembicProgress;
 
@@ -185,6 +204,10 @@ public class MasteringMixologyPlugin extends Plugin {
     public void onGameStateChanged(GameStateChanged event) {
         if (event.getGameState() == GameState.LOGIN_SCREEN || event.getGameState() == GameState.HOPPING) {
             highlightedObjects.clear();
+            // Keep taggedSlots across a relog/hop — the inventory (and its slots) persist
+            // server-side, so the station tags stay valid; only the transient pending state
+            // is reset.  The onItemContainerChanged reconcile on login drops stale slots.
+            pendingTags.clear();
         }
     }
 
@@ -249,7 +272,16 @@ public class MasteringMixologyPlugin extends Plugin {
 
     @Subscribe
     public void onItemContainerChanged(ItemContainerChanged event) {
-        if (!inLab || !config.highlightStations() || event.getContainerId() != InventoryID.INV) {
+        if (event.getContainerId() != InventoryID.INV) {
+            return;
+        }
+        // Only reconcile while logged in so a transient empty-inventory event around logout
+        // doesn't wipe the tags (they should survive the relog).
+        if (client.getGameState() == GameState.LOGGED_IN) {
+            updateStationTags(event.getItemContainer());
+        }
+
+        if (!inLab || !config.highlightStations()) {
             return;
         }
         // Do not update the highlight if there's a potion in a station
@@ -275,6 +307,65 @@ public class MasteringMixologyPlugin extends Plugin {
         }
     }
 
+    private void queueStationTag(PotionType type, PotionModifier modifier) {
+        if (type == null) {
+            return;
+        }
+        pendingTags.addLast(new int[]{type.modifiedItemId(), modifier.ordinal(), client.getTickCount()});
+        updateStationTags(client.getItemContainer(InventoryID.INV));
+    }
+
+    // Reconcile slot->station tags against the inventory: drop tags whose slot no longer
+    // holds a finished potion, then assign queued station finishes to the matching finished
+    // potion(s) that have appeared in the inventory.
+    private void updateStationTags(ItemContainer inventory) {
+        if (inventory == null) {
+            return;
+        }
+        Item[] items = inventory.getItems();
+
+        taggedSlots.keySet().removeIf(slot -> {
+            if (slot < 0 || slot >= items.length) {
+                return true;
+            }
+            var pt = PotionType.fromItemId(items[slot].getId());
+            return pt == null || pt.modifiedItemId() != items[slot].getId();
+        });
+
+        int now = client.getTickCount();
+        pendingTags.removeIf(e -> now - e[2] > 5);
+        if (pendingTags.isEmpty()) {
+            return;
+        }
+        for (int i = 0; i < items.length && !pendingTags.isEmpty(); i++) {
+            int id = items[i].getId();
+            var pt = PotionType.fromItemId(id);
+            if (pt == null || pt.modifiedItemId() != id || taggedSlots.containsKey(i)) {
+                continue;
+            }
+            PotionModifier modifier = popPendingForItem(id);
+            if (modifier != null) {
+                taggedSlots.put(i, modifier);
+            }
+        }
+    }
+
+    // Prefer an exact item-id match; if none and exactly one finish is queued, use it.
+    private PotionModifier popPendingForItem(int finishedItemId) {
+        for (Iterator<int[]> it = pendingTags.iterator(); it.hasNext(); ) {
+            int[] e = it.next();
+            if (e[0] == finishedItemId) {
+                it.remove();
+                return PotionModifier.values()[e[1]];
+            }
+        }
+        if (pendingTags.size() == 1) {
+            int[] e = pendingTags.pollFirst();
+            return PotionModifier.values()[e[1]];
+        }
+        return null;
+    }
+
     @Subscribe
     public void onVarbitChanged(VarbitChanged event) {
         var varbitId = event.getVarbitId();
@@ -294,6 +385,7 @@ public class MasteringMixologyPlugin extends Plugin {
                 // Finished crystalising
                 unHighlightObject(AlchemyObject.ALEMBIC);
                 tryFulfillOrder(alembicPotionType, PotionModifier.CRYSTALISED);
+                queueStationTag(alembicPotionType, PotionModifier.CRYSTALISED);
                 tryHighlightNextStation();
                 LOGGER.debug("Finished crystalising {}", alembicPotionType);
                 alembicPotionType = null;
@@ -306,6 +398,7 @@ public class MasteringMixologyPlugin extends Plugin {
                 // Finished homogenising
                 unHighlightObject(AlchemyObject.AGITATOR);
                 tryFulfillOrder(agitatorPotionType, PotionModifier.HOMOGENOUS);
+                queueStationTag(agitatorPotionType, PotionModifier.HOMOGENOUS);
                 tryHighlightNextStation();
                 LOGGER.debug("Finished homogenising {}", agitatorPotionType);
                 agitatorPotionType = null;
@@ -318,6 +411,7 @@ public class MasteringMixologyPlugin extends Plugin {
                 // Finished concentrating
                 unHighlightObject(AlchemyObject.RETORT);
                 tryFulfillOrder(retortPotionType, PotionModifier.CONCENTRATED);
+                queueStationTag(retortPotionType, PotionModifier.CONCENTRATED);
                 tryHighlightNextStation();
                 LOGGER.debug("Finished concentrating {}", retortPotionType);
                 retortPotionType = null;
